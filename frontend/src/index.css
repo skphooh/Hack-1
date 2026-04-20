@@ -1,0 +1,190 @@
+/* Google Fonts: Inter + Noto Sans JP */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+
+@import "tailwindcss";
+
+/* ========================================
+   うちの子ファクトリー グローバルスタイル
+   ======================================== */
+
+/* CSS カスタムプロパティ（デザイントークン） */
+:root {
+  /* カラーパレット */
+  --color-bg-primary: #0d0d14;
+  --color-bg-secondary: #13131f;
+  --color-bg-card: #1a1a2e;
+  --color-bg-glass: rgba(255, 255, 255, 0.06);
+
+  --color-accent-primary: #a78bfa;   /* パープル */
+  --color-accent-secondary: #f472b6; /* ピンク */
+  --color-accent-blue: #60a5fa;
+
+  --color-text-primary: #f1f0ff;
+  --color-text-secondary: #9e9ab8;
+  --color-text-muted: #5e5a7a;
+
+  --color-border: rgba(167, 139, 250, 0.2);
+
+  /* グラデーション */
+  --gradient-hero: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #60a5fa 100%);
+  --gradient-card: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%);
+  --gradient-button: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+
+  /* シャドウ */
+  --shadow-glow: 0 0 40px rgba(167, 139, 250, 0.3);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* フォント */
+  --font-base: 'Noto Sans JP', 'Inter', sans-serif;
+  --font-display: 'Inter', 'Noto Sans JP', sans-serif;
+
+  /* ボーダーラジウス */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+/* ===== ベーススタイル ===== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-base);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== グラスモーフィズム カード ===== */
+.glass-card {
+  background: var(--color-bg-glass);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ===== プライマリーボタン ===== */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: var(--gradient-button);
+  color: white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.4);
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(167, 139, 250, 0.6);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ===== アウトラインボタン ===== */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: transparent;
+  color: var(--color-accent-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid var(--color-border);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.btn-outline:hover {
+  background: rgba(167, 139, 250, 0.1);
+  border-color: var(--color-accent-primary);
+}
+
+/* ===== グラデーションテキスト ===== */
+.gradient-text {
+  background: var(--gradient-hero);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== ページコンテナ ===== */
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== セクション ===== */
+.section {
+  padding: 80px 0;
+}
+
+/* ===== スクロールバー カスタマイズ ===== */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent-primary);
+  border-radius: 100px;
+}
+
+/* ===== アニメーション ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(167, 139, 250, 0.6); }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.5s ease forwards;
+}
