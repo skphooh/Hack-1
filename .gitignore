@@ -1,0 +1,12 @@
+# 環境変数ファイル（パスワード等）
+.env
+.env.*
+!.env.example
+
+# Firebaseの管理者権限ファイル
+*firebase-adminsdk*.json
+utinoko-7e0ab-firebase-adminsdk-fbsvc-c393fa62a6.json
+
+# パッケージ管理
+node_modules/
+__pycache__/
