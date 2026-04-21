@@ -33,6 +33,18 @@ class WorkCreate(BaseModel):
     task_id: Optional[str] = None
 
 
+class WorkUpdate(BaseModel):
+    """作品更新リクエスト"""
+    title: Optional[str] = None
+    genre: Optional[str] = None
+    is_official: Optional[bool] = None
+    price: Optional[int] = None
+    status: Optional[str] = None
+    glb_url: Optional[str] = None
+    stl_url: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+
+
 class WorkResponse(BaseModel):
     """作品情報レスポンス"""
     id: UUID

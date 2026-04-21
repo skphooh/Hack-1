@@ -1,4 +1,4 @@
-// マーケット一覧カードコンポーネント
+import { useState } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
@@ -24,6 +24,8 @@ const GENRE_LABELS: Record<string, string> = {
 }
 
 export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardProps) {
+  const [has3DError, setHas3DError] = useState(false)
+
   return (
     <article
       id={`work-card-${work.id}`}
@@ -50,9 +52,9 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
     >
       {/* 3Dモデル または サムネイル */}
       <div style={{ position: 'relative', height: '200px', background: 'var(--color-bg-secondary)', overflow: 'hidden' }}>
-        {work.glb_url ? (
+        {work.glb_url && !has3DError ? (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
-            <Viewer3D glbUrl={work.glb_url} isMarket={true} height={200} />
+            <Viewer3D glbUrl={work.glb_url} isMarket={true} height={200} onError={() => setHas3DError(true)} />
           </div>
         ) : work.thumbnail_url ? (
           <img

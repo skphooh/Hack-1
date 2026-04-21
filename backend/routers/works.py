@@ -11,8 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from db.models import Like, User, Work
-from db.schemas import LikeResponse, WorkCreate, WorkListResponse, WorkResponse
+from db.schemas import LikeResponse, WorkCreate, WorkUpdate, WorkListResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
+from services.storage import upload_url_to_storage
 
 router = APIRouter()
 
@@ -135,3 +136,50 @@ async def delete_work(
     await db.delete(work)
     await db.commit()
     return {"message": "deleted"}
+
+
+@router.patch("/works/{work_id}", response_model=WorkResponse)
+async def update_work(
+    work_id: UUID,
+    body: WorkUpdate,
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """作品情報の更新（所有者のみ可能）"""
+    user = await get_or_create_user(uid, db)
+    
+    result = await db.execute(
+        select(Work).options(selectinload(Work.user)).where(Work.id == work_id)
+    )
+    work = result.scalar_one_or_none()
+    
+    if not work:
+        raise HTTPException(status_code=404, detail="作品が見つかりません")
+        
+    if work.user_id != user.id:
+        raise HTTPException(status_code=403, detail="他人の作品は編集できません")
+        
+    # フィールドの更新
+    update_data = body.model_dump(exclude_unset=True)
+    
+    # GLB URL が更新された場合、Firebase Storage に永続化を試みる
+    if "glb_url" in update_data and update_data["glb_url"]:
+        raw_url = update_data["glb_url"]
+        if "tripo3d.com" in raw_url or "wonder3d" in raw_url:
+            print(f"🔄 Permanentizing GLB to Firebase: {raw_url}", flush=True)
+            try:
+                # ユーザーディレクトリ配下に保存
+                firebase_url = await upload_url_to_storage(
+                    raw_url, f"models/{user.id}/{work.id}.glb"
+                )
+                update_data["glb_url"] = firebase_url
+                print(f"✅ GLB permanentized: {firebase_url}", flush=True)
+            except Exception as e:
+                print(f"⚠️ GLB permanentization failed: {e}", flush=True)
+
+    for key, value in update_data.items():
+        setattr(work, key, value)
+        
+    await db.commit()
+    await db.refresh(work)
+    return work

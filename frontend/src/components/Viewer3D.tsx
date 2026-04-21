@@ -38,9 +38,11 @@ interface Viewer3DProps {
   height?: number
   /** マーケット等で多数表示する際の軽量モード */
   isMarket?: boolean
+  /** 読み込みエラー時のコールバック */
+  onError?: () => void
 }
 
-export function Viewer3D({ glbUrl, height = 400, isMarket = false }: Viewer3DProps) {
+export function Viewer3D({ glbUrl, height = 400, isMarket = false, onError }: Viewer3DProps) {
   return (
     <div
       id="model-viewer"
@@ -56,6 +58,7 @@ export function Viewer3D({ glbUrl, height = 400, isMarket = false }: Viewer3DPro
       }}
     >
       <ErrorBoundary
+        onCatch={onError}
         fallback={
           <div style={{ color: '#ef4444', textAlign: 'center', padding: isMarket ? '10px' : '20px' }}>
             <p style={{ fontWeight: 'bold', fontSize: isMarket ? '0.8rem' : '1rem', marginBottom: '4px' }}>表示エラー</p>
