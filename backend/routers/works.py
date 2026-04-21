@@ -110,3 +110,26 @@ async def toggle_like(
     count = result.scalar_one()
 
     return LikeResponse(liked=liked, likes_count=count)
+
+
+@router.delete("/works/{work_id}")
+async def delete_work(
+    work_id: UUID,
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """作品の削除（本人のみ可能）"""
+    user = await get_or_create_user(uid, db)
+    
+    result = await db.execute(select(Work).where(Work.id == work_id))
+    work = result.scalar_one_or_none()
+    
+    if not work:
+        raise HTTPException(status_code=404, detail="作品が見つかりません")
+        
+    if work.user_id != user.id:
+        raise HTTPException(status_code=403, detail="他人の作品は削除できません")
+        
+    await db.delete(work)
+    await db.commit()
+    return {"message": "deleted"}

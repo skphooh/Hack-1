@@ -31,8 +31,9 @@ async def start_generate(
     user = await get_or_create_user(uid, db)
     image_bytes = await file.read()
 
-    # サムネイルをFirebase Storageにアップロード
-    safe_filename = file.filename or "image.png"
+    import uuid
+    # サムネイルをFirebase Storageにアップロード（上書き防止のためUUIDを付与）
+    safe_filename = f"{uuid.uuid4().hex}_{file.filename or 'image.png'}"
     thumbnail_url = await upload_to_storage(
         image_bytes, f"thumbnails/{uid}/{safe_filename}"
     )
