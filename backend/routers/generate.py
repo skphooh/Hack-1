@@ -10,7 +10,7 @@ from db.models import Work
 from db.schemas import TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
 from services.tripo3d import generate_3d_tripo, get_tripo_task_status
-from services.storage import upload_to_storage
+from services.storage import upload_to_storage, upload_url_to_storage
 
 router = APIRouter()
 
@@ -92,9 +92,17 @@ async def get_task_status(
 
         if new_status != work.status or tripo_data.get("glb_url"):
             work.status = new_status
+            
+            # glb_url が新規に届いた場合はFirebaseに永続化してCORSを解除
             if tripo_data.get("glb_url"):
-                work.glb_url = tripo_data["glb_url"]
-                print(f"✅ GLB保存完了: {task_id}", flush=True)
+                raw_glb_url = tripo_data["glb_url"]
+                print(f"🔄 downloading {raw_glb_url} to firebase...", flush=True)
+                firebase_url = await upload_url_to_storage(
+                    raw_glb_url, f"models/{work.user_id}/{task_id}.glb"
+                )
+                work.glb_url = firebase_url
+                print(f"✅ GLB保存完了 (Firebase): {task_id}", flush=True)
+                
             await db.commit()
             await db.refresh(work)
 

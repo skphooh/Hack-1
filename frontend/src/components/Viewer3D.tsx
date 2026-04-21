@@ -36,18 +36,20 @@ interface Viewer3DProps {
   glbUrl: string
   /** ビューアの高さ */
   height?: number
+  /** マーケット等で多数表示する際の軽量モード */
+  isMarket?: boolean
 }
 
-export function Viewer3D({ glbUrl, height = 400 }: Viewer3DProps) {
+export function Viewer3D({ glbUrl, height = 400, isMarket = false }: Viewer3DProps) {
   return (
     <div
       id="model-viewer"
       style={{
         width: '100%',
         height,
-        borderRadius: 'var(--radius-lg)',
+        borderRadius: isMarket ? 0 : 'var(--radius-lg)',
         overflow: 'hidden',
-        background: 'radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d14 100%)',
+        background: isMarket ? 'transparent' : 'radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d14 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -55,21 +57,21 @@ export function Viewer3D({ glbUrl, height = 400 }: Viewer3DProps) {
     >
       <ErrorBoundary
         fallback={
-          <div style={{ color: '#ef4444', textAlign: 'center', padding: '20px' }}>
-            <p style={{ fontWeight: 'bold', marginBottom: '8px' }}>モデルの読み込みに失敗しました</p>
-            <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>URLが不正か、ブラウザによってブロックされました。</p>
+          <div style={{ color: '#ef4444', textAlign: 'center', padding: isMarket ? '10px' : '20px' }}>
+            <p style={{ fontWeight: 'bold', fontSize: isMarket ? '0.8rem' : '1rem', marginBottom: '4px' }}>表示エラー</p>
+            {!isMarket && <p style={{ fontSize: '0.8rem', opacity: 0.8 }}>読み込みに失敗しました。</p>}
           </div>
         }
       >
-        <Canvas camera={{ position: [0, 0, 4], fov: 45 }}>
-          <ambientLight intensity={0.5} />
+        <Canvas camera={{ position: [0, 0, 4], fov: 45 }} gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}>
+          <ambientLight intensity={isMarket ? 0.8 : 0.5} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
           <Suspense fallback={<LoadingFallback />}>
             <RotatingModel url={glbUrl} />
-            <Environment preset="city" />
-            <ContactShadows position={[0, -1.5, 0]} opacity={0.4} blur={2} />
+            {!isMarket && <Environment preset="city" />}
+            {!isMarket && <ContactShadows position={[0, -1.5, 0]} opacity={0.4} blur={2} />}
           </Suspense>
-          <OrbitControls enablePan={false} autoRotate={false} />
+          <OrbitControls enablePan={false} enableZoom={!isMarket} autoRotate={isMarket} autoRotateSpeed={2} />
         </Canvas>
       </ErrorBoundary>
     </div>
