@@ -44,6 +44,7 @@ async def get_current_uid(authorization: str = Header(...)) -> str:
         decoded = auth.verify_id_token(token)
         return decoded["uid"]
     except Exception as e:
+        print(f"🔥 Firebase Auth Token Verification Failed: {e}", flush=True)
         raise HTTPException(status_code=401, detail=f"トークンが無効です: {e}")
 
 
