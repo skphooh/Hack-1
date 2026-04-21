@@ -7,7 +7,8 @@ import { ErrorBoundary } from './ErrorBoundary'
 
 /** 自動回転するGLBモデル */
 function RotatingModel({ url }: { url: string }) {
-  const { scene } = useGLTF(url)
+  // Tripo3D等のDraco圧縮されたファイルにも対応するため、第2引数にデコーダーのパスを指定
+  const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
   const groupRef = useRef<Mesh>(null!)
 
   // 毎フレーム少しずつ回転

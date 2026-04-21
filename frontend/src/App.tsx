@@ -5,6 +5,7 @@ import Top from './pages/Top'
 import Generate from './pages/Generate'
 import Market from './pages/Market'
 import MyPage from './pages/MyPage'
+import WorkDetail from './pages/WorkDetail'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<Top />} />
         <Route path="/generate" element={<Generate />} />
         <Route path="/market" element={<Market />} />
+        <Route path="/works/:id" element={<WorkDetail />} />
         <Route path="/mypage" element={<MyPage />} />
         {/* 404 フォールバック */}
         <Route
