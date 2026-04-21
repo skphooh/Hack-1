@@ -27,12 +27,16 @@ app = FastAPI(
 )
 
 # CORS設定（フロントエンドのドメインを許可）
+_allowed_origins = [
+    "http://localhost:5173",
+    "https://utinoko.skphooh.com",
+]
+if os.getenv("FRONTEND_URL"):
+    _allowed_origins.append(os.getenv("FRONTEND_URL"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite 開発サーバー
-        os.getenv("FRONTEND_URL", ""),  # 本番フロントエンドURL
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

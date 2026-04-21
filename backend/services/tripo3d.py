@@ -47,11 +47,10 @@ async def generate_3d_tripo(image_bytes: bytes) -> str:
 async def get_tripo_task_status(task_id: str) -> dict:
     """
     Tripo3D のジョブステータスをポーリングする。
-    returns: {"status": "...", "progress": 0-100, "result": {...}}
+    returns: {"status": "done"|"processing"|"failed", "progress": 0-100, "glb_url": str|None}
     """
     if not TRIPO3D_API_KEY or task_id.startswith("mock_"):
-        # 開発用モック: 即完了を返す
-        return {"status": "done", "progress": 100, "result": None}
+        return {"status": "done", "progress": 100, "glb_url": None}
 
     headers = {"Authorization": f"Bearer {TRIPO3D_API_KEY}"}
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -60,4 +59,23 @@ async def get_tripo_task_status(task_id: str) -> dict:
             headers=headers,
         )
         resp.raise_for_status()
-        return resp.json()["data"]
+        data = resp.json()["data"]
+
+    # Tripo3D のステータスを内部ステータスにマッピング
+    tripo_status = data.get("status", "")
+    if tripo_status == "success":
+        status = "done"
+    elif tripo_status in ("failed", "cancelled"):
+        status = "failed"
+    else:
+        status = "processing"
+
+    progress = data.get("progress", 0)
+
+    # 完了時: output.model から GLB URL を取得
+    glb_url = None
+    output = data.get("output") or data.get("result") or {}
+    if isinstance(output, dict):
+        glb_url = output.get("model") or output.get("glb_url") or output.get("pbr_model")
+
+    return {"status": status, "progress": progress, "glb_url": glb_url}

@@ -12,7 +12,7 @@ from db.database import get_db
 from db.models import Work
 from db.schemas import GenerateRequest, TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
-from services.tripo3d import generate_3d_tripo
+from services.tripo3d import generate_3d_tripo, get_tripo_task_status
 from services.wonder3d import generate_3d_wonder
 from services.storage import upload_to_storage
 
@@ -66,16 +66,35 @@ async def get_task_status(
 ):
     """
     ジョブのステータスをポーリングする（フロントは3秒ごとに呼ぶ）。
-    完了時は STL/GLB URL を返す。
+    処理中の場合は Tripo3D API を叩いてDBを更新する。完了時は GLB URL を返す。
     """
     result = await db.execute(select(Work).where(Work.task_id == task_id))
     work = result.scalar_one_or_none()
     if not work:
         raise HTTPException(status_code=404, detail="タスクが見つかりません")
 
+    # 処理中のタスクは外部APIで最新状態を取得してDBを更新
+    progress = 0
+    if work.status == "processing":
+        try:
+            tripo_data = await get_tripo_task_status(task_id)
+            progress = tripo_data.get("progress", 0)
+            new_status = tripo_data.get("status", "processing")
+
+            if new_status != work.status or tripo_data.get("glb_url"):
+                work.status = new_status
+                if tripo_data.get("glb_url"):
+                    work.glb_url = tripo_data["glb_url"]
+                await db.commit()
+                await db.refresh(work)
+        except Exception:
+            # 外部API失敗はポーリング継続扱い
+            pass
+
     return TaskStatusResponse(
         task_id=task_id,
         status=work.status,
+        progress=progress,
         glb_url=work.glb_url,
         stl_url=work.stl_url,
     )
