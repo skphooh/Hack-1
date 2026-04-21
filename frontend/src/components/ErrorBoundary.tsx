@@ -4,6 +4,7 @@ import type { ReactNode, ErrorInfo } from 'react'
 interface Props {
   children: ReactNode
   fallback: ReactNode
+  onCatch?: (error: Error, errorInfo: ErrorInfo) => void
 }
 
 interface State {
@@ -22,6 +23,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('3D Viewer Error:', error, errorInfo)
+    this.props.onCatch?.(error, errorInfo)
   }
 
   render() {
