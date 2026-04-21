@@ -69,7 +69,7 @@ export function Navbar() {
             backgroundClip: 'text',
           }}
         >
-          うちの子ファクトリー
+          うちの子製作所
         </span>
       </Link>
 

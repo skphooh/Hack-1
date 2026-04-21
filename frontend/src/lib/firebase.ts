@@ -19,7 +19,7 @@ const isDemoMode = !firebaseConfig.apiKey
 let app: FirebaseApp
 
 if (isDemoMode) {
-  console.warn('[うちの子ファクトリー] Firebase APIキーが未設定です。frontend/.env を作成してください。')
+  console.warn('[うちの子製作所] Firebase APIキーが未設定です。frontend/.env を作成してください。')
   // デモ用のダミー設定（Firebase初期化のクラッシュを防ぐ）
   app = initializeApp({
     apiKey: 'demo-api-key',

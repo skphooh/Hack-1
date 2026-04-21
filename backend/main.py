@@ -1,5 +1,5 @@
 """
-うちの子ファクトリー - FastAPI メインエントリポイント
+うちの子製作所 - FastAPI メインエントリポイント
 """
 import os
 from contextlib import asynccontextmanager
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="うちの子ファクトリー API",
+    title="うちの子製作所 API",
     description="写真・イラスト1枚から3Dメッシュを生成するWebサービスのバックエンドAPI",
     version="1.0.0",
     lifespan=lifespan,
