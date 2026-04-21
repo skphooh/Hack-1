@@ -21,14 +21,18 @@ def _init_firebase():
     global _firebase_initialized
     if _firebase_initialized:
         return
-    service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
-    if service_account_json:
-        cert = credentials.Certificate(json.loads(service_account_json))
-        firebase_admin.initialize_app(cert)
-    else:
-        # 開発環境: 環境変数なしの場合はデフォルト初期化（エミュレーター想定）
-        firebase_admin.initialize_app()
-    _firebase_initialized = True
+    try:
+        service_account_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+        if service_account_json:
+            cert = credentials.Certificate(json.loads(service_account_json))
+            firebase_admin.initialize_app(cert)
+        else:
+            # 開発環境: 環境変数なしの場合はデフォルト初期化（エミュレーター想定）
+            firebase_admin.initialize_app()
+    except Exception as e:
+        print(f"🔥 Firebase Init Error: {e}", flush=True)
+    finally:
+        _firebase_initialized = True
 
 
 async def get_current_uid(authorization: str = Header(...)) -> str:

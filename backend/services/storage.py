@@ -8,7 +8,7 @@ import uuid
 import firebase_admin
 from firebase_admin import storage
 
-STORAGE_BUCKET = os.getenv("VITE_FIREBASE_STORAGE_BUCKET", "")
+STORAGE_BUCKET = os.getenv("FIREBASE_STORAGE_BUCKET") or os.getenv("VITE_FIREBASE_STORAGE_BUCKET", "")
 
 
 async def upload_to_storage(file_bytes: bytes, path: str) -> str:
