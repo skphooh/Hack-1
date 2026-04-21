@@ -6,6 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select, update
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
@@ -34,7 +35,7 @@ async def list_works(
     total = count_result.scalar_one()
 
     # ページネーション
-    query = query.order_by(Work.created_at.desc())
+    query = query.options(selectinload(Work.user)).order_by(Work.created_at.desc())
     query = query.offset((page - 1) * per_page).limit(per_page)
     result = await db.execute(query)
     items = result.scalars().all()
@@ -45,7 +46,7 @@ async def list_works(
 @router.get("/works/{work_id}", response_model=WorkResponse)
 async def get_work(work_id: UUID, db: AsyncSession = Depends(get_db)):
     """作品詳細取得"""
-    result = await db.execute(select(Work).where(Work.id == work_id))
+    result = await db.execute(select(Work).options(selectinload(Work.user)).where(Work.id == work_id))
     work = result.scalar_one_or_none()
     if not work:
         raise HTTPException(status_code=404, detail="作品が見つかりません")
@@ -71,6 +72,7 @@ async def create_work(
     )
     db.add(work)
     await db.flush()
+    work.user = user
     return work
 
 

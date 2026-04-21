@@ -49,6 +49,7 @@ class WorkResponse(BaseModel):
     likes_count: int
     downloads: int
     created_at: datetime
+    author_firebase_uid: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
