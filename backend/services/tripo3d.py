@@ -45,11 +45,13 @@ async def generate_3d_tripo(image_bytes: bytes) -> str:
             task_body = {
                 "type": "image_to_model",
                 "file": {"object": object_info},
+                "model_version": "v2.5-20240925",
             }
         elif image_token:
             task_body = {
                 "type": "image_to_model",
                 "file": {"type": "png", "file_token": image_token},
+                "model_version": "v2.5-20240925",
             }
         else:
             raise ValueError(f"Unexpected upload response: {upload_data}")
