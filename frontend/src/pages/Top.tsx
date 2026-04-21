@@ -430,7 +430,7 @@ export default function Top() {
           }}
           className="gradient-text"
         >
-          うちの子ファクトリー ✨
+          うちの子製作所 ✨
         </p>
         <p>Hack-1 グランプリ 2026「小さくなる日本」</p>
       </footer>
