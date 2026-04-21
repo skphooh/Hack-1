@@ -1,14 +1,40 @@
-// 生成ページ（フロー①: 写真・イラスト→3D変換）
+// 生成ページ（フロー①: 写真・イラスト→3D変換）- ポップ・かわいいデザイン
 import { useCallback, useRef, useState } from 'react'
-import { Sparkles, Download, RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { Download, RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { Dropzone } from '../components/Dropzone'
 import { Viewer3D } from '../components/Viewer3D'
 import { useGenerateStore } from '../stores/generateStore'
 import { estimateDepth, startGenerate, fetchTaskStatus } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 
-/** ステップインジケーターのラベル */
-const STEPS = ['画像選択', 'プレビュー確認', '3D生成中', '完成！']
+/** ステップインジケーターのラベルと絵文字 */
+const STEPS = [
+  { label: '画像を選んでね', emoji: '🖼️' },
+  { label: 'プレビュー確認', emoji: '👀' },
+  { label: '3D生成中…', emoji: '⚙️' },
+  { label: 'できた！', emoji: '🎉' },
+]
+
+/** 紙吹雪エフェクトを生成する関数 */
+function launchConfetti() {
+  const colors = ['#FF6B9D', '#9B59B6', '#4ECDC4', '#FFE566', '#FFB347', '#FF85C2']
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div')
+    el.className = 'confetti-particle'
+    el.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      width: ${6 + Math.random() * 8}px;
+      height: ${6 + Math.random() * 8}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      animation-duration: ${1.5 + Math.random() * 1.5}s;
+      animation-delay: ${Math.random() * 0.8}s;
+    `
+    document.body.appendChild(el)
+    setTimeout(() => el.remove(), 4000)
+  }
+}
 
 export default function Generate() {
   const { user } = useAuthState()
@@ -65,6 +91,7 @@ export default function Generate() {
           if (status.status === 'done') {
             clearInterval(pollingRef.current!)
             setStep('done')
+            launchConfetti() // 🎉 紙吹雪エフェクト！
           } else if (status.status === 'failed') {
             clearInterval(pollingRef.current!)
             setError('3D生成に失敗しました。別の画像で試してみてください。')
@@ -98,11 +125,36 @@ export default function Generate() {
       <div className="page-container section">
         {/* ページタイトル */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 12 }}>
-            <span className="gradient-text">うちの子</span>を3Dにする
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 20px',
+              background: '#FFEDF4',
+              border: '2px solid var(--color-pink-light)',
+              borderRadius: 100,
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              color: 'var(--color-pink)',
+              marginBottom: 16,
+            }}
+          >
+            🎨 3D生成ページ
+          </div>
+          <h1
+            style={{
+              fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+              fontWeight: 900,
+              marginBottom: 12,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--color-text)',
+            }}
+          >
+            <span className="gradient-text">うちの子</span>を3Dにする✨
           </h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            写真またはイラストを1枚アップするだけで、STLデータが生成されます
+          <p style={{ color: 'var(--color-text-sub)', fontWeight: 500 }}>
+            写真またはイラストを1枚アップするだけで、STLデータが生成されます！
           </p>
         </div>
 
@@ -114,137 +166,222 @@ export default function Generate() {
             gap: 0,
             marginBottom: 48,
             overflowX: 'auto',
+            padding: '0 8px',
           }}
         >
-          {STEPS.map((label, i) => (
-            <div
-              key={label}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 80 }}>
+          {STEPS.map(({ label, emoji }, i) => {
+            const isActive = i <= currentStepIndex
+            const isCurrent = i === currentStepIndex
+            return (
+              <div
+                key={label}
+                style={{ display: 'flex', alignItems: 'center' }}
+              >
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    background:
-                      i <= currentStepIndex
-                        ? 'var(--gradient-button)'
-                        : 'var(--color-bg-glass)',
-                    border: `2px solid ${i <= currentStepIndex ? 'transparent' : 'var(--color-border)'}`,
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    color: i <= currentStepIndex ? 'white' : 'var(--color-text-muted)',
-                    transition: 'all 0.3s',
+                    minWidth: 88,
                   }}
                 >
-                  {i + 1}
+                  {/* ステップ丸 */}
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: isActive
+                        ? 'var(--color-pink)'
+                        : 'white',
+                      border: `2.5px solid ${isActive ? 'var(--color-pink)' : 'var(--color-border)'}`,
+                      fontSize: isActive ? '1.1rem' : '0.9rem',
+                      boxShadow: isCurrent
+                        ? '0 0 0 6px rgba(255, 107, 157, 0.2)'
+                        : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      transform: isCurrent ? 'scale(1.12)' : 'scale(1)',
+                    }}
+                  >
+                    {isActive ? emoji : (
+                      <span
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 800,
+                          color: 'var(--color-text-muted)',
+                        }}
+                      >
+                        {i + 1}
+                      </span>
+                    )}
+                  </div>
+                  {/* ラベル */}
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      marginTop: 6,
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? 'var(--color-pink)' : 'var(--color-text-muted)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {label}
+                  </span>
                 </div>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    marginTop: 6,
-                    color: i <= currentStepIndex ? 'var(--color-accent-primary)' : 'var(--color-text-muted)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {label}
-                </span>
+                {/* コネクターライン */}
+                {i < STEPS.length - 1 && (
+                  <div
+                    style={{
+                      width: 36,
+                      height: 3,
+                      background:
+                        i < currentStepIndex
+                          ? 'var(--color-pink)'
+                          : 'var(--color-border)',
+                      marginBottom: 22,
+                      borderRadius: 100,
+                      transition: 'background 0.3s',
+                    }}
+                  />
+                )}
               </div>
-              {i < STEPS.length - 1 && (
-                <div
-                  style={{
-                    width: 40,
-                    height: 2,
-                    background: i < currentStepIndex ? 'var(--gradient-button)' : 'var(--color-border)',
-                    marginBottom: 24,
-                    transition: 'background 0.3s',
-                  }}
-                />
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {/* メインコンテンツ */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
-          {/* 左カラム: 入力 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* ログイン促進 */}
+        {/* メインコンテンツ（2カラムレイアウト） */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 28,
+            alignItems: 'start',
+          }}
+        >
+          {/* 左カラム: 入力エリア */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {/* ログイン促進バナー */}
             {!user && (
               <div
-                className="glass-card"
-                style={{ padding: 20, borderColor: 'rgba(244, 114, 182, 0.4)', textAlign: 'center' }}
+                style={{
+                  padding: '16px 20px',
+                  background: '#FFFBF0',
+                  border: '2px solid #FFD699',
+                  borderRadius: 'var(--radius-md)',
+                  textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  justifyContent: 'center',
+                }}
               >
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-                  ⚠️ 生成するには Google ログインが必要です
+                <span style={{ fontSize: '1.3rem' }}>⚠️</span>
+                <p style={{ color: '#8B5E00', fontSize: '0.9rem', fontWeight: 600 }}>
+                  生成するには Google ログインが必要だよ！
                 </p>
               </div>
             )}
 
             {/* モード切替 */}
             <div
-              className="glass-card"
-              style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}
+              style={{
+                background: 'white',
+                border: '2px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '18px 20px',
+                boxShadow: 'var(--shadow-card)',
+              }}
             >
-              <p style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
-                画像の種類
+              <p
+                style={{
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  marginBottom: 12,
+                  color: 'var(--color-text-sub)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                🖼️ 画像の種類を選んでね
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {(['photo', 'anime'] as const).map((m) => (
-                  <button
-                    key={m}
-                    id={`mode-${m}`}
-                    onClick={() => setMode(m)}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 'var(--radius-md)',
-                      border: `2px solid ${mode === m ? 'var(--color-accent-primary)' : 'var(--color-border)'}`,
-                      background: mode === m ? 'rgba(167, 139, 250, 0.12)' : 'transparent',
-                      color: mode === m ? 'var(--color-accent-primary)' : 'var(--color-text-secondary)',
-                      fontSize: '0.875rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {m === 'photo' ? '📷 実写・コスプレ' : '🎨 アニメ・イラスト'}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', gap: 10 }}>
+                {(['photo', 'anime'] as const).map((m) => {
+                  const isSelected = mode === m
+                  return (
+                    <button
+                      key={m}
+                      id={`mode-${m}`}
+                      onClick={() => setMode(m)}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        borderRadius: 'var(--radius-btn)',
+                        border: `2.5px solid ${isSelected ? 'var(--color-pink)' : 'var(--color-border)'}`,
+                        background: isSelected ? '#FFEDF4' : 'white',
+                        color: isSelected ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        transform: isSelected ? 'scale(1.03)' : 'scale(1)',
+                        boxShadow: isSelected ? '0 4px 12px rgba(255,107,157,0.2)' : 'none',
+                      }}
+                    >
+                      {m === 'photo' ? '📷 実写・コスプレ' : '🎨 アニメ・イラスト'}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
             {/* タイトル入力 */}
-            <div className="glass-card" style={{ padding: 20 }}>
+            <div
+              style={{
+                background: 'white',
+                border: '2px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                padding: '18px 20px',
+                boxShadow: 'var(--shadow-card)',
+              }}
+            >
               <label
                 htmlFor="work-title"
-                style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: 8, color: 'var(--color-text-secondary)' }}
+                style={{
+                  display: 'block',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  marginBottom: 10,
+                  color: 'var(--color-text-sub)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
               >
-                作品タイトル（任意）
+                ⭐ 作品タイトル（任意）
               </label>
               <input
                 id="work-title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="例: 私の推し / うちの子 2024"
+                placeholder="例: 推しの名前 / うちの子 2024"
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-md)',
-                  color: 'var(--color-text-primary)',
+                  background: '#FFF9FB',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-btn)',
+                  color: 'var(--color-text)',
                   fontSize: '0.95rem',
                   outline: 'none',
+                  fontFamily: 'var(--font-base)',
+                  fontWeight: 500,
+                  transition: 'border-color 0.2s',
                 }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-pink)' }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)' }}
               />
             </div>
 
@@ -253,16 +390,20 @@ export default function Generate() {
               <Dropzone onFile={handleFile} disabled={!user} />
             )}
 
-            {/* 生成ボタン */}
+            {/* 生成スタートボタン */}
             {step === 'depth_preview' && (
               <button
                 id="start-generate-btn"
                 onClick={handleGenerate}
                 className="btn-primary"
-                style={{ justifyContent: 'center', width: '100%', padding: '16px' }}
+                style={{
+                  justifyContent: 'center',
+                  width: '100%',
+                  padding: '16px',
+                  fontSize: '1.05rem',
+                }}
               >
-                <Sparkles size={18} />
-                3D生成スタート！
+                ✨ 3Dにする！
               </button>
             )}
 
@@ -275,17 +416,32 @@ export default function Generate() {
                 style={{ justifyContent: 'center', width: '100%' }}
               >
                 <RefreshCw size={16} />
-                もう一度作る
+                もう一度作る 🔄
               </button>
             )}
           </div>
 
-          {/* 右カラム: プレビュー */}
+          {/* 右カラム: プレビューエリア */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Depthプレビュー */}
             {depthUrl && step !== 'done' && (
-              <div className="glass-card" style={{ padding: 16 }}>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>
+              <div
+                style={{
+                  background: 'white',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 16,
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--color-text-sub)',
+                    marginBottom: 10,
+                    fontWeight: 700,
+                  }}
+                >
                   🔍 Depth プレビュー（即時）
                 </p>
                 <img
@@ -298,14 +454,34 @@ export default function Generate() {
 
             {/* 元画像プレビュー */}
             {previewUrl && step !== 'done' && (
-              <div className="glass-card" style={{ padding: 16 }}>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: 8 }}>
+              <div
+                style={{
+                  background: 'white',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 16,
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--color-text-sub)',
+                    marginBottom: 10,
+                    fontWeight: 700,
+                  }}
+                >
                   📷 アップロード画像
                 </p>
                 <img
                   src={previewUrl}
                   alt="アップロード画像"
-                  style={{ width: '100%', borderRadius: 'var(--radius-md)', maxHeight: 300, objectFit: 'contain' }}
+                  style={{
+                    width: '100%',
+                    borderRadius: 'var(--radius-md)',
+                    maxHeight: 300,
+                    objectFit: 'contain',
+                  }}
                 />
               </div>
             )}
@@ -313,28 +489,45 @@ export default function Generate() {
             {/* 生成中インジケーター */}
             {(step === 'uploading' || step === 'generating') && (
               <div
-                className="glass-card animate-glow"
-                style={{ padding: 40, textAlign: 'center' }}
+                style={{
+                  background: 'white',
+                  border: '2.5px solid var(--color-pink-light)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '48px 32px',
+                  textAlign: 'center',
+                  boxShadow: '0 0 24px rgba(255,107,157,0.2)',
+                  animation: 'glow-pulse 2s ease-in-out infinite',
+                }}
               >
+                <div style={{ fontSize: '3rem', marginBottom: 16, animation: 'float 2s ease-in-out infinite' }}>
+                  {step === 'uploading' ? '📤' : '⚙️'}
+                </div>
                 <Loader2
-                  size={48}
-                  color="var(--color-accent-primary)"
+                  size={36}
+                  color="var(--color-pink)"
                   style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px' }}
                 />
-                <p style={{ fontWeight: 600 }}>
+                <p style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--color-text)' }}>
                   {step === 'uploading' ? 'アップロード中...' : '3Dモデルを生成中...'}
                 </p>
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem', marginTop: 8 }}>
+                <p
+                  style={{
+                    color: 'var(--color-text-sub)',
+                    fontSize: '0.875rem',
+                    marginTop: 8,
+                    fontWeight: 500,
+                  }}
+                >
                   {mode === 'anime'
-                    ? 'Wonder3D が処理中です（3〜8分）'
-                    : 'Tripo3D が処理中です（1〜3分）'}
+                    ? '⏳ Wonder3D が処理中です（3〜8分）'
+                    : '⏳ Tripo3D が処理中です（1〜3分）'}
                 </p>
                 {taskStatus && taskStatus.progress > 0 && (
                   <div style={{ marginTop: 20 }}>
                     <div
                       style={{
-                        height: 6,
-                        background: 'var(--color-bg-secondary)',
+                        height: 8,
+                        background: '#FFD6E8',
                         borderRadius: 100,
                         overflow: 'hidden',
                       }}
@@ -343,13 +536,20 @@ export default function Generate() {
                         style={{
                           width: `${taskStatus.progress}%`,
                           height: '100%',
-                          background: 'var(--gradient-button)',
+                          background: 'linear-gradient(90deg, var(--color-pink), var(--color-purple))',
                           borderRadius: 100,
                           transition: 'width 0.5s ease',
                         }}
                       />
                     </div>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 6 }}>
+                    <p
+                      style={{
+                        fontSize: '0.82rem',
+                        color: 'var(--color-pink)',
+                        marginTop: 6,
+                        fontWeight: 700,
+                      }}
+                    >
                       {taskStatus.progress}%
                     </p>
                   </div>
@@ -357,12 +557,32 @@ export default function Generate() {
               </div>
             )}
 
-            {/* 完成！ */}
+            {/* 完成！！！ */}
             {step === 'done' && taskStatus?.glb_url && (
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
-                <div style={{ padding: '16px 16px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircle size={20} color="#34d399" />
-                  <span style={{ fontWeight: 600, color: '#34d399' }}>3D生成完了！</span>
+              <div
+                style={{
+                  background: 'white',
+                  border: '2.5px solid #90D4A4',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  boxShadow: '0 8px 32px rgba(40, 167, 69, 0.15)',
+                  animation: 'bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '14px 16px',
+                    background: '#E8FFF4',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    borderBottom: '2px solid #90D4A4',
+                  }}
+                >
+                  <CheckCircle size={20} color="#22863a" />
+                  <span style={{ fontWeight: 800, color: '#22863a', fontSize: '1rem' }}>
+                    できた！🎉 3D生成完了！
+                  </span>
                 </div>
                 <Viewer3D glbUrl={taskStatus.glb_url} height={350} />
                 {taskStatus.stl_url && (
@@ -371,10 +591,15 @@ export default function Generate() {
                       id="download-stl-btn"
                       onClick={handleDownload}
                       className="btn-primary"
-                      style={{ justifyContent: 'center', width: '100%' }}
+                      style={{
+                        justifyContent: 'center',
+                        width: '100%',
+                        padding: '14px',
+                        fontSize: '1rem',
+                      }}
                     >
                       <Download size={18} />
-                      STLをダウンロード
+                      🖨️ STLをダウンロード
                     </button>
                   </div>
                 )}
@@ -384,15 +609,22 @@ export default function Generate() {
             {/* エラー */}
             {step === 'error' && (
               <div
-                className="glass-card"
-                style={{ padding: 32, textAlign: 'center', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                style={{
+                  background: 'white',
+                  border: '2px solid #FFAAAA',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '40px 32px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 20px rgba(239,68,68,0.1)',
+                }}
               >
-                <AlertCircle size={40} color="#ef4444" style={{ margin: '0 auto 16px' }} />
-                <p style={{ fontWeight: 600, color: '#ef4444', marginBottom: 8 }}>
-                  生成に失敗しました
+                <div style={{ fontSize: '3rem', marginBottom: 12 }}>😢</div>
+                <AlertCircle size={36} color="#ef4444" style={{ margin: '0 auto 12px' }} />
+                <p style={{ fontWeight: 800, color: '#ef4444', marginBottom: 8, fontSize: '1rem' }}>
+                  うまくいかなかった…
                 </p>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-                  別の画像を試してみてください
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-sub)' }}>
+                  別の画像を試してみてね！
                 </p>
               </div>
             )}
@@ -401,7 +633,17 @@ export default function Generate() {
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes float   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes glow-pulse {
+          0%,100% { box-shadow: 0 0 16px rgba(255,107,157,0.2); }
+          50%      { box-shadow: 0 0 32px rgba(255,107,157,0.5); }
+        }
+        @keyframes bounce-in {
+          0%   { transform: scale(0.85); opacity: 0; }
+          60%  { transform: scale(1.05); opacity: 1; }
+          100% { transform: scale(1); }
+        }
       `}</style>
     </main>
   )
