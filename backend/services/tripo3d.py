@@ -21,35 +21,32 @@ async def generate_3d_tripo(image_bytes: bytes) -> str:
     headers = {"Authorization": f"Bearer {TRIPO3D_API_KEY}"}
 
     async with httpx.AsyncClient(timeout=60.0) as client:
-        # Step 1: STS エンドポイントで画像をアップロードして image_token を取得
+        # Step 1: STS エンドポイントで画像をアップロード（最新仕様）
         upload_resp = await client.post(
             f"{TRIPO3D_API_BASE}/upload/sts",
             headers=headers,
             files={"file": ("image.png", image_bytes, "image/png")},
         )
-        print(f"📤 Tripo3D upload status: {upload_resp.status_code}", flush=True)
+        print(f"📤 Upload status: {upload_resp.status_code}", flush=True)
         if not upload_resp.is_success:
             print(f"❌ Upload error: {upload_resp.text}", flush=True)
         upload_resp.raise_for_status()
 
         upload_data = upload_resp.json()
-        print(f"📤 Tripo3D upload response: {upload_data}", flush=True)
-
-        # STS レスポンスから object 情報を取得
-        # レスポンス形式: {"data": {"image_token": "..."}} または {"data": {"object": {...}}}
+        print(f"📤 Upload response: {upload_data}", flush=True)
         data = upload_data.get("data", {})
-        image_token = data.get("image_token")
+
+        # STSレスポンスからobjectまたはimage_tokenを取得
         object_info = data.get("object")
+        image_token = data.get("image_token")
 
         # Step 2: 3D生成タスクを作成
         if object_info:
-            # STS形式（推奨）
             task_body = {
                 "type": "image_to_model",
                 "file": {"object": object_info},
             }
         elif image_token:
-            # 旧形式（フォールバック）
             task_body = {
                 "type": "image_to_model",
                 "file": {"type": "png", "file_token": image_token},
@@ -62,13 +59,13 @@ async def generate_3d_tripo(image_bytes: bytes) -> str:
             headers={**headers, "Content-Type": "application/json"},
             json=task_body,
         )
-        print(f"🚀 Tripo3D task status: {task_resp.status_code}", flush=True)
+        print(f"🚀 Task status: {task_resp.status_code}", flush=True)
         if not task_resp.is_success:
             print(f"❌ Task error: {task_resp.text}", flush=True)
         task_resp.raise_for_status()
 
         task_id = task_resp.json()["data"]["task_id"]
-        print(f"✅ Tripo3D task_id: {task_id}", flush=True)
+        print(f"✅ Task started: {task_id}", flush=True)
         return task_id
 
 
@@ -108,4 +105,5 @@ async def get_tripo_task_status(task_id: str) -> dict:
             or output.get("pbr_model")
         )
 
+    print(f"📊 Task {task_id}: {status} ({progress}%) glb={glb_url}", flush=True)
     return {"status": status, "progress": progress, "glb_url": glb_url}
