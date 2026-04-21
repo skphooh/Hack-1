@@ -1,149 +1,102 @@
 """
-サービス: Wonder3D連携（画像→3D変換）
-HuggingFace Inference API を使って画像から3Dメッシュを生成する。
-Wonder3D SpaceはGPU待ちが長いため、InstantMesh（より安定）を優先使用。
+サービス: fal.ai TRELLIS連携（アニメ・イラスト・実写共通の画像→3D変換）
+HuggingFace Spaceが不安定なため、fal.ai の TRELLIS（超高品質・高速なImage-to-3Dモデル）を使用します。
 """
-import asyncio
 import base64
-import io
 import os
 import uuid
 
 import httpx
 
-HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN", "")
+FAL_KEY = os.getenv("FAL_KEY", "")
 
-# InstantMesh: Wonder3Dより安定していて速い（同じHuggingFace）
-INSTANTMESH_API_URL = "https://api-inference.huggingface.co/models/TencentARC/InstantMesh"
-
-# フォールバック: Zero123++
-ZERO123_API_URL = "https://api-inference.huggingface.co/models/sudo-ai/zero123plus"
-
-# タスクをメモリ内で管理（Renderの1インスタンスで動作）
-_task_store: dict[str, dict] = {}
+# fal.ai の TRELLIS キューのベースURL
+FAL_QUEUE_BASE = "https://queue.fal.run/fal-ai/trellis"
 
 
 async def generate_3d_wonder(image_bytes: bytes) -> str:
     """
-    画像をHuggingFace APIに送り、非同期でタスクを開始してtask_idを返す。
+    画像を fal.ai の TRELLIS に送り、キューの request_id (task_id) を返す。
+    キー未設定の場合はモックの task_id を返す。
     """
-    task_id = f"wonder_{uuid.uuid4().hex[:8]}"
+    if not FAL_KEY:
+        # モック（FAL_KEY未設定の場合）
+        return f"mock_task_fal_{uuid.uuid4().hex[:8]}"
 
-    if not HUGGINGFACE_TOKEN:
-        # モック: 5秒後に完了するタスクをシミュレート
-        _task_store[task_id] = {"status": "processing", "progress": 0, "glb_url": None}
-        asyncio.create_task(_mock_process(task_id))
-        return task_id
+    headers = {
+        "Authorization": f"Key {FAL_KEY}",
+        "Content-Type": "application/json",
+    }
 
-    # タスクを登録して非同期処理開始
-    _task_store[task_id] = {"status": "processing", "progress": 0, "glb_url": None}
-    asyncio.create_task(_run_wonder3d(task_id, image_bytes))
-    print(f"✅ Wonder3D タスク開始: {task_id}", flush=True)
-    return task_id
+    # 画像を Base64 Data URLに変換
+    b64_str = base64.b64encode(image_bytes).decode('utf-8')
+    data_url = f"data:image/png;base64,{b64_str}"
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        # キューにタスクを登録
+        resp = await client.post(
+            FAL_QUEUE_BASE,
+            headers=headers,
+            json={"image_url": data_url},
+        )
+        
+        print(f"🚀 fal.ai TRELLIS リクエスト: {resp.status_code}", flush=True)
+        if not resp.is_success:
+            print(f"❌ fal.ai Error: {resp.text}", flush=True)
+        resp.raise_for_status()
+
+        data = resp.json()
+        request_id = data.get("request_id")
+        
+        print(f"✅ fal.ai タスクID発行: {request_id}", flush=True)
+        return request_id
 
 
 async def get_wonder_task_status(task_id: str) -> dict:
     """
-    Wonder3Dタスクのステータスを返す。
+    fal.ai のタスク進捗を確認する（フロントからのポーリングで毎秒〜3秒ごとに呼ばれる）。
     """
-    if task_id not in _task_store:
-        return {"status": "failed", "progress": 0, "glb_url": None}
-    return _task_store[task_id]
-
-
-async def _run_wonder3d(task_id: str, image_bytes: bytes):
-    """
-    HuggingFace Inference APIで画像→3D変換を実行する（バックグラウンド処理）。
-    InstantMeshを試し、失敗したらZero123++にフォールバック。
-    """
-    headers = {
-        "Authorization": f"Bearer {HUGGINGFACE_TOKEN}",
-        "Content-Type": "application/octet-stream",
-    }
-
-    try:
-        _task_store[task_id]["progress"] = 10
-        print(f"🚀 InstantMesh リクエスト開始: {task_id}", flush=True)
-
-        async with httpx.AsyncClient(timeout=300.0) as client:
-            resp = await client.post(
-                INSTANTMESH_API_URL,
-                headers=headers,
-                content=image_bytes,
-            )
-
-            print(f"📊 InstantMesh レスポンス: {resp.status_code}", flush=True)
-
-            if resp.status_code == 200:
-                _task_store[task_id]["progress"] = 80
-                # レスポンスはGLBバイナリまたはJSON
-                content_type = resp.headers.get("content-type", "")
-                if "application/json" in content_type:
-                    data = resp.json()
-                    glb_url = data.get("url") or data.get("glb_url")
-                    if glb_url:
-                        _task_store[task_id].update({
-                            "status": "done",
-                            "progress": 100,
-                            "glb_url": glb_url,
-                        })
-                        print(f"✅ GLB URL取得: {glb_url}", flush=True)
-                        return
-                else:
-                    # バイナリレスポンスの場合はbase64でData URLとして保存
-                    glb_b64 = base64.b64encode(resp.content).decode()
-                    glb_data_url = f"data:model/gltf-binary;base64,{glb_b64}"
-                    _task_store[task_id].update({
-                        "status": "done",
-                        "progress": 100,
-                        "glb_url": glb_data_url,
-                    })
-                    print(f"✅ GLBバイナリ取得完了: {task_id} ({len(resp.content)} bytes)", flush=True)
-                    return
-
-            # 503: モデルロード中 → 少し待ってリトライ
-            if resp.status_code == 503:
-                print(f"⏳ モデルロード待機中... 30秒後にリトライ", flush=True)
-                _task_store[task_id]["progress"] = 20
-                await asyncio.sleep(30)
-                # リトライ
-                resp2 = await client.post(
-                    INSTANTMESH_API_URL,
-                    headers=headers,
-                    content=image_bytes,
-                )
-                if resp2.status_code == 200:
-                    glb_b64 = base64.b64encode(resp2.content).decode()
-                    _task_store[task_id].update({
-                        "status": "done",
-                        "progress": 100,
-                        "glb_url": f"data:model/gltf-binary;base64,{glb_b64}",
-                    })
-                    print(f"✅ リトライ成功: {task_id}", flush=True)
-                    return
-
-            print(f"⚠️ InstantMesh失敗: {resp.status_code} {resp.text[:200]}", flush=True)
-
-    except Exception as e:
-        print(f"⚠️ InstantMesh例外: {e}", flush=True)
-
-    # フォールバック: モック完了（デモ用）
-    print(f"⚠️ フォールバック: モック完了を返します: {task_id}", flush=True)
-    _task_store[task_id].update({
-        "status": "done",
-        "progress": 100,
-        "glb_url": None,  # フロント側でモック3Dを表示
-    })
-
-
-async def _mock_process(task_id: str):
-    """開発用モック: 5秒後に完了"""
-    await asyncio.sleep(2)
-    _task_store[task_id]["progress"] = 50
-    await asyncio.sleep(3)
-    _task_store[task_id].update({
-        "status": "done",
-        "progress": 100,
-        "glb_url": None,
-    })
-    print(f"✅ モック完了: {task_id}", flush=True)
+    # モックタスクの場合
+    if task_id.startswith("mock_"):
+        return {"status": "done", "progress": 100, "glb_url": None}
+        
+    headers = {"Authorization": f"Key {FAL_KEY}"}
+    
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        # ステータス確認
+        status_url = f"{FAL_QUEUE_BASE}/requests/{task_id}/status"
+        s_resp = await client.get(status_url, headers=headers)
+        
+        if not s_resp.is_success:
+            print(f"⚠️ fal.ai status error: {s_resp.text}", flush=True)
+            s_resp.raise_for_status()
+            
+        s_data = s_resp.json()
+        fal_status = s_data.get("status", "")
+        
+        print(f"📊 fal.ai status: {fal_status}", flush=True)
+        
+        # キュー進行中
+        if fal_status in ("IN_QUEUE", "IN_PROGRESS"):
+            return {"status": "processing", "progress": 50, "glb_url": None}
+            
+        # 失敗
+        if fal_status != "COMPLETED":
+            return {"status": "failed", "progress": 0, "glb_url": None}
+            
+        # 完了（COMPLETED）なら結果を取得
+        result_url = f"{FAL_QUEUE_BASE}/requests/{task_id}"
+        r_resp = await client.get(result_url, headers=headers)
+        r_resp.raise_for_status()
+        
+        r_data = r_resp.json()
+        print(f"✅ fal.ai 完了レスポンス: {r_data.keys()}", flush=True)
+        
+        # モデルファイルURLを取得
+        # TRELLIS の出力は通常 r_data["model_file"]["url"]
+        glb_url = None
+        model_file = r_data.get("model_file")
+        if isinstance(model_file, dict):
+            glb_url = model_file.get("url")
+            
+        return {"status": "done", "progress": 100, "glb_url": glb_url}
