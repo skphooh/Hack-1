@@ -129,7 +129,7 @@ export default function WorkDetail() {
             )}
 
             {/* 本人のみ削除可能 */}
-            {user && work.user_id === user.uid && (
+            {user && work.author_firebase_uid === user.uid && (
               <button 
                 onClick={async () => {
                   if (!window.confirm('この作品を本当に削除しますか？')) return

@@ -56,6 +56,7 @@ async def start_generate(
     )
     db.add(work)
     await db.flush()
+    work.user = user
     print(f"✅ 生成ジョブ開始: task_id={task_id}, user={uid}", flush=True)
     return work
 

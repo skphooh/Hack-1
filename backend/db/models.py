@@ -65,6 +65,11 @@ class Work(Base):
     likes = relationship("Like", back_populates="work", cascade="all, delete-orphan")
     purchases = relationship("Purchase", back_populates="work")
 
+    @property
+    def author_firebase_uid(self) -> str | None:
+        if self.user:
+            return self.user.firebase_uid
+        return None
 
 class Like(Base):
     """いいねテーブル"""

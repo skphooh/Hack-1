@@ -107,6 +107,7 @@ export interface WorkResponse {
   likes_count: number
   downloads: number
   created_at: string
+  author_firebase_uid: string | null
 }
 
 export interface WorkListResponse {
