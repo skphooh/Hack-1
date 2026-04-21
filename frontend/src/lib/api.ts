@@ -49,6 +49,17 @@ export async function apiPostForm<T>(path: string, form: FormData): Promise<T> {
   return res.json()
 }
 
+/** 汎用DELETEリクエスト */
+export async function apiDelete<T>(path: string): Promise<T> {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers,
+  })
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
 // ===== エンドポイント別APIメソッド =====
 
 /** 作品一覧取得 */
@@ -58,6 +69,10 @@ export const fetchWorks = (params?: Record<string, string>) =>
 /** 作品詳細取得 */
 export const fetchWork = (id: string) =>
   apiGet<WorkResponse>(`/api/works/${id}`)
+
+/** 作品削除（本人のみ） */
+export const deleteWork = (id: string) =>
+  apiDelete<{ message: string }>(`/api/works/${id}`)
 
 /** 3D生成ジョブ開始 */
 export const startGenerate = (form: FormData) =>

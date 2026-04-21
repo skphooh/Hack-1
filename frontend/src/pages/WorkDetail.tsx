@@ -127,6 +127,27 @@ export default function WorkDetail() {
                 <img src={work.thumbnail_url} alt="元画像" style={{ width: '100%', borderRadius: 8, objectFit: 'contain' }} />
               </div>
             )}
+
+            {/* 本人のみ削除可能 */}
+            {user && work.user_id === user.uid && (
+              <button 
+                onClick={async () => {
+                  if (!window.confirm('この作品を本当に削除しますか？')) return
+                  try {
+                    const { deleteWork } = await import('../lib/api')
+                    await deleteWork(work.id)
+                    navigate('/market')
+                  } catch (e) {
+                    console.error(e)
+                    alert('削除に失敗しました')
+                  }
+                }}
+                className="btn-outline" 
+                style={{ marginTop: 'auto', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              >
+                作品を削除する
+              </button>
+            )}
           </div>
         </div>
       </div>
