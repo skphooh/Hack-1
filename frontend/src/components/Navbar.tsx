@@ -1,15 +1,15 @@
-// ナビゲーションバーコンポーネント
+// ナビゲーションバーコンポーネント（ポップ・かわいいデザイン）
 import { Link, useLocation } from 'react-router-dom'
-import { Sparkles, LogIn, LogOut, User } from 'lucide-react'
+import { LogIn, LogOut, User } from 'lucide-react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
 
 /** ナビゲーションリンク定義 */
 const NAV_LINKS = [
-  { path: '/', label: 'ホーム' },
-  { path: '/generate', label: '✨ 作成する' },
-  { path: '/market', label: 'マーケット' },
+  { path: '/', label: '🏠 ホーム' },
+  { path: '/generate', label: '✨ 3Dにする！' },
+  { path: '/market', label: '🛍️ マーケット' },
 ]
 
 export function Navbar() {
@@ -39,10 +39,12 @@ export function Navbar() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '16px 32px',
-        background: 'rgba(13, 13, 20, 0.8)',
+        padding: '12px 32px',
+        background: 'rgba(255, 255, 255, 0.88)',
         backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--color-border)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '2px solid #FFDCEC',
+        boxShadow: '0 2px 16px rgba(255, 107, 157, 0.1)',
       }}
     >
       {/* ロゴ */}
@@ -55,11 +57,11 @@ export function Navbar() {
           textDecoration: 'none',
         }}
       >
-        <Sparkles size={22} color="var(--color-accent-primary)" />
+        <span style={{ fontSize: '1.5rem' }}>🌟</span>
         <span
           style={{
             fontFamily: 'var(--font-display)',
-            fontWeight: 800,
+            fontWeight: 900,
             fontSize: '1.1rem',
             background: 'var(--gradient-hero)',
             WebkitBackgroundClip: 'text',
@@ -72,35 +74,33 @@ export function Navbar() {
       </Link>
 
       {/* ナビリンク */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        {NAV_LINKS.map(({ path, label }) => (
-          <Link
-            key={path}
-            to={path}
-            style={{
-              padding: '8px 16px',
-              borderRadius: 100,
-              textDecoration: 'none',
-              fontSize: '0.9rem',
-              fontWeight: location.pathname === path ? 600 : 400,
-              color:
-                location.pathname === path
-                  ? 'var(--color-accent-primary)'
-                  : 'var(--color-text-secondary)',
-              background:
-                location.pathname === path
-                  ? 'rgba(167, 139, 250, 0.12)'
-                  : 'transparent',
-              transition: 'all 0.2s',
-            }}
-          >
-            {label}
-          </Link>
-        ))}
+      <div style={{ display: 'flex', gap: 4 }}>
+        {NAV_LINKS.map(({ path, label }) => {
+          const isActive = location.pathname === path
+          return (
+            <Link
+              key={path}
+              to={path}
+              style={{
+                padding: '8px 18px',
+                borderRadius: 100,
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                background: isActive ? '#FFEDF4' : 'transparent',
+                border: isActive ? '1.5px solid var(--color-pink-light)' : '1.5px solid transparent',
+                transition: 'all 0.2s',
+              }}
+            >
+              {label}
+            </Link>
+          )
+        })}
       </div>
 
       {/* 認証ボタン */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {user ? (
           <>
             <Link
@@ -113,12 +113,15 @@ export function Navbar() {
                 padding: '8px 16px',
                 borderRadius: 100,
                 textDecoration: 'none',
-                color: 'var(--color-text-secondary)',
-                fontSize: '0.9rem',
-                transition: 'color 0.2s',
+                color: 'var(--color-text-sub)',
+                fontSize: '0.88rem',
+                fontWeight: 600,
+                background: '#F5EDFF',
+                border: '1.5px solid #DDB3F5',
+                transition: 'all 0.2s',
               }}
             >
-              <User size={16} />
+              <User size={15} />
               {user.displayName?.split(' ')[0] ?? 'マイページ'}
             </Link>
             <button
@@ -132,7 +135,7 @@ export function Navbar() {
             </button>
           </>
         ) : (
-          <button id="login-btn" onClick={handleLogin} className="btn-primary">
+          <button id="login-btn" onClick={handleLogin} className="btn-primary" style={{ padding: '10px 22px' }}>
             <LogIn size={16} />
             Googleでログイン
           </button>

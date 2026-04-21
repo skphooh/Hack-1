@@ -29,13 +29,17 @@ function App() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'column',
-                gap: 16,
+                gap: 20,
+                textAlign: 'center',
               }}
             >
-              <h1 className="gradient-text" style={{ fontSize: '4rem', fontWeight: 800 }}>
+              <div style={{ fontSize: '5rem' }}>🔍</div>
+              <h1 className="gradient-text" style={{ fontSize: '5rem', fontWeight: 900, fontFamily: 'var(--font-display)', lineHeight: 1 }}>
                 404
               </h1>
-              <p style={{ color: 'var(--color-text-secondary)' }}>ページが見つかりません</p>
+              <p style={{ color: 'var(--color-text-sub)', fontWeight: 600, fontSize: '1rem' }}>
+                ページが見つからなかったよ…😢
+              </p>
             </main>
           }
         />

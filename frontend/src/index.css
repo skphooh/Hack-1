@@ -1,48 +1,58 @@
-/* Google Fonts: Inter + Noto Sans JP */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+/* ========================================
+   うちの子ファクトリー - ポップ & かわいいデザインシステム
+   ======================================== */
 
 @import "tailwindcss";
 
-/* ========================================
-   うちの子ファクトリー グローバルスタイル
-   ======================================== */
-
-/* CSS カスタムプロパティ（デザイントークン） */
+/* ===== デザイントークン ===== */
 :root {
   /* カラーパレット */
-  --color-bg-primary: #0d0d14;
-  --color-bg-secondary: #13131f;
-  --color-bg-card: #1a1a2e;
-  --color-bg-glass: rgba(255, 255, 255, 0.06);
+  --color-pink:     #FF6B9D;
+  --color-pink-light: #FFAECB;
+  --color-purple:   #9B59B6;
+  --color-purple-light: #C39BD3;
+  --color-mint:     #4ECDC4;
+  --color-yellow:   #FFE566;
+  --color-peach:    #FFB347;
 
-  --color-accent-primary: #a78bfa;   /* パープル */
-  --color-accent-secondary: #f472b6; /* ピンク */
-  --color-accent-blue: #60a5fa;
+  /* 背景 */
+  --color-bg:       #FFFBFE;
+  --color-bg-soft:  #FFF0F6;
+  --color-bg-card:  #FFFFFF;
+  --color-bg-section: #FEF9FF;
 
-  --color-text-primary: #f1f0ff;
-  --color-text-secondary: #9e9ab8;
-  --color-text-muted: #5e5a7a;
+  /* テキスト */
+  --color-text:     #2D1B4E;
+  --color-text-sub: #6B5380;
+  --color-text-muted: #A89BBF;
 
-  --color-border: rgba(167, 139, 250, 0.2);
+  /* ボーダー */
+  --color-border:   #F0C4DE;
+  --color-border-purple: rgba(155, 89, 182, 0.2);
 
   /* グラデーション */
-  --gradient-hero: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #60a5fa 100%);
-  --gradient-card: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%);
-  --gradient-button: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+  --gradient-hero:  linear-gradient(135deg, #FF6B9D 0%, #9B59B6 60%, #4ECDC4 100%);
+  --gradient-pink:  linear-gradient(135deg, #FF6B9D 0%, #FFB347 100%);
+  --gradient-purple: linear-gradient(135deg, #9B59B6 0%, #4ECDC4 100%);
+  --gradient-button: linear-gradient(135deg, #FF6B9D 0%, #C06CD0 100%);
+  --gradient-bg:    linear-gradient(160deg, #FFF0F6 0%, #F5EDFF 50%, #EDFCFB 100%);
 
   /* シャドウ */
-  --shadow-glow: 0 0 40px rgba(167, 139, 250, 0.3);
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card:    0 4px 20px rgba(255, 107, 157, 0.12);
+  --shadow-hover:   0 8px 32px rgba(155, 89, 182, 0.22);
+  --shadow-pink:    0 4px 20px rgba(255, 107, 157, 0.35);
 
   /* フォント */
-  --font-base: 'Noto Sans JP', 'Inter', sans-serif;
-  --font-display: 'Inter', 'Noto Sans JP', sans-serif;
+  --font-display:   'Paytone One', 'Fredoka One', 'Noto Sans JP', sans-serif;
+  --font-heading:   'Fredoka One', 'Nunito', 'Noto Sans JP', sans-serif;
+  --font-base:      'Nunito', 'Noto Sans JP', sans-serif;
 
   /* ボーダーラジウス */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-sm:  10px;
+  --radius-md:  16px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-btn: 24px;
 }
 
 /* ===== ベーススタイル ===== */
@@ -58,20 +68,45 @@ html {
 
 body {
   font-family: var(--font-base);
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
+  background: var(--gradient-bg);
+  background-attachment: fixed;
+  color: var(--color-text);
   min-height: 100vh;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ===== グラスモーフィズム カード ===== */
-.glass-card {
-  background: var(--color-bg-glass);
-  border: 1px solid var(--color-border);
+/* ===== ページフェードイン ===== */
+main {
+  animation: page-fade-in 0.45s ease both;
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== カード ===== */
+.pop-card {
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s ease;
+}
+
+.pop-card:hover {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-pink-light);
+  transform: translateY(-3px);
+}
+
+/* glass-card を pop-card に上書き（後方互換）*/
+.glass-card {
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
 }
 
 /* ===== プライマリーボタン ===== */
@@ -80,25 +115,28 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: var(--gradient-button);
+  background: var(--color-pink);
   color: white;
-  font-weight: 600;
+  font-family: var(--font-base);
+  font-weight: 700;
   font-size: 0.95rem;
   border: none;
-  border-radius: 100px;
+  border-radius: var(--radius-btn);
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 20px rgba(167, 139, 250, 0.4);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
   text-decoration: none;
+  letter-spacing: 0.02em;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(167, 139, 250, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(255, 107, 157, 0.55);
+  background: #FF5090;
 }
 
 .btn-primary:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
 /* ===== アウトラインボタン ===== */
@@ -107,20 +145,27 @@ body {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: transparent;
-  color: var(--color-accent-primary);
-  font-weight: 600;
+  background: white;
+  color: var(--color-purple);
+  font-family: var(--font-base);
+  font-weight: 700;
   font-size: 0.95rem;
-  border: 1px solid var(--color-border);
-  border-radius: 100px;
+  border: 2px solid var(--color-purple);
+  border-radius: var(--radius-btn);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
   text-decoration: none;
+  letter-spacing: 0.02em;
 }
 
 .btn-outline:hover {
-  background: rgba(167, 139, 250, 0.1);
-  border-color: var(--color-accent-primary);
+  background: #F5EDFF;
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(155, 89, 182, 0.2);
+}
+
+.btn-outline:active {
+  transform: scale(0.98);
 }
 
 /* ===== グラデーションテキスト ===== */
@@ -138,43 +183,53 @@ body {
   padding: 0 24px;
 }
 
-/* ===== セクション ===== */
+/* ===== セクション余白 ===== */
 .section {
   padding: 80px 0;
 }
 
-/* ===== スクロールバー カスタマイズ ===== */
+/* ===== スクロールバー ===== */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: var(--color-bg-soft);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-accent-primary);
+  background: var(--color-pink-light);
   border-radius: 100px;
 }
 
 /* ===== アニメーション ===== */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes bounce-in {
+  0%   { transform: scale(0.8); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sparkle {
+  0%   { opacity: 0; transform: scale(0) rotate(0deg); }
+  50%  { opacity: 1; transform: scale(1.2) rotate(180deg); }
+  100% { opacity: 0; transform: scale(0) rotate(360deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(167, 139, 250, 0.6); }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0%, 100% { box-shadow: 0 0 16px rgba(255, 107, 157, 0.3); }
+  50%       { box-shadow: 0 0 32px rgba(255, 107, 157, 0.6); }
 }
 
 .animate-float {
@@ -186,5 +241,64 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in-up 0.5s ease forwards;
+  animation: page-fade-in 0.5s ease both;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ===== 紙吹雪エフェクト用 ===== */
+.confetti-particle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ===== セクション見出しデコ ===== */
+.section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  color: var(--color-text);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.section-sub {
+  text-align: center;
+  color: var(--color-text-sub);
+  margin-bottom: 48px;
+  font-size: 0.95rem;
+}
+
+/* ===== タグバッジ ===== */
+.tag-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  background: #FFEDF4;
+  color: var(--color-pink);
+  border: 1.5px solid var(--color-pink-light);
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ===== インプット ===== */
+input[type="text"],
+input[type="email"],
+textarea {
+  font-family: var(--font-base);
+  color: var(--color-text);
+}
+
+input[type="text"]::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
 }

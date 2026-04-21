@@ -1,20 +1,30 @@
-// マーケットページ（フロー②③: 作品一覧・検索・詳細）
+// マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Filter, Sparkles } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 
-/** ジャンルフィルター */
+/** ジャンルフィルター（絵文字付き） */
 const GENRES = [
-  { value: '', label: 'すべて' },
-  { value: 'figure', label: 'フィギュア' },
-  { value: 'anime', label: 'アニメ・イラスト' },
-  { value: 'cosplay', label: 'コスプレ' },
-  { value: 'original', label: 'オリジナル' },
-  { value: 'official', label: '公式' },
+  { value: '', label: '🌈 すべて' },
+  { value: 'figure', label: '🎭 フィギュア' },
+  { value: 'anime', label: '🎨 アニメ・イラスト' },
+  { value: 'cosplay', label: '✨ コスプレ' },
+  { value: 'original', label: '⭐ オリジナル' },
+  { value: 'official', label: '🌟 公式' },
 ]
+
+/** フィルターボタンのカラー定義 */
+const GENRE_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  '':       { bg: 'linear-gradient(135deg, #FF6B9D, #9B59B6)', color: 'white', border: 'transparent' },
+  figure:   { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
+  anime:    { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
+  cosplay:  { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
+  original: { bg: '#FFF9E6', color: '#E67E22', border: '#FFD699' },
+  official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
+}
 
 export default function Market() {
   const { user } = useAuthState()
@@ -69,15 +79,40 @@ export default function Market() {
       <div className="page-container section">
         {/* ページタイトル */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.5rem)', fontWeight: 800, marginBottom: 12 }}>
-            3Dデータ <span className="gradient-text">マーケット</span>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '6px 20px',
+              background: '#F5EDFF',
+              border: '2px solid #DDB3F5',
+              borderRadius: 100,
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              color: 'var(--color-purple)',
+              marginBottom: 16,
+            }}
+          >
+            🛍️ みんなの作品を探そう
+          </div>
+          <h1
+            style={{
+              fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
+              fontWeight: 900,
+              marginBottom: 12,
+              fontFamily: 'var(--font-display)',
+              color: 'var(--color-text)',
+            }}
+          >
+            3Dデータ <span className="gradient-text">マーケット</span> 🛍️
           </h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>
-            コミュニティが作った3Dデータをダウンロードして印刷しよう
+          <p style={{ color: 'var(--color-text-sub)', fontWeight: 500 }}>
+            コミュニティが作った3Dデータをダウンロードして印刷しよう！
           </p>
         </div>
 
-        {/* ジャンルフィルター */}
+        {/* ジャンルフィルターバー */}
         <div
           style={{
             display: 'flex',
@@ -87,47 +122,85 @@ export default function Market() {
             alignItems: 'center',
           }}
         >
-          <Filter size={18} color="var(--color-text-muted)" />
-          {GENRES.map(({ value, label }) => (
-            <button
-              key={value}
-              id={`genre-filter-${value || 'all'}`}
-              onClick={() => setGenre(value)}
-              style={{
-                padding: '8px 18px',
-                borderRadius: 100,
-                border: `1px solid ${genre === value ? 'var(--color-accent-primary)' : 'var(--color-border)'}`,
-                background: genre === value ? 'rgba(167, 139, 250, 0.12)' : 'transparent',
-                color: genre === value ? 'var(--color-accent-primary)' : 'var(--color-text-secondary)',
-                fontSize: '0.875rem',
-                fontWeight: genre === value ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              {label}
-            </button>
-          ))}
-          <span style={{ marginLeft: 'auto', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+          {GENRES.map(({ value, label }) => {
+            const isSelected = genre === value
+            const style = isSelected ? GENRE_STYLES[value] : null
+            return (
+              <button
+                key={value}
+                id={`genre-filter-${value || 'all'}`}
+                onClick={() => setGenre(value)}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 100,
+                  border: `2px solid ${isSelected ? (style?.border ?? 'transparent') : 'var(--color-border)'}`,
+                  background: isSelected ? (style?.bg ?? '#FFEDF4') : 'white',
+                  color: isSelected ? (style?.color ?? 'white') : 'var(--color-text-sub)',
+                  fontSize: '0.875rem',
+                  fontWeight: isSelected ? 800 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transform: isSelected ? 'scale(1.06)' : 'scale(1)',
+                  boxShadow: isSelected ? '0 4px 12px rgba(155,89,182,0.2)' : 'none',
+                }}
+              >
+                {label}
+              </button>
+            )
+          })}
+          <span
+            style={{
+              marginLeft: 'auto',
+              background: '#F5EDFF',
+              color: 'var(--color-purple)',
+              border: '1.5px solid #DDB3F5',
+              borderRadius: 100,
+              padding: '4px 14px',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+            }}
+          >
             {total}件
           </span>
         </div>
 
         {/* 作品グリッド */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--color-text-secondary)' }}>
-            <Sparkles size={40} color="var(--color-accent-primary)" style={{ margin: '0 auto 16px', display: 'block' }} />
-            <p>読み込み中...</p>
+          <div style={{ textAlign: 'center', padding: '80px 0' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 16, animation: 'float 2s ease-in-out infinite' }}>
+              🔍
+            </div>
+            <Loader2
+              size={40}
+              color="var(--color-pink)"
+              style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px', display: 'block' }}
+            />
+            <p style={{ color: 'var(--color-text-sub)', fontWeight: 600 }}>読み込み中...</p>
           </div>
         ) : works.length === 0 ? (
           <div
-            className="glass-card"
-            style={{ padding: 60, textAlign: 'center' }}
+            style={{
+              background: 'white',
+              border: '2px solid var(--color-border)',
+              borderRadius: 'var(--radius-xl)',
+              padding: '80px 40px',
+              textAlign: 'center',
+              boxShadow: 'var(--shadow-card)',
+            }}
           >
-            <p style={{ fontSize: '2rem', marginBottom: 16 }}>🎭</p>
-            <p style={{ fontWeight: 600, marginBottom: 8 }}>まだ作品がありません</p>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>
-              最初の3Dデータを作成してみませんか？
+            <p style={{ fontSize: '3.5rem', marginBottom: 16 }}>🎭</p>
+            <p
+              style={{
+                fontWeight: 800,
+                marginBottom: 8,
+                fontSize: '1.1rem',
+                color: 'var(--color-text)',
+              }}
+            >
+              まだ作品がないよ！
+            </p>
+            <p style={{ color: 'var(--color-text-sub)', fontSize: '0.9rem' }}>
+              最初の3Dデータを作ってみませんか？🌟
             </p>
           </div>
         ) : (
@@ -150,6 +223,11 @@ export default function Market() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes spin  { to { transform: rotate(360deg); } }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+      `}</style>
     </main>
   )
 }

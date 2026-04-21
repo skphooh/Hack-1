@@ -1,3 +1,4 @@
+// WorkCardコンポーネント（ポップ・かわいいデザイン）
 import { useState } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
@@ -15,43 +16,61 @@ interface WorkCardProps {
 
 /** ジャンルラベルの日本語マッピング */
 const GENRE_LABELS: Record<string, string> = {
-  figure: 'フィギュア',
-  anime: 'アニメ・イラスト',
-  cosplay: 'コスプレ',
-  original: 'オリジナル',
-  official: '公式',
-  other: 'その他',
+  figure: '🎭 フィギュア',
+  anime: '🎨 アニメ・イラスト',
+  cosplay: '✨ コスプレ',
+  original: '⭐ オリジナル',
+  official: '🌟 公式',
+  other: '📦 その他',
+}
+
+/** ジャンルごとの色 */
+const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
+  figure:   { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
+  anime:    { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
+  cosplay:  { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
+  original: { bg: '#FFF9E6', color: '#E67E22', border: '#FFD699' },
+  official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
+  other:    { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
 }
 
 export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardProps) {
   const [has3DError, setHas3DError] = useState(false)
+  const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
     <article
       id={`work-card-${work.id}`}
       onClick={onClick}
       style={{
-        background: 'var(--color-bg-glass)',
-        border: '1px solid var(--color-border)',
+        background: 'white',
+        border: '2px solid var(--color-border)',
         borderRadius: 'var(--radius-lg)',
-        backdropFilter: 'blur(16px)',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.25s ease',
+        transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        boxShadow: 'var(--shadow-card)',
       }}
       onMouseEnter={(e) => {
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-glow)'
-        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-accent-primary)'
+        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
+        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-pink-light)'
       }}
       onMouseLeave={(e) => {
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
+        ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
         ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
       }}
     >
       {/* 3Dモデル または サムネイル */}
-      <div style={{ position: 'relative', height: '200px', background: 'var(--color-bg-secondary)', overflow: 'hidden' }}>
+      <div
+        style={{
+          position: 'relative',
+          height: '200px',
+          background: 'linear-gradient(135deg, #FFF0F6 0%, #F5EDFF 100%)',
+          overflow: 'hidden',
+        }}
+      >
         {work.glb_url && !has3DError ? (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
             <Viewer3D glbUrl={work.glb_url} isMarket={true} height={200} onError={() => setHas3DError(true)} />
@@ -76,12 +95,12 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'var(--gradient-card)',
             }}
           >
-            <span style={{ fontSize: '2rem' }}>🎭</span>
+            <span style={{ fontSize: '3rem' }}>🎭</span>
           </div>
         )}
+
         {/* 公式バッジ */}
         {work.is_official && (
           <div
@@ -93,48 +112,51 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
               alignItems: 'center',
               gap: 4,
               padding: '4px 10px',
-              background: 'var(--gradient-button)',
+              background: 'var(--color-yellow)',
               borderRadius: 100,
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: 'white',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              color: '#7A4F00',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             }}
           >
-            <Star size={12} fill="white" /> 公式
+            <Star size={11} fill="#7A4F00" /> 公式
           </div>
         )}
+
         {/* 価格バッジ */}
         <div
           style={{
             position: 'absolute',
             top: 8,
             right: 8,
-            padding: '4px 10px',
-            background: 'rgba(13, 13, 20, 0.8)',
-            backdropFilter: 'blur(8px)',
+            padding: '4px 12px',
+            background: work.price === 0 ? '#E8FFF4' : '#FFF0F6',
+            border: `1.5px solid ${work.price === 0 ? '#90D4A4' : '#FFAECB'}`,
             borderRadius: 100,
             fontSize: '0.75rem',
-            fontWeight: 700,
-            color: work.price === 0 ? '#34d399' : 'var(--color-accent-secondary)',
+            fontWeight: 800,
+            color: work.price === 0 ? '#22863a' : 'var(--color-pink)',
           }}
         >
-          {work.price === 0 ? '無料' : `¥${work.price.toLocaleString()}`}
+          {work.price === 0 ? '🆓 無料' : `¥${work.price.toLocaleString()}`}
         </div>
       </div>
 
       {/* カード情報 */}
-      <div style={{ padding: '14px 16px 16px' }}>
+      <div style={{ padding: '12px 14px 14px' }}>
         {work.genre && (
           <span
             style={{
               display: 'inline-block',
               padding: '2px 10px',
-              background: 'rgba(167, 139, 250, 0.15)',
-              color: 'var(--color-accent-primary)',
+              background: genreColor.bg,
+              color: genreColor.color,
+              border: `1.5px solid ${genreColor.border}`,
               borderRadius: 100,
               fontSize: '0.7rem',
-              fontWeight: 600,
-              marginBottom: 6,
+              fontWeight: 700,
+              marginBottom: 7,
             }}
           >
             {GENRE_LABELS[work.genre] ?? work.genre}
@@ -144,8 +166,9 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
         <h3
           style={{
             fontSize: '0.95rem',
-            fontWeight: 600,
-            color: 'var(--color-text-primary)',
+            fontWeight: 700,
+            color: 'var(--color-text)',
+            fontFamily: 'var(--font-base)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
@@ -160,7 +183,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginTop: 12,
+            marginTop: 10,
           }}
         >
           <button
@@ -172,17 +195,19 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
-              background: 'transparent',
-              border: 'none',
+              gap: 5,
+              background: isLiked ? '#FFEDF4' : 'transparent',
+              border: isLiked ? '1.5px solid var(--color-pink-light)' : '1.5px solid transparent',
+              borderRadius: 100,
+              padding: '4px 10px',
               cursor: 'pointer',
-              color: isLiked ? 'var(--color-accent-secondary)' : 'var(--color-text-secondary)',
+              color: isLiked ? 'var(--color-pink)' : 'var(--color-text-muted)',
               fontSize: '0.85rem',
-              fontWeight: 500,
-              transition: 'color 0.2s',
+              fontWeight: 600,
+              transition: 'all 0.2s',
             }}
           >
-            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
             {work.likes_count}
           </button>
 
@@ -192,10 +217,10 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
               alignItems: 'center',
               gap: 4,
               color: 'var(--color-text-muted)',
-              fontSize: '0.85rem',
+              fontSize: '0.82rem',
             }}
           >
-            <Download size={14} />
+            <Download size={13} />
             {work.downloads}
           </span>
         </div>
