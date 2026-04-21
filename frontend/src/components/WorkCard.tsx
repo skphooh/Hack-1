@@ -1,6 +1,7 @@
 // マーケット一覧カードコンポーネント
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
+import { Viewer3D } from './Viewer3D'
 
 interface WorkCardProps {
   work: WorkResponse
@@ -47,9 +48,13 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
         ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
       }}
     >
-      {/* サムネイル */}
-      <div style={{ position: 'relative', paddingTop: '75%', background: 'var(--color-bg-secondary)' }}>
-        {work.thumbnail_url ? (
+      {/* 3Dモデル または サムネイル */}
+      <div style={{ position: 'relative', height: '200px', background: 'var(--color-bg-secondary)', overflow: 'hidden' }}>
+        {work.glb_url ? (
+          <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
+            <Viewer3D glbUrl={work.glb_url} isMarket={true} height={200} />
+          </div>
+        ) : work.thumbnail_url ? (
           <img
             src={work.thumbnail_url}
             alt={work.title}

@@ -33,3 +33,18 @@ async def upload_to_storage(file_bytes: bytes, path: str) -> str:
         print(f"⚠️ Storage アップロード失敗: {e}", flush=True)
         # アップロード失敗してもサービス全体を落とさない
         return f"https://mock-storage.example.com/{path}"
+
+import httpx
+
+async def upload_url_to_storage(url: str, path: str) -> str:
+    """
+    外部URLからファイルをダウンロードし、Firebase Storageにアップロードする。
+    """
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            return await upload_to_storage(resp.content, path)
+    except Exception as e:
+        print(f"⚠️ 外部URLからのダウンロード・アップロード失敗: {e}", flush=True)
+        return url  # 失敗した場合は元のURLをフォールバックとして返す
