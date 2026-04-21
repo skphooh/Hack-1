@@ -13,9 +13,14 @@ from routers import depth, generate, convert, works
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """アプリ起動時にDBテーブルを自動作成（開発用）"""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    """アプリ起動時にDBテーブルを自動作成"""
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("✅ DB テーブルの初期化が完了しました", flush=True)
+    except Exception as e:
+        # DB接続失敗でもサーバーは起動させる（CORS ミドルウェアを有効にするため）
+        print(f"⚠️ DB 初期化エラー（DATABASE_URL を確認してください）: {e}", flush=True)
     yield
 
 
