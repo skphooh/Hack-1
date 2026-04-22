@@ -11,6 +11,7 @@ from db.schemas import TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
 from services.tripo3d import generate_3d_tripo, get_tripo_task_status
 from services.storage import upload_to_storage, upload_url_to_storage
+from services.mesh import convert_to_stl
 
 router = APIRouter()
 
@@ -99,12 +100,33 @@ async def get_task_status(
             if tripo_data.get("glb_url"):
                 raw_glb_url = tripo_data["glb_url"]
                 print(f"🔄 downloading {raw_glb_url} to firebase...", flush=True)
-                firebase_url = await upload_url_to_storage(
-                    raw_glb_url, f"models/{work.user_id}/{task_id}.glb"
+
+                # GLBをダウンロードしFirebase Storageに保存
+                import httpx
+                async with httpx.AsyncClient(timeout=120.0) as client:
+                    glb_resp = await client.get(raw_glb_url)
+                    glb_resp.raise_for_status()
+                    glb_bytes = glb_resp.content
+
+                firebase_glb_url = await upload_to_storage(
+                    glb_bytes, f"models/{work.user_id}/{task_id}.glb"
                 )
-                work.glb_url = firebase_url
+                work.glb_url = firebase_glb_url
                 print(f"✅ GLB保存完了 (Firebase): {task_id}", flush=True)
-                
+
+                # GLBをSTLに変換してFirebase Storageに保存
+                try:
+                    print(f"🔧 GLB→STL変換中: {task_id}", flush=True)
+                    stl_bytes = await convert_to_stl(glb_bytes, "glb")
+                    firebase_stl_url = await upload_to_storage(
+                        stl_bytes, f"stl/{work.user_id}/{task_id}.stl"
+                    )
+                    work.stl_url = firebase_stl_url
+                    print(f"✅ STL保存完了 (Firebase): {task_id}", flush=True)
+                except Exception as stl_err:
+                    # STL変換失敗はGLBの保存を妨げない
+                    print(f"⚠️ STL変換失敗（GLBは保存済み）: {stl_err}", flush=True)
+
             await db.commit()
             await db.refresh(work)
 
