@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db.database import engine, Base
-from routers import depth, generate, convert, works
+from routers import depth, generate, convert, works, postprocess
 
 
 @asynccontextmanager
@@ -52,6 +52,7 @@ app.include_router(depth.router, prefix="/api", tags=["depth"])
 app.include_router(generate.router, prefix="/api", tags=["generate"])
 app.include_router(convert.router, prefix="/api", tags=["convert"])
 app.include_router(works.router, prefix="/api", tags=["works"])
+app.include_router(postprocess.router, prefix="/api", tags=["postprocess"])
 
 
 @app.get("/health", tags=["health"])
