@@ -1,7 +1,8 @@
 // Three.js 3Dビューアコンポーネント（GLB / OBJ 対応）
-import { Suspense, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei'
+import { SkeletonUtils } from 'three-stdlib'
 import type { Mesh } from 'three'
 import { ErrorBoundary } from './ErrorBoundary'
 
@@ -9,6 +10,9 @@ import { ErrorBoundary } from './ErrorBoundary'
 function RotatingModel({ url }: { url: string }) {
   // Tripo3D等のDraco圧縮されたファイルにも対応するため、第2引数にデコーダーのパスを指定
   const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
+  // useGLTF はシーンをグローバルキャッシュで共有する。Three.js の Object3D は
+  // 1つの Canvas にしか属せないため、複数カードで同じシーンを奪い合わないようクローンする。
+  const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
   const groupRef = useRef<Mesh>(null!)
 
   // 毎フレーム少しずつ回転
@@ -18,7 +22,7 @@ function RotatingModel({ url }: { url: string }) {
     }
   })
 
-  return <primitive ref={groupRef} object={scene} scale={1.5} />
+  return <primitive ref={groupRef} object={cloned} scale={1.5} />
 }
 
 /** ローディングプレースホルダー */
