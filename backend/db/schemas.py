@@ -86,8 +86,6 @@ class LikeResponse(BaseModel):
 
 class GenerateRequest(BaseModel):
     """3D生成ジョブ開始リクエスト"""
-    # モード: "photo"=実写(Tripo3D) / "anime"=イラスト(Wonder3D)
-    mode: str = "photo"
     title: str = "新しい作品"
     genre: Optional[str] = None
 
