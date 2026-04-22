@@ -21,7 +21,6 @@ async def start_generate(
     file: UploadFile = File(..., description="変換する画像ファイル"),
     title: str = Form("新しい作品"),
     genre: str = Form(None),
-    mode: str = Form("photo"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):

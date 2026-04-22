@@ -43,7 +43,6 @@ export default function Generate() {
     setStep, setPreviewUrl, setDepthUrl, setWork, setTaskStatus, setError, reset,
   } = useGenerateStore()
 
-  const [mode, setMode] = useState<'photo' | 'anime'>('photo')
   const [title, setTitle] = useState('')
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -76,7 +75,6 @@ export default function Generate() {
       const form = new FormData()
       form.append('file', blob, 'upload.png')
       form.append('title', title || 'うちの子')
-      form.append('mode', mode)
 
       const newWork = await startGenerate(form)
       setWork(newWork)
@@ -105,7 +103,7 @@ export default function Generate() {
       setError(e instanceof Error ? e.message : '生成に失敗しました')
       setStep('error')
     }
-  }, [user, previewUrl, title, mode, setStep, setWork, setTaskStatus, setError])
+  }, [user, previewUrl, title, setStep, setWork, setTaskStatus, setError])
 
   /** STLダウンロード */
   const handleDownload = useCallback(() => {
@@ -294,58 +292,6 @@ export default function Generate() {
               </div>
             )}
 
-            {/* モード切替 */}
-            <div
-              style={{
-                background: 'white',
-                border: '2px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: '18px 20px',
-                boxShadow: 'var(--shadow-card)',
-              }}
-            >
-              <p
-                style={{
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  marginBottom: 12,
-                  color: 'var(--color-text-sub)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}
-              >
-                🖼️ 画像の種類を選んでね
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {(['photo', 'anime'] as const).map((m) => {
-                  const isSelected = mode === m
-                  return (
-                    <button
-                      key={m}
-                      id={`mode-${m}`}
-                      onClick={() => setMode(m)}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        borderRadius: 'var(--radius-btn)',
-                        border: `2.5px solid ${isSelected ? 'var(--color-pink)' : 'var(--color-border)'}`,
-                        background: isSelected ? '#FFEDF4' : 'white',
-                        color: isSelected ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                        fontSize: '0.9rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        transform: isSelected ? 'scale(1.03)' : 'scale(1)',
-                        boxShadow: isSelected ? '0 4px 12px rgba(255,107,157,0.2)' : 'none',
-                      }}
-                    >
-                      {m === 'photo' ? '📷 実写・コスプレ' : '🎨 アニメ・イラスト'}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             {/* タイトル入力 */}
             <div
               style={{
@@ -527,9 +473,7 @@ export default function Generate() {
                     fontWeight: 500,
                   }}
                 >
-                  {mode === 'anime'
-                    ? '⏳ Wonder3D が処理中です（3〜8分）'
-                    : '⏳ Tripo3D が処理中です（1〜3分）'}
+                  ⏳ Tripo3D が処理中です（1〜3分）
                 </p>
                 {taskStatus && taskStatus.progress > 0 && (
                   <div style={{ marginTop: 20 }}>
