@@ -1,6 +1,7 @@
 // トップページ（ランディングページ）- ポップ・かわいいデザイン
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import logoImg from '../assets/logo.png'
 
 /** サービスの3つのフローを紹介するカード */
 const FLOW_CARDS = [
@@ -157,6 +158,19 @@ export default function Top() {
           }}
         >
           🎀
+        </div>
+
+        {/* ロゴ画像（ヒーロー） */}
+        <div style={{ marginBottom: 40 }} className="animate-fade-in">
+          <img
+            src={logoImg}
+            alt="うちの子製作所"
+            style={{
+              height: 'clamp(80px, 15vw, 140px)',
+              width: 'auto',
+              filter: 'drop-shadow(0 10px 20px rgba(255, 107, 157, 0.25))',
+            }}
+          />
         </div>
 
         {/* バッジ */}
@@ -421,17 +435,35 @@ export default function Top() {
           background: 'white',
         }}
       >
-        <p
+        <div
           style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            marginBottom: 8,
-            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            marginBottom: 10,
           }}
-          className="gradient-text"
         >
-          うちの子製作所 ✨
-        </p>
+          <img
+            src={logoImg}
+            alt=""
+            style={{
+              height: 28,
+              width: 'auto',
+            }}
+          />
+          <p
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              margin: 0,
+            }}
+            className="gradient-text"
+          >
+            うちの子製作所
+          </p>
+        </div>
         <p>Hack-1 グランプリ 2026「小さくなる日本」</p>
       </footer>
 
