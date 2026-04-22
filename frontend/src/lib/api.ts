@@ -90,6 +90,22 @@ export const estimateDepth = (form: FormData) =>
 export const toggleLike = (workId: string) =>
   apiPost<LikeResponse>(`/api/works/${workId}/like`, {})
 
+/** ストラップ穴追加 */
+export const addStrapHole = (workId: string, position: string) =>
+  apiPost<PostProcessResponse>(`/api/works/${workId}/strap-hole?position=${position}`, {})
+
+/** 台座追加 */
+export const addBase = (workId: string) =>
+  apiPost<PostProcessResponse>(`/api/works/${workId}/base`, {})
+
+/** ターンアラウンドプレビュー生成 */
+export const generateTurnaroundPreview = (form: FormData) =>
+  apiPostForm<TurnaroundPreviewResponse>('/api/generate/turnaround/preview', form)
+
+/** ターンアラウンドから3D生成 */
+export const startGenerateTurnaround = (form: FormData) =>
+  apiPostForm<WorkResponse>('/api/generate/turnaround', form)
+
 // ===== 型定義 =====
 
 export interface WorkResponse {
@@ -133,4 +149,12 @@ export interface DepthResponse {
 export interface LikeResponse {
   liked: boolean
   likes_count: number
+}
+
+export interface PostProcessResponse {
+  stl_url: string
+}
+
+export interface TurnaroundPreviewResponse {
+  turnaround_url: string
 }

@@ -1,6 +1,9 @@
 """
-ルーター: 3D生成ジョブ（/api/generate, /api/task/{task_id}）
+ルーター: 3D生成ジョブ（/api/generate, /api/task/{task_id}, /api/generate/turnaround）
 """
+import uuid
+
+import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,9 +12,10 @@ from db.database import get_db
 from db.models import Work
 from db.schemas import TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
-from services.tripo3d import generate_3d_tripo, get_tripo_task_status
-from services.storage import upload_to_storage, upload_url_to_storage
 from services.mesh import convert_to_stl
+from services.storage import upload_to_storage
+from services.tripo3d import generate_3d_tripo, generate_3d_tripo_multiview, get_tripo_task_status
+from services.turnaround import generate_turnaround_image, split_turnaround
 
 router = APIRouter()
 
@@ -21,31 +25,28 @@ async def start_generate(
     file: UploadFile = File(..., description="変換する画像ファイル"),
     title: str = Form("新しい作品"),
     genre: str = Form(None),
+    quality: str = Form("standard", description="standard / high"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
     """
     画像を受け取り3D生成ジョブを開始する。
-    Tripo3D APIで処理する（モード問わず統一）。
+    quality=high の場合は Tripo3D にテクスチャ・PBR を有効化して送る。
     """
     user = await get_or_create_user(uid, db)
     image_bytes = await file.read()
 
-    import uuid
-    # サムネイルをFirebase Storageにアップロード（上書き防止のためUUIDを付与）
     safe_filename = f"{uuid.uuid4().hex}_{file.filename or 'image.png'}"
     thumbnail_url = await upload_to_storage(
         image_bytes, f"thumbnails/{uid}/{safe_filename}"
     )
 
-    # Tripo3Dでジョブ開始
     try:
-        task_id = await generate_3d_tripo(image_bytes)
+        task_id = await generate_3d_tripo(image_bytes, quality=quality)
     except Exception as e:
         print(f"❌ 3D生成ジョブ開始失敗: {e}", flush=True)
         raise HTTPException(status_code=500, detail=f"3D生成の開始に失敗しました: {str(e)}")
 
-    # DBに作品を仮登録
     work = Work(
         user_id=user.id,
         title=title,
@@ -57,7 +58,82 @@ async def start_generate(
     db.add(work)
     await db.flush()
     work.user = user
-    print(f"✅ 生成ジョブ開始: task_id={task_id}, user={uid}", flush=True)
+    print(f"✅ 生成ジョブ開始: task_id={task_id}, quality={quality}, user={uid}", flush=True)
+    return work
+
+
+@router.post("/generate/turnaround/preview")
+async def turnaround_preview(
+    file: UploadFile = File(..., description="元画像"),
+):
+    """
+    アップロード画像から GPT-4o + DALL-E 3 でターンアラウンドシートを生成してURLを返す。
+    認証不要（プレビューはログイン前でも確認できるよう）。
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="画像ファイルを送信してください")
+
+    image_bytes = await file.read()
+    try:
+        turnaround_url = await generate_turnaround_image(image_bytes)
+    except ValueError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        print(f"❌ ターンアラウンド生成失敗: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=f"ターンアラウンド生成に失敗しました: {e}")
+
+    return {"turnaround_url": turnaround_url}
+
+
+@router.post("/generate/turnaround", response_model=WorkResponse)
+async def start_generate_turnaround(
+    turnaround_url: str = Form(..., description="ターンアラウンドシート画像URL"),
+    title: str = Form("新しい作品"),
+    genre: str = Form(None),
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    ターンアラウンドシートを3ビューに分割し、Tripo3D multiview_to_model で3D生成する。
+    """
+    user = await get_or_create_user(uid, db)
+
+    # ターンアラウンド画像をダウンロード
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.get(turnaround_url)
+            resp.raise_for_status()
+            turnaround_bytes = resp.content
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"ターンアラウンド画像のダウンロードに失敗: {e}")
+
+    # 3ビューに分割
+    views = split_turnaround(turnaround_bytes)
+
+    # サムネイル（正面ビュー）を保存
+    thumbnail_url = await upload_to_storage(
+        views[0], f"thumbnails/{uid}/{uuid.uuid4().hex}_turnaround.png"
+    )
+
+    # Tripo3D マルチビュー生成
+    try:
+        task_id = await generate_3d_tripo_multiview(views)
+    except Exception as e:
+        print(f"❌ ターンアラウンド3D生成失敗: {e}", flush=True)
+        raise HTTPException(status_code=500, detail=f"3D生成の開始に失敗しました: {e}")
+
+    work = Work(
+        user_id=user.id,
+        title=title,
+        genre=genre,
+        thumbnail_url=thumbnail_url,
+        task_id=task_id,
+        status="processing",
+    )
+    db.add(work)
+    await db.flush()
+    work.user = user
+    print(f"✅ ターンアラウンド生成ジョブ開始: task_id={task_id}, user={uid}", flush=True)
     return work
 
 
@@ -75,7 +151,6 @@ async def get_task_status(
     if not work:
         raise HTTPException(status_code=404, detail="タスクが見つかりません")
 
-    # すでに完了・失敗済みならDBの値をそのまま返す
     if work.status in ("done", "failed"):
         return TaskStatusResponse(
             task_id=task_id,
@@ -85,7 +160,6 @@ async def get_task_status(
             stl_url=work.stl_url,
         )
 
-    # Tripo3Dタスクのステータスを取得してDBを更新
     progress = 0
     try:
         tripo_data = await get_tripo_task_status(task_id)
@@ -94,14 +168,11 @@ async def get_task_status(
 
         if new_status != work.status or tripo_data.get("glb_url"):
             work.status = new_status
-            
-            # glb_url が新規に届いた場合はFirebaseに永続化してCORSを解除
+
             if tripo_data.get("glb_url"):
                 raw_glb_url = tripo_data["glb_url"]
                 print(f"🔄 downloading {raw_glb_url} to firebase...", flush=True)
 
-                # GLBをダウンロードしFirebase Storageに保存
-                import httpx
                 async with httpx.AsyncClient(timeout=120.0) as client:
                     glb_resp = await client.get(raw_glb_url)
                     glb_resp.raise_for_status()
@@ -113,7 +184,6 @@ async def get_task_status(
                 work.glb_url = firebase_glb_url
                 print(f"✅ GLB保存完了 (Firebase): {task_id}", flush=True)
 
-                # GLBをSTLに変換してFirebase Storageに保存
                 try:
                     print(f"🔧 GLB→STL変換中: {task_id}", flush=True)
                     stl_bytes = await convert_to_stl(glb_bytes, "glb")
@@ -123,7 +193,6 @@ async def get_task_status(
                     work.stl_url = firebase_stl_url
                     print(f"✅ STL保存完了 (Firebase): {task_id}", flush=True)
                 except Exception as stl_err:
-                    # STL変換失敗はGLBの保存を妨げない
                     print(f"⚠️ STL変換失敗（GLBは保存済み）: {stl_err}", flush=True)
 
             await db.commit()
