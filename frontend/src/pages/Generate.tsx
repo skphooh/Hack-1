@@ -116,6 +116,15 @@ export default function Generate() {
     a.click()
   }, [taskStatus, title])
 
+  /** GLBダウンロード */
+  const handleDownloadGlb = useCallback(() => {
+    if (!taskStatus?.glb_url) return
+    const a = document.createElement('a')
+    a.href = taskStatus.glb_url
+    a.download = `${title || 'uchi-no-ko'}.glb`
+    a.click()
+  }, [taskStatus, title])
+
   const currentStepIndex = {
     idle: 0, depth_preview: 1, uploading: 2, generating: 2, done: 3, error: 0,
   }[step] ?? 0
@@ -586,7 +595,8 @@ export default function Generate() {
                 </div>
                 <Viewer3D glbUrl={taskStatus.glb_url} height={350} />
                 {taskStatus.stl_url && (
-                  <div style={{ padding: 16 }}>
+                  <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {/* STLダウンロード（3Dプリント用） */}
                     <button
                       id="download-stl-btn"
                       onClick={handleDownload}
@@ -599,8 +609,41 @@ export default function Generate() {
                       }}
                     >
                       <Download size={18} />
-                      🖨️ STLをダウンロード
+                      🖨️ STLをダウンロード（3Dプリント用）
                     </button>
+                    {/* GLBダウンロード（3Dデータ保存用） */}
+                    {taskStatus.glb_url && (
+                      <button
+                        id="download-glb-btn"
+                        onClick={handleDownloadGlb}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          justifyContent: 'center',
+                          padding: '12px',
+                          background: 'white',
+                          color: 'var(--color-purple)',
+                          border: '2px solid #DDB3F5',
+                          borderRadius: 'var(--radius-btn)',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: 700,
+                          fontFamily: 'var(--font-base)',
+                          transition: 'all 0.2s',
+                          width: '100%',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F5EDFF'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'white'
+                        }}
+                      >
+                        <Download size={16} />
+                        💾 GLBをダウンロード（3Dデータ）
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

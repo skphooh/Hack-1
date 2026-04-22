@@ -59,6 +59,15 @@ export default function WorkDetail() {
     a.click()
   }
 
+  /** GLBファイルのダウンロード処理 */
+  const handleDownloadGlb = () => {
+    if (!work?.glb_url) return
+    const a = document.createElement('a')
+    a.href = work.glb_url
+    a.download = `${work.title ?? 'model'}.glb`
+    a.click()
+  }
+
   // ローディング中
   if (loading) {
     return (
@@ -276,22 +285,59 @@ export default function WorkDetail() {
               </div>
             </div>
 
-            {/* STLダウンロードボタン */}
-            {work.stl_url && (
-              <button
-                onClick={handleDownload}
-                className="btn-primary"
-                style={{
-                  padding: '16px',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  width: '100%',
-                }}
-              >
-                <Download size={20} />
-                🖨️ STLをダウンロード
-              </button>
-            )}
+            {/* STL/GLBダウンロードボタン */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* STLダウンロード（3Dプリント用） */}
+              {work.stl_url && (
+                <button
+                  onClick={handleDownload}
+                  className="btn-primary"
+                  style={{
+                    padding: '16px',
+                    justifyContent: 'center',
+                    fontSize: '1rem',
+                    width: '100%',
+                  }}
+                >
+                  <Download size={20} />
+                  🖨️ STLをダウンロード（3Dプリント用）
+                </button>
+              )}
+              {/* GLBダウンロード（3Dデータ保存用） */}
+              {work.glb_url && (
+                <button
+                  onClick={handleDownloadGlb}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    padding: '14px',
+                    background: 'white',
+                    color: 'var(--color-purple)',
+                    border: '2px solid #DDB3F5',
+                    borderRadius: 'var(--radius-btn)',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-base)',
+                    transition: 'all 0.2s',
+                    width: '100%',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#F5EDFF'
+                    e.currentTarget.style.borderColor = 'var(--color-purple)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white'
+                    e.currentTarget.style.borderColor = '#DDB3F5'
+                  }}
+                >
+                  <Download size={18} />
+                  💾 GLBをダウンロード（3Dデータ）
+                </button>
+              )}
+            </div>
 
             {/* 元画像 */}
             {work.thumbnail_url && (
