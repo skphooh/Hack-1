@@ -43,7 +43,7 @@ function launchConfetti() {
 export default function Generate() {
   const { user } = useAuthState()
   const {
-    step, previewUrl, taskStatus,
+    step, previewUrl, work, taskStatus,
     setStep, setPreviewUrl, setDepthUrl, setWork, setTaskStatus, setError, reset,
   } = useGenerateStore()
 
