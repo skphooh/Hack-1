@@ -1,6 +1,6 @@
 # うちの子製作所 (Uchi-no-ko Factory)
 
-> **「うちの子」を、自分の手で立体にする。**
+> **好きなものを、手のひらに。**
 
 ![Uchi-no-ko Factory Logo](./logo02.png)
 
@@ -21,7 +21,7 @@
 
 ## ✨ 主な機能
 
-- 📸 **AI 3D Generation**: 実写（Tripo3D）やイラスト（Wonder3D）に最適化されたAIエンジンで3D化。
+- 📸 **AI 3D Generation**: 画像に最適化されたAIエンジンで3D化。
 - ⚡ **Instant Preview**: アップロード直後に Depth Anything V2 による深度推定で立体感を即座に確認。
 - 🎨 **3D Viewer**: Browser上で生成されたモデルを全方位から確認できる高精細ビューア。
 - 🛠️ **Print-Ready Export**: 3Dプリンタでそのまま扱える `.stl` / `.obj` 形式への自動変換とメッシュ修復。
@@ -98,4 +98,4 @@ uvicorn main:app --reload
 
 ---
 
-*うちの子製作所 — Hack-1グランプリ 2026「小さくなる日本」出展作品*
+*うちの子製作所 — Hack-1グランプリ 2026出展作品*
