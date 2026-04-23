@@ -22,7 +22,7 @@ function RotatingModel({ url }: { url: string }) {
     }
   })
 
-  return <primitive ref={groupRef} object={cloned} scale={1.5} />
+  return <primitive ref={groupRef} object={cloned} scale={2.2} />
 }
 
 /** ローディングプレースホルダー */
@@ -70,13 +70,13 @@ export function Viewer3D({ glbUrl, height = 400, isMarket = false, onError }: Vi
           </div>
         }
       >
-        <Canvas camera={{ position: [0, 0, 4], fov: 45 }} gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}>
+        <Canvas camera={{ position: [0, 0, 3.5], fov: 45 }} gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}>
           <ambientLight intensity={isMarket ? 0.8 : 0.5} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
           <Suspense fallback={<LoadingFallback />}>
             <RotatingModel url={glbUrl} />
             {!isMarket && <Environment preset="city" />}
-            {!isMarket && <ContactShadows position={[0, -1.5, 0]} opacity={0.4} blur={2} />}
+            {!isMarket && <ContactShadows position={[0, -2.0, 0]} opacity={0.4} blur={2} />}
           </Suspense>
           <OrbitControls enablePan={false} enableZoom={!isMarket} autoRotate={isMarket} autoRotateSpeed={2} />
         </Canvas>
