@@ -3,7 +3,7 @@
 > **好きなものを、手のひらに。**
 
 <p align="center">
-  <img src="./logo02.png" alt="うちの子製作所" width="320" />
+  <img src="./logo02.png" alt="うちの子製作所" width="480" />
 </p>
 
 <p align="center">
