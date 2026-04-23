@@ -1,6 +1,6 @@
 # うちの子製作所 (Uchi-no-ko Factory)
 
-> **「うちの子」を、自分の手で立体にする。**
+> **好きなものを、手のひらに。**
 
 ![Uchi-no-ko Factory Logo](./logo02.png)
 
@@ -21,8 +21,8 @@
 
 ## ✨ 主な機能
 
-- 📸 **AI 3D Generation**: 実写（Tripo3D）やイラスト（Wonder3D）に最適化されたAIエンジンで3D化。
-- ⚡ **Instant Preview**: アップロード直後に Depth Anything V2 による深度推定で立体感を即座に確認。
+- 📸 **AI 3D Generation**: Tripo3D API を活用し、画像から高品質な3Dモデルを生成。
+- 🔄 **Turnaround Generation**: GPT-4o + DALL-E 3 を用い、1枚の画像から「見えない裏側」を含むターンアラウンド画像を生成し、より精度の高い3D化をサポート。
 - 🎨 **3D Viewer**: Browser上で生成されたモデルを全方位から確認できる高精細ビューア。
 - 🛠️ **Print-Ready Export**: 3Dプリンタでそのまま扱える `.stl` / `.obj` 形式への自動変換とメッシュ修復。
 - 🛒 **Marketplace**: 生成した作品の公開・共有、および3Dデータの売買が可能なコミュニティ機能。
@@ -30,41 +30,35 @@
 ## 🛠️ 技術スタック
 
 ### Frontend
-- **Framework**: React + Vite
+- **Framework**: React + Vite (**TypeScript**)
 - **3D Rendering**: React Three Fiber / Three.js
-- **Styling**: Vanilla CSS / Tailwind CSS
+- **Styling**: Tailwind CSS v4
 - **State Management**: Zustand
-- **Backend Integration**: Firebase SDK / Axios
+- **Deployment**: **Vercel**
 
 ### Backend
 - **Framework**: FastAPI (Python)
-- **Database**: Neon (PostgreSQL) / SQLAlchemy (Async)
+- **Database**: **PostgreSQL (Render)**
 - **Storage**: Firebase Storage
 - **Auth**: Firebase Authentication
 - **AI Engines**: 
-  - Tripo3D API (Real-life images)
-  - Wonder3D / HuggingFace (Illustrations)
-  - Depth Anything V2 (Instant Preview)
+  - **Tripo3D API** (3D Model Generation)
+  - **GPT-4o / DALL-E 3** (Turnaround Sheet Generation)
 - **Mesh Processing**: trimesh (GLB to STL conversion)
-
-### Infrastructure
-- **Hosting**: Firebase Hosting
-- **Server**: Railway (FastAPI Container)
-- **CI/CD**: GitHub Actions / Railway Deploy
+- **Deployment**: **Render**
 
 ## 🏗️ システム構成図
 
 ```mermaid
 graph TD
-    User([ユーザー]) -->|画像アップロード| FE[React Frontend]
-    FE -->|API Request| BE[FastAPI Backend]
-    BE -->|生成リクエスト| AI1[Tripo3D API]
-    BE -->|生成リクエスト| AI2[Wonder3D / HF]
-    BE -->|メタデータ保存| DB[(Neon PostgreSQL)]
+    User([ユーザー]) -->|画像アップロード| FE[Vercel: React Frontend]
+    FE -->|API Request| BE[Render: FastAPI Backend]
+    BE -->|3D生成| AI1[Tripo3D API]
+    BE -->|ターンアラウンド生成| AI2[OpenAI: GPT-4o/DALL-E 3]
+    BE -->|メタデータ保存| DB[(Render PostgreSQL)]
     BE -->|ファイル保存| ST[Firebase Storage]
     FE -->|Auth| FA[Firebase Auth]
     AI1 -->|GLB取得| BE
-    AI2 -->|OBJ取得| BE
     BE -->|STL変換| TR[trimesh]
     TR -->|保存| ST
     FE -->|表示| Viewer[Three.js Viewer]
@@ -89,13 +83,16 @@ uvicorn main:app --reload
 ```
 
 ## 🗺️ ロードマップ
-- [x] 写真・イラストからの3D生成
+- [x] 1枚の画像からの3D生成
+- [x] GPT-4oによるターンアラウンド生成とマルチビュー3D化
 - [x] ブラウザ上での3Dプレビュー
 - [x] STL形式への書き出し
-- [ ] 近くの3Dプリンター保有者とのマッチング機能
+- [ ] AIを用いた高品質化
+- [ ] 検索・タグ付け機能
+- [ ] 企業のグッズコンペする場の提案
 - [ ] 公式ライセンス管理機能（DRM）
-- [ ] ARによる現実世界でのサイズ感シミュレーション
+- [ ] クリエーターの実績を作れる場の提案
 
 ---
 
-*うちの子製作所 — Hack-1グランプリ 2026「小さくなる日本」出展作品*
+*うちの子製作所 — Hack-1グランプリ 2026出展作品*

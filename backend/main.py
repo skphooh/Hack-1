@@ -57,5 +57,5 @@ app.include_router(postprocess.router, prefix="/api", tags=["postprocess"])
 
 @app.get("/health", tags=["health"])
 async def health_check():
-    """Railway のヘルスチェック用エンドポイント"""
+    """Render のヘルスチェック用エンドポイント"""
     return {"status": "ok"}
