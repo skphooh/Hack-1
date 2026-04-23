@@ -5,7 +5,7 @@ import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
 
-import logoImg from '../assets/logo.png'
+import logoImg from '../assets/logo02.png'
 
 /** ナビゲーションリンク定義 */
 const NAV_LINKS = [
@@ -63,25 +63,11 @@ export function Navbar() {
           src={logoImg}
           alt="うちの子製作所 ロゴ"
           style={{
-            height: 36,
+            height: 40,
             width: 'auto',
             objectFit: 'contain',
           }}
         />
-        <span
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 900,
-            fontSize: '1.15rem',
-            background: 'var(--gradient-hero)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          うちの子製作所
-        </span>
       </Link>
 
       {/* ナビリンク */}
