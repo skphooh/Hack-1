@@ -49,10 +49,19 @@ export default function Generate() {
 
   const [title, setTitle] = useState('')
   const [quality, setQuality] = useState<'standard' | 'high'>('standard')
-  const [strapPosition, setStrapPosition] = useState<'top_center' | 'top_left' | 'top_right'>('top_center')
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
-  const [strapHoleUrl, setStrapHoleUrl] = useState<string | null>(null)
-  const [baseUrl, setBaseUrl] = useState<string | null>(null)
+  const [strapBlobUrl, setStrapBlobUrl] = useState<string | null>(null)
+  const [baseBlobUrl, setBaseBlobUrl] = useState<string | null>(null)
+
+  // ストラップ穴パラメータ
+  const [holeOffsetX,  setHoleOffsetX]  = useState(0)
+  const [holeOffsetY,  setHoleOffsetY]  = useState(0)
+  const [holeDepthMm,  setHoleDepthMm]  = useState(5)
+  const [holeRadiusMm, setHoleRadiusMm] = useState(1.0)
+
+  // 台座パラメータ
+  const [baseHeightMm,  setBaseHeightMm]  = useState(3)
+  const [baseMarginPct, setBaseMarginPct] = useState(15)
   const [turnaroundUrl, setTurnaroundUrl] = useState<string | null>(null)
   const [turnaroundLoading, setTurnaroundLoading] = useState(false)
   const [turnaroundConfirming, setTurnaroundConfirming] = useState(false)
@@ -140,31 +149,49 @@ export default function Generate() {
   const handleAddStrapHole = useCallback(async () => {
     if (!work?.id) return
     setPostProcessing('strap')
+    if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
-      const res = await addStrapHole(work.id, strapPosition)
-      setStrapHoleUrl(res.stl_url)
+      const blobUrl = await addStrapHole(work.id, {
+        offset_x:  holeOffsetX,
+        offset_y:  holeOffsetY,
+        depth_mm:  holeDepthMm,
+        radius_mm: holeRadiusMm,
+      })
+      setStrapBlobUrl(blobUrl)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `${title || 'uchi-no-ko'}_hole.stl`
+      a.click()
     } catch (e) {
       alert('ストラップ穴の追加に失敗しました。しばらく待ってから再試行してください。')
       console.error(e)
     } finally {
       setPostProcessing(null)
     }
-  }, [work, strapPosition])
+  }, [work, strapBlobUrl, holeOffsetX, holeOffsetY, holeDepthMm, holeRadiusMm, title])
 
   /** 台座追加 */
   const handleAddBase = useCallback(async () => {
     if (!work?.id) return
     setPostProcessing('base')
+    if (baseBlobUrl) { URL.revokeObjectURL(baseBlobUrl); setBaseBlobUrl(null) }
     try {
-      const res = await addBase(work.id)
-      setBaseUrl(res.stl_url)
+      const blobUrl = await addBase(work.id, {
+        height_mm:  baseHeightMm,
+        margin_pct: baseMarginPct,
+      })
+      setBaseBlobUrl(blobUrl)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `${title || 'uchi-no-ko'}_base.stl`
+      a.click()
     } catch (e) {
       alert('台座の追加に失敗しました。しばらく待ってから再試行してください。')
       console.error(e)
     } finally {
       setPostProcessing(null)
     }
-  }, [work])
+  }, [work, baseBlobUrl, baseHeightMm, baseMarginPct, title])
 
   /** ターンアラウンドプレビュー生成 */
   const handleTurnaroundPreview = useCallback(async () => {
@@ -740,87 +767,118 @@ export default function Generate() {
                       </p>
 
                       {/* ストラップ穴 */}
-                      <div style={{ marginBottom: 10 }}>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                          {(['top_center', 'top_left', 'top_right'] as const).map(pos => (
-                            <button
-                              key={pos}
-                              onClick={() => setStrapPosition(pos)}
-                              style={{
-                                flex: 1, padding: '6px 4px', fontSize: '0.7rem', fontWeight: 700,
-                                border: `1.5px solid ${strapPosition === pos ? 'var(--color-pink)' : 'var(--color-border)'}`,
-                                background: strapPosition === pos ? '#FFEDF4' : 'white',
-                                color: strapPosition === pos ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                                borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontFamily: 'var(--font-base)',
-                              }}
-                            >
-                              {pos === 'top_center' ? '上中' : pos === 'top_left' ? '上左' : '上右'}
-                            </button>
-                          ))}
-                        </div>
+                      <div
+                        style={{
+                          background: '#FFF9FB', border: '1.5px solid var(--color-pink-light)',
+                          borderRadius: 'var(--radius-md)', padding: '12px 14px', marginBottom: 10,
+                        }}
+                      >
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 10 }}>
+                          🔗 ストラップ穴の位置を指定
+                        </p>
+                        {[
+                          { label: 'X方向 (左↔右)',    value: holeOffsetX,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetX },
+                          { label: 'Y方向 (前↔奥)',    value: holeOffsetY,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetY },
+                          { label: '深さ（上端から）', value: holeDepthMm,  min: 1,   max: 20, step: 0.5,  unit: 'mm', setter: setHoleDepthMm },
+                          { label: '穴の半径',          value: holeRadiusMm, min: 0.5, max: 3,  step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                        ].map(({ label, value, min, max, step, unit, setter }) => (
+                          <div key={label} style={{ marginBottom: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--color-pink)', fontWeight: 700 }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value}
+                              onChange={e => setter(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: 'var(--color-pink)' }} />
+                          </div>
+                        ))}
                         <button
                           onClick={handleAddStrapHole}
                           disabled={postProcessing === 'strap'}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                            width: '100%', padding: '11px', background: 'white',
-                            color: postProcessing === 'strap' ? 'var(--color-text-muted)' : 'var(--color-pink)',
-                            border: `2px solid ${postProcessing === 'strap' ? 'var(--color-border)' : 'var(--color-pink-light)'}`,
-                            borderRadius: 'var(--radius-btn)', cursor: postProcessing === 'strap' ? 'not-allowed' : 'pointer',
-                            fontSize: '0.87rem', fontWeight: 700, fontFamily: 'var(--font-base)',
+                            width: '100%', padding: '10px', marginTop: 4,
+                            background: postProcessing === 'strap' ? '#f3f4f6' : 'var(--color-pink)',
+                            color: postProcessing === 'strap' ? 'var(--color-text-muted)' : 'white',
+                            border: 'none', borderRadius: 'var(--radius-btn)',
+                            cursor: postProcessing === 'strap' ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem', fontWeight: 700, fontFamily: 'var(--font-base)',
                           }}
                         >
                           {postProcessing === 'strap'
-                            ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…</>
-                            : '🔗 ストラップ穴を追加（直径2mm）'}
+                            ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> 処理中（1〜2分）…</>
+                            : <><Download size={14} /> 穴あきSTLを生成・ダウンロード</>}
                         </button>
-                        {strapHoleUrl && (
-                          <a
-                            href={strapHoleUrl}
-                            download={`${title || 'uchi-no-ko'}_strap.stl`}
+                        {strapBlobUrl && (
+                          <a href={strapBlobUrl} download={`${title || 'uchi-no-ko'}_hole.stl`}
                             style={{
-                              display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                              marginTop: 6, padding: '10px', background: '#E8FFF4',
-                              color: '#22863a', border: '2px solid #90D4A4', borderRadius: 'var(--radius-btn)',
-                              fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none',
+                              display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
+                              marginTop: 6, padding: '8px', fontSize: '0.78rem',
+                              background: '#E8FFF4', color: '#22863a',
+                              border: '2px solid #90D4A4', borderRadius: 'var(--radius-btn)',
+                              textDecoration: 'none', fontWeight: 700,
                             }}
                           >
-                            <Download size={14} /> ⬇ 穴あきSTLをダウンロード
+                            <Download size={13} /> 再ダウンロード
                           </a>
                         )}
                       </div>
 
                       {/* 台座追加 */}
-                      <button
-                        onClick={handleAddBase}
-                        disabled={postProcessing === 'base'}
+                      <div
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                          width: '100%', padding: '11px', background: 'white',
-                          color: postProcessing === 'base' ? 'var(--color-text-muted)' : 'var(--color-purple)',
-                          border: `2px solid ${postProcessing === 'base' ? 'var(--color-border)' : '#DDB3F5'}`,
-                          borderRadius: 'var(--radius-btn)', cursor: postProcessing === 'base' ? 'not-allowed' : 'pointer',
-                          fontSize: '0.87rem', fontWeight: 700, fontFamily: 'var(--font-base)',
+                          background: '#F9F5FF', border: '1.5px solid #DDB3F5',
+                          borderRadius: 'var(--radius-md)', padding: '12px 14px',
                         }}
                       >
-                        {postProcessing === 'base'
-                          ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…</>
-                          : '🏠 台座を追加（高さ3mm）'}
-                      </button>
-                      {baseUrl && (
-                        <a
-                          href={baseUrl}
-                          download={`${title || 'uchi-no-ko'}_base.stl`}
+                        <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-purple)', marginBottom: 10 }}>
+                          🔳 台座の設定
+                        </p>
+                        {[
+                          { label: '台座の高さ',       value: baseHeightMm,  min: 1, max: 10, step: 0.5, unit: 'mm', setter: setBaseHeightMm },
+                          { label: 'モデルからの張り出し', value: baseMarginPct, min: 0, max: 50, step: 5,   unit: '%',  setter: setBaseMarginPct },
+                        ].map(({ label, value, min, max, step, unit, setter }) => (
+                          <div key={label} style={{ marginBottom: 8 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--color-purple)', fontWeight: 700 }}>{value}{unit}</span>
+                            </div>
+                            <input type="range" min={min} max={max} step={step} value={value}
+                              onChange={e => setter(Number(e.target.value))}
+                              style={{ width: '100%', accentColor: 'var(--color-purple)' }} />
+                          </div>
+                        ))}
+                        <button
+                          onClick={handleAddBase}
+                          disabled={postProcessing === 'base'}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                            marginTop: 6, padding: '10px', background: '#E8FFF4',
-                            color: '#22863a', border: '2px solid #90D4A4', borderRadius: 'var(--radius-btn)',
-                            fontSize: '0.85rem', fontWeight: 700, textDecoration: 'none',
+                            width: '100%', padding: '10px', marginTop: 4,
+                            background: postProcessing === 'base' ? '#f3f4f6' : 'var(--color-purple)',
+                            color: postProcessing === 'base' ? 'var(--color-text-muted)' : 'white',
+                            border: 'none', borderRadius: 'var(--radius-btn)',
+                            cursor: postProcessing === 'base' ? 'not-allowed' : 'pointer',
+                            fontSize: '0.85rem', fontWeight: 700, fontFamily: 'var(--font-base)',
                           }}
                         >
-                          <Download size={14} /> ⬇ 台座付きSTLをダウンロード
-                        </a>
-                      )}
+                          {postProcessing === 'base'
+                            ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> 処理中（1〜2分）…</>
+                            : <><Download size={14} /> 台座付きSTLを生成・ダウンロード</>}
+                        </button>
+                        {baseBlobUrl && (
+                          <a href={baseBlobUrl} download={`${title || 'uchi-no-ko'}_base.stl`}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
+                              marginTop: 6, padding: '8px', fontSize: '0.78rem',
+                              background: '#F5EDFF', color: 'var(--color-purple)',
+                              border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)',
+                              textDecoration: 'none', fontWeight: 700,
+                            }}
+                          >
+                            <Download size={13} /> 再ダウンロード
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
