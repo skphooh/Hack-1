@@ -29,6 +29,9 @@ export default function WorkDetail() {
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
   const [strapBlobUrl, setStrapBlobUrl] = useState<string | null>(null)
   const [baseBlobUrl, setBaseBlobUrl] = useState<string | null>(null)
+  // STLビュー切り替え
+  const [stlViewUrl, setStlViewUrl] = useState<string | null>(null)
+  const [showStl,    setShowStl]    = useState(false)
 
   // ストラップ穴パラメータ
   const [holeOffsetX,  setHoleOffsetX]  = useState(0)    // モデル幅の%
@@ -89,7 +92,8 @@ export default function WorkDetail() {
     if (!user) { alert('ストラップ穴の追加にはログインが必要です。'); return }
     if (!work.glb_url && !work.stl_url) { alert('3Dモデルデータがまだ生成されていません。'); return }
     setPostProcessing('strap')
-    // 前の blob URL を解放
+    setStlViewUrl(null)
+    setShowStl(false)
     if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
       const blobUrl = await addStrapHole(work.id, {
@@ -99,7 +103,8 @@ export default function WorkDetail() {
         radius_mm: holeRadiusMm,
       })
       setStrapBlobUrl(blobUrl)
-      // 自動ダウンロードをトリガー
+      setStlViewUrl(blobUrl)   // 加工後STLをビューアに反映
+      setShowStl(true)          // STLビューに自動切り替え
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = `${work.title ?? 'model'}_hole.stl`
@@ -118,6 +123,8 @@ export default function WorkDetail() {
     if (!user) { alert('台座の追加にはログインが必要です。'); return }
     if (!work.glb_url && !work.stl_url) { alert('3Dモデルデータがまだ生成されていません。'); return }
     setPostProcessing('base')
+    setStlViewUrl(null)
+    setShowStl(false)
     if (baseBlobUrl) { URL.revokeObjectURL(baseBlobUrl); setBaseBlobUrl(null) }
     try {
       const blobUrl = await addBase(work.id, {
@@ -125,6 +132,8 @@ export default function WorkDetail() {
         margin_pct: baseMarginPct,
       })
       setBaseBlobUrl(blobUrl)
+      setStlViewUrl(blobUrl)  // 加工後STLをビューアに反映
+      setShowStl(true)         // STLビューに自動切り替え
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = `${work.title ?? 'model'}_base.stl`
@@ -243,8 +252,48 @@ export default function WorkDetail() {
             >
               🎮 3Dビューア（ドラッグで回転！）
             </div>
+            {/* GLB / STL 切り替えタブ（STL生成後に表示） */}
+            {stlViewUrl && (
+              <div style={{ display: 'flex', gap: 6, padding: '10px 0 0' }}>
+                <button
+                  onClick={() => setShowStl(false)}
+                  style={{
+                    flex: 1, padding: '7px', fontSize: '0.78rem', fontWeight: 700,
+                    borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontFamily: 'var(--font-base)',
+                    border: `2px solid ${!showStl ? 'var(--color-pink)' : 'var(--color-border)'}`,
+                    background: !showStl ? '#FFEDF4' : 'white',
+                    color: !showStl ? 'var(--color-pink)' : 'var(--color-text-muted)',
+                  }}
+                >
+                  🎨 GLBビュー
+                </button>
+                <button
+                  onClick={() => setShowStl(true)}
+                  style={{
+                    flex: 1, padding: '7px', fontSize: '0.78rem', fontWeight: 700,
+                    borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontFamily: 'var(--font-base)',
+                    border: `2px solid ${showStl ? 'var(--color-purple)' : 'var(--color-border)'}`,
+                    background: showStl ? '#F5EDFF' : 'white',
+                    color: showStl ? 'var(--color-purple)' : 'var(--color-text-muted)',
+                  }}
+                >
+                  🔧 STLビュー（加工済）
+                </button>
+              </div>
+            )}
             {work.glb_url ? (
-              <Viewer3D glbUrl={work.glb_url} height={500} />
+              <Viewer3D
+                glbUrl={work.glb_url}
+                stlUrl={showStl && stlViewUrl ? stlViewUrl : undefined}
+                holeOverlay={!showStl ? {
+                  offsetX: holeOffsetX, offsetY: holeOffsetY,
+                  depthMm: holeDepthMm, radiusMm: holeRadiusMm,
+                } : undefined}
+                baseOverlay={!showStl ? {
+                  heightMm: baseHeightMm, marginPct: baseMarginPct,
+                } : undefined}
+                height={500}
+              />
             ) : (
               <div
                 style={{
