@@ -1,6 +1,8 @@
 // アプリケーションルート: ルーティング設定
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Navbar } from './components/Navbar'
+import { wakeBackend } from './lib/api'
 import Top from './pages/Top'
 import Generate from './pages/Generate'
 import Market from './pages/Market'
@@ -8,6 +10,8 @@ import MyPage from './pages/MyPage'
 import WorkDetail from './pages/WorkDetail'
 
 function App() {
+  useEffect(() => { wakeBackend() }, [])
+
   return (
     <BrowserRouter>
       <Navbar />

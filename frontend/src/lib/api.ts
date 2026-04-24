@@ -199,6 +199,18 @@ export interface LikeResponse {
 // PostProcessResponse は廃止（APIがSTLバイナリを直接返すようになった）
 // addStrapHole / addBase は blob URL (string) を返す
 
+/**
+ * Render のスリープ解除用 ping。
+ * 無料プランは 15 分無通信でスリープするため、アプリ起動時に叩いておく。
+ */
+export async function wakeBackend(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/health`)
+  } catch {
+    // fire-and-forget — 失敗しても無視
+  }
+}
+
 export interface TurnaroundPreviewResponse {
   turnaround_url: string
 }

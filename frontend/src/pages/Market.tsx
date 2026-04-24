@@ -33,23 +33,36 @@ export default function Market() {
   const [works, setWorks] = useState<WorkResponse[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [retrying, setRetrying] = useState(false)
   const [genre, setGenre] = useState('')
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
 
-  // 作品一覧を取得
+  // 作品一覧を取得（Render スリープ対策のリトライ付き）
   useEffect(() => {
+    const MAX_RETRIES = 4
+    const RETRY_DELAY_MS = 5000
+
     const load = async () => {
       setLoading(true)
-      try {
-        const params: Record<string, string> = { status: 'done', page: '1', per_page: '20' }
-        if (genre) params.genre = genre
-        const res = await fetchWorks(params)
-        setWorks(res.items)
-        setTotal(res.total)
-      } catch (e) {
-        console.error('作品取得エラー:', e)
-      } finally {
-        setLoading(false)
+      setRetrying(false)
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const params: Record<string, string> = { status: 'done', page: '1', per_page: '20' }
+          if (genre) params.genre = genre
+          const res = await fetchWorks(params)
+          setWorks(res.items)
+          setTotal(res.total)
+          setLoading(false)
+          return
+        } catch (e) {
+          if (attempt < MAX_RETRIES) {
+            setRetrying(true)
+            await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
+          } else {
+            console.error('作品取得エラー:', e)
+            setLoading(false)
+          }
+        }
       }
     }
     load()
@@ -168,14 +181,16 @@ export default function Market() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0' }}>
             <div style={{ fontSize: '3rem', marginBottom: 16, animation: 'float 2s ease-in-out infinite' }}>
-              🔍
+              {retrying ? '⏳' : '🔍'}
             </div>
             <Loader2
               size={40}
               color="var(--color-pink)"
               style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px', display: 'block' }}
             />
-            <p style={{ color: 'var(--color-text-sub)', fontWeight: 600 }}>読み込み中...</p>
+            <p style={{ color: 'var(--color-text-sub)', fontWeight: 600 }}>
+              {retrying ? 'サーバー起動中… しばらくお待ちください 🚀' : '読み込み中...'}
+            </p>
           </div>
         ) : works.length === 0 ? (
           <div
