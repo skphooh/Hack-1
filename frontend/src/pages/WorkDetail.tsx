@@ -32,6 +32,9 @@ export default function WorkDetail() {
   // STLビュー切り替え
   const [stlViewUrl, setStlViewUrl] = useState<string | null>(null)
   const [showStl,    setShowStl]    = useState(false)
+  // オーバーレイ表示フラグ（チェックボックスでON/OFF）
+  const [showHoleOverlay, setShowHoleOverlay] = useState(false)
+  const [showBaseOverlay, setShowBaseOverlay] = useState(false)
 
   // ストラップ穴パラメータ
   const [holeOffsetX,  setHoleOffsetX]  = useState(0)    // モデル幅の%
@@ -285,11 +288,11 @@ export default function WorkDetail() {
               <Viewer3D
                 glbUrl={work.glb_url}
                 stlUrl={showStl && stlViewUrl ? stlViewUrl : undefined}
-                holeOverlay={!showStl ? {
+                holeOverlay={!showStl && showHoleOverlay ? {
                   offsetX: holeOffsetX, offsetY: holeOffsetY,
                   depthMm: holeDepthMm, radiusMm: holeRadiusMm,
                 } : undefined}
-                baseOverlay={!showStl ? {
+                baseOverlay={!showStl && showBaseOverlay ? {
                   heightMm: baseHeightMm, marginPct: baseMarginPct,
                 } : undefined}
                 height={500}
@@ -552,48 +555,65 @@ export default function WorkDetail() {
                 <div
                   style={{
                     background: '#FFF9FB',
-                    border: '1.5px solid var(--color-pink-light)',
+                    border: `1.5px solid ${showHoleOverlay ? 'var(--color-pink)' : 'var(--color-pink-light)'}`,
                     borderRadius: 'var(--radius-md)',
                     padding: '14px 16px',
                     marginBottom: 12,
                   }}
                 >
-                  <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 12 }}>
-                    🔗 ストラップ穴の位置を指定
-                  </p>
+                  {/* チェックボックス付きタイトル */}
+                  <label
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-pink)',
+                      marginBottom: showHoleOverlay ? 12 : 0, cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={showHoleOverlay}
+                      onChange={e => setShowHoleOverlay(e.target.checked)}
+                      style={{ accentColor: 'var(--color-pink)', width: 16, height: 16, cursor: 'pointer' }}
+                    />
+                    🔴 ストラップ穴の位置をビューアに表示
+                  </label>
 
-                  {/* スライダー群 */}
-                  {[
-                    { label: `X方向オフセット (左↔右)`, value: holeOffsetX, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetX },
-                    { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetY },
-                    { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 20, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
-                    { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 3.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
-                  ].map(({ label, value, min, max, step, unit, setter }) => (
-                    <div key={label} style={{ marginBottom: 10 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-pink)', fontWeight: 700 }}>
-                          {value}{unit}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={min}
-                        max={max}
-                        step={step}
-                        value={value}
-                        onChange={(e) => setter(Number(e.target.value))}
-                        style={{ width: '100%', accentColor: 'var(--color-pink)' }}
-                      />
-                    </div>
-                  ))}
+                  {/* スライダー群（チェック時のみ表示） */}
+                  {showHoleOverlay && (
+                    <>
+                      {[
+                        { label: `X方向オフセット (左↔右)`, value: holeOffsetX, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetX },
+                        { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetY },
+                        { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 20, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
+                        { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 3.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                      ].map(({ label, value, min, max, step, unit, setter }) => (
+                        <div key={label} style={{ marginBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-pink)', fontWeight: 700 }}>
+                              {value}{unit}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={min}
+                            max={max}
+                            step={step}
+                            value={value}
+                            onChange={(e) => setter(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--color-pink)' }}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
 
                   <button
                     onClick={handleAddStrapHole}
                     disabled={postProcessing === 'strap'}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                      width: '100%', padding: '11px', marginTop: 4,
+                      width: '100%', padding: '11px', marginTop: showHoleOverlay ? 4 : 12,
                       background: postProcessing === 'strap' ? '#f3f4f6' : 'var(--color-pink)',
                       color: postProcessing === 'strap' ? 'var(--color-text-muted)' : 'white',
                       border: 'none', borderRadius: 'var(--radius-btn)',
@@ -627,44 +647,62 @@ export default function WorkDetail() {
                 <div
                   style={{
                     background: '#F9F5FF',
-                    border: '1.5px solid #DDB3F5',
+                    border: `1.5px solid ${showBaseOverlay ? 'var(--color-purple)' : '#DDB3F5'}`,
                     borderRadius: 'var(--radius-md)',
                     padding: '14px 16px',
                   }}
                 >
-                  <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-purple)', marginBottom: 12 }}>
-                    🔳 台座の設定
-                  </p>
+                  {/* チェックボックス付きタイトル */}
+                  <label
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-purple)',
+                      marginBottom: showBaseOverlay ? 12 : 0, cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={showBaseOverlay}
+                      onChange={e => setShowBaseOverlay(e.target.checked)}
+                      style={{ accentColor: 'var(--color-purple)', width: 16, height: 16, cursor: 'pointer' }}
+                    />
+                    🟣 台座のサイズをビューアに表示
+                  </label>
 
-                  {[
-                    { label: '台座の高さ', value: baseHeightMm, min: 1, max: 10, step: 0.5, unit: 'mm', setter: setBaseHeightMm },
-                    { label: 'モデルからの張り出し', value: baseMarginPct, min: 0, max: 50, step: 5, unit: '%', setter: setBaseMarginPct },
-                  ].map(({ label, value, min, max, step, unit, setter }) => (
-                    <div key={label} style={{ marginBottom: 10 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-purple)', fontWeight: 700 }}>
-                          {value}{unit}
-                        </span>
-                      </div>
-                      <input
-                        type="range"
-                        min={min}
-                        max={max}
-                        step={step}
-                        value={value}
-                        onChange={(e) => setter(Number(e.target.value))}
-                        style={{ width: '100%', accentColor: 'var(--color-purple)' }}
-                      />
-                    </div>
-                  ))}
+                  {/* スライダー群（チェック時のみ表示） */}
+                  {showBaseOverlay && (
+                    <>
+                      {[
+                        { label: '台座の高さ', value: baseHeightMm, min: 1, max: 10, step: 0.5, unit: 'mm', setter: setBaseHeightMm },
+                        { label: 'モデルからの張り出し', value: baseMarginPct, min: 0, max: 50, step: 5, unit: '%', setter: setBaseMarginPct },
+                      ].map(({ label, value, min, max, step, unit, setter }) => (
+                        <div key={label} style={{ marginBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--color-purple)', fontWeight: 700 }}>
+                              {value}{unit}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={min}
+                            max={max}
+                            step={step}
+                            value={value}
+                            onChange={(e) => setter(Number(e.target.value))}
+                            style={{ width: '100%', accentColor: 'var(--color-purple)' }}
+                          />
+                        </div>
+                      ))}
+                    </>
+                  )}
 
                   <button
                     onClick={handleAddBase}
                     disabled={postProcessing === 'base'}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                      width: '100%', padding: '11px', marginTop: 4,
+                      width: '100%', padding: '11px', marginTop: showBaseOverlay ? 4 : 12,
                       background: postProcessing === 'base' ? '#f3f4f6' : 'var(--color-purple)',
                       color: postProcessing === 'base' ? 'var(--color-text-muted)' : 'white',
                       border: 'none', borderRadius: 'var(--radius-btn)',
