@@ -90,13 +90,57 @@ export const estimateDepth = (form: FormData) =>
 export const toggleLike = (workId: string) =>
   apiPost<LikeResponse>(`/api/works/${workId}/like`, {})
 
-/** ストラップ穴追加 */
-export const addStrapHole = (workId: string, position: string) =>
-  apiPost<PostProcessResponse>(`/api/works/${workId}/strap-hole?position=${position}`, {})
+/**
+ * ストラップ穴追加 → STLファイルを直接Blobで受け取る
+ * @returns ダウンロード用のURL (blob:)
+ */
+export async function addStrapHole(
+  workId: string,
+  params: {
+    offset_x?: number   // モデル幅の%（-50〜50）
+    offset_y?: number   // モデル奥行きの%（-50〜50）
+    depth_mm?: number   // 上端からの深さmm
+    radius_mm?: number  // 穴の半径mm（1.0=直径2mm）
+  } = {}
+): Promise<string> {
+  const headers = await getAuthHeaders()
+  const q = new URLSearchParams()
+  if (params.offset_x  !== undefined) q.set('offset_x',  String(params.offset_x))
+  if (params.offset_y  !== undefined) q.set('offset_y',  String(params.offset_y))
+  if (params.depth_mm  !== undefined) q.set('depth_mm',  String(params.depth_mm))
+  if (params.radius_mm !== undefined) q.set('radius_mm', String(params.radius_mm))
+  const res = await fetch(`${API_BASE}/api/works/${workId}/strap-hole?${q.toString()}`, {
+    method: 'POST',
+    headers,
+  })
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${await res.text()}`)
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
 
-/** 台座追加 */
-export const addBase = (workId: string) =>
-  apiPost<PostProcessResponse>(`/api/works/${workId}/base`, {})
+/**
+ * 台座追加 → STLファイルを直接Blobで受け取る
+ * @returns ダウンロード用のURL (blob:)
+ */
+export async function addBase(
+  workId: string,
+  params: {
+    height_mm?:  number  // 台座の高さmm
+    margin_pct?: number  // 余白%
+  } = {}
+): Promise<string> {
+  const headers = await getAuthHeaders()
+  const q = new URLSearchParams()
+  if (params.height_mm  !== undefined) q.set('height_mm',  String(params.height_mm))
+  if (params.margin_pct !== undefined) q.set('margin_pct', String(params.margin_pct))
+  const res = await fetch(`${API_BASE}/api/works/${workId}/base?${q.toString()}`, {
+    method: 'POST',
+    headers,
+  })
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${await res.text()}`)
+  const blob = await res.blob()
+  return URL.createObjectURL(blob)
+}
 
 /** ターンアラウンドプレビュー生成 */
 export const generateTurnaroundPreview = (form: FormData) =>
@@ -152,9 +196,8 @@ export interface LikeResponse {
   likes_count: number
 }
 
-export interface PostProcessResponse {
-  stl_url: string
-}
+// PostProcessResponse は廃止（APIがSTLバイナリを直接返すようになった）
+// addStrapHole / addBase は blob URL (string) を返す
 
 export interface TurnaroundPreviewResponse {
   turnaround_url: string
