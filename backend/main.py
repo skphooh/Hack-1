@@ -32,6 +32,7 @@ app = FastAPI(
 )
 
 # CORS設定（フロントエンドのドメインを許可）
+# Vercel のプレビューデプロイは毎回URLが変わるため allow_origin_regex で一括許可する
 _allowed_origins = [
     "http://localhost:5173",
     "https://utinoko.skphooh.com",
@@ -42,6 +43,8 @@ if os.getenv("FRONTEND_URL"):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    # Vercel プレビューURL (https://hack-1-*-skphoohs-projects.vercel.app) を許可
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
