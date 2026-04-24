@@ -86,25 +86,41 @@ def _try_boolean_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> t
 def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh.Trimesh:
     """
     ボクセル化してカッターで穴を掘り、メッシュ化して返す。
-    精度は落ちるが非ウォータータイトメッシュでも動作する。
+    networkx 不要の numpy ベース実装。
     """
     print("🔁 ボクセルベース差分にフォールバック", flush=True)
-    # モデルサイズに応じて解像度を決定（小さすぎると穴が消える）
     extents = mesh.extents
-    voxel_size = min(extents) / 60.0  # モデルの最小辺を60分割
-    voxel_size = max(voxel_size, 0.3)  # 最小0.3mm
+    voxel_size = min(extents) / 50.0
+    voxel_size = max(voxel_size, 0.4)  # 最小0.4mm
 
-    vox_mesh = mesh.voxelized(pitch=voxel_size).fill()
-    vox_cutter = cutter.voxelized(pitch=voxel_size).fill()
+    # fill() は networkx 依存のため filled() を使用（外部ドエ方式フィル辺め）
+    vox_mesh   = mesh.voxelized(pitch=voxel_size).filled()
+    vox_cutter = cutter.voxelized(pitch=voxel_size).filled()
 
-    # ボクセル差分
+    # ボクセル差分（numpy操作のみ）
     vox_result = vox_mesh.matrix.copy()
-    vox_result[vox_cutter.matrix] = False
+    # カッターボクセルのoriginとサイズのミスマッチを安全に処理
+    try:
+        c_origin = np.round(
+            (vox_cutter.origin - vox_mesh.origin) / voxel_size
+        ).astype(int)
+        c_shape = vox_cutter.matrix.shape
+        for dz in range(c_shape[0]):
+            for dy in range(c_shape[1]):
+                for dx in range(c_shape[2]):
+                    if not vox_cutter.matrix[dz, dy, dx]:
+                        continue
+                    mz = c_origin[2] + dz
+                    my = c_origin[1] + dy
+                    mx = c_origin[0] + dx
+                    if 0 <= mz < vox_result.shape[0] and \
+                       0 <= my < vox_result.shape[1] and \
+                       0 <= mx < vox_result.shape[2]:
+                        vox_result[mz, my, mx] = False
+    except Exception as e:
+        print(f"⚠️ ボクセル差分計算エラー: {e}", flush=True)
 
-    result_vox = trimesh.voxel.VoxelGrid(
-        vox_result,
-        transform=vox_mesh.transform
-    )
+    result_vox = trimesh.voxel.VoxelGrid(vox_result, transform=vox_mesh.transform)
     result_mesh = result_vox.marching_cubes
     _repair_mesh(result_mesh)
     return result_mesh
