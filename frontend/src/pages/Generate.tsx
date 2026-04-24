@@ -577,8 +577,8 @@ export default function Generate() {
                 id="reset-btn"
                 onClick={() => {
                   reset()
-                  setStrapHoleUrl(null)
-                  setBaseUrl(null)
+                  setStrapBlobUrl(null)
+                  setBaseBlobUrl(null)
                   setTurnaroundUrl(null)
                   setTurnaroundConfirming(false)
                   setTurnaroundLoading(false)
