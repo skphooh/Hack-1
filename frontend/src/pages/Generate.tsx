@@ -52,6 +52,8 @@ export default function Generate() {
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
   const [strapBlobUrl, setStrapBlobUrl] = useState<string | null>(null)
   const [baseBlobUrl, setBaseBlobUrl] = useState<string | null>(null)
+  const [stlViewUrl, setStlViewUrl] = useState<string | null>(null)
+  const [showStl, setShowStl] = useState(false)
 
   // ストラップ穴パラメータ
   const [holeOffsetX,  setHoleOffsetX]  = useState(0)
@@ -149,6 +151,8 @@ export default function Generate() {
   const handleAddStrapHole = useCallback(async () => {
     if (!work?.id) return
     setPostProcessing('strap')
+    setStlViewUrl(null)
+    setShowStl(false)
     if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
       const blobUrl = await addStrapHole(work.id, {
@@ -158,6 +162,8 @@ export default function Generate() {
         radius_mm: holeRadiusMm,
       })
       setStrapBlobUrl(blobUrl)
+      setStlViewUrl(blobUrl)
+      setShowStl(true)
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = `${title || 'uchi-no-ko'}_hole.stl`
@@ -174,6 +180,8 @@ export default function Generate() {
   const handleAddBase = useCallback(async () => {
     if (!work?.id) return
     setPostProcessing('base')
+    setStlViewUrl(null)
+    setShowStl(false)
     if (baseBlobUrl) { URL.revokeObjectURL(baseBlobUrl); setBaseBlobUrl(null) }
     try {
       const blobUrl = await addBase(work.id, {
@@ -181,6 +189,8 @@ export default function Generate() {
         margin_pct: baseMarginPct,
       })
       setBaseBlobUrl(blobUrl)
+      setStlViewUrl(blobUrl)
+      setShowStl(true)
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = `${title || 'uchi-no-ko'}_base.stl`
@@ -579,6 +589,8 @@ export default function Generate() {
                   reset()
                   setStrapBlobUrl(null)
                   setBaseBlobUrl(null)
+                  setStlViewUrl(null)
+                  setShowStl(false)
                   setTurnaroundUrl(null)
                   setTurnaroundConfirming(false)
                   setTurnaroundLoading(false)
@@ -712,7 +724,61 @@ export default function Generate() {
                     できた！🎉 3D生成完了！
                   </span>
                 </div>
-                <Viewer3D glbUrl={taskStatus.glb_url} height={350} />
+                {/* GLB / STL 切り替えタブ（STL生成後に表示） */}
+                {stlViewUrl && (
+                  <div style={{ display: 'flex', gap: 6, padding: '10px 16px 0' }}>
+                    <button
+                      onClick={() => setShowStl(false)}
+                      style={{
+                        flex: 1, padding: '7px', fontSize: '0.78rem', fontWeight: 700,
+                        borderRadius: 'var(--radius-btn)', cursor: 'pointer',
+                        fontFamily: 'var(--font-base)',
+                        border: `2px solid ${!showStl ? 'var(--color-pink)' : 'var(--color-border)'}`,
+                        background: !showStl ? '#FFEDF4' : 'white',
+                        color: !showStl ? 'var(--color-pink)' : 'var(--color-text-muted)',
+                      }}
+                    >
+                      🎨 GLBビュー
+                    </button>
+                    <button
+                      onClick={() => setShowStl(true)}
+                      style={{
+                        flex: 1, padding: '7px', fontSize: '0.78rem', fontWeight: 700,
+                        borderRadius: 'var(--radius-btn)', cursor: 'pointer',
+                        fontFamily: 'var(--font-base)',
+                        border: `2px solid ${showStl ? 'var(--color-purple)' : 'var(--color-border)'}`,
+                        background: showStl ? '#F5EDFF' : 'white',
+                        color: showStl ? 'var(--color-purple)' : 'var(--color-text-muted)',
+                      }}
+                    >
+                      🔧 STLビュー
+                    </button>
+                  </div>
+                )}
+
+                <Viewer3D
+                  glbUrl={taskStatus.glb_url}
+                  stlUrl={showStl && stlViewUrl ? stlViewUrl : undefined}
+                  holeOverlay={!showStl ? {
+                    offsetX: holeOffsetX, offsetY: holeOffsetY,
+                    depthMm: holeDepthMm, radiusMm: holeRadiusMm,
+                  } : undefined}
+                  baseOverlay={!showStl ? {
+                    heightMm: baseHeightMm, marginPct: baseMarginPct,
+                  } : undefined}
+                  height={350}
+                />
+
+                {/* オーバーレイ凡例 */}
+                {!showStl && (
+                  <div style={{
+                    padding: '6px 16px', display: 'flex', gap: 16,
+                    fontSize: '0.68rem', color: 'var(--color-text-muted)',
+                  }}>
+                    <span>🔴 ストラップ穴の位置</span>
+                    <span>🟣 台座のサイズ</span>
+                  </div>
+                )}
                 {taskStatus.stl_url && (
                   <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {/* STL + 印刷ボタン */}
