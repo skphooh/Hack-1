@@ -43,6 +43,7 @@ class WorkUpdate(BaseModel):
     glb_url: Optional[str] = None
     stl_url: Optional[str] = None
     thumbnail_url: Optional[str] = None
+    turnaround_url: Optional[str] = None
 
 
 class WorkResponse(BaseModel):
@@ -54,6 +55,7 @@ class WorkResponse(BaseModel):
     is_official: bool
     price: int
     thumbnail_url: Optional[str]
+    turnaround_url: Optional[str] = None
     stl_url: Optional[str]
     glb_url: Optional[str]
     task_id: Optional[str]

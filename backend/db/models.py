@@ -51,6 +51,7 @@ class Work(Base):
     # 価格（円単位。0=無料）
     price = Column(Integer, default=0)
     thumbnail_url = Column(Text)
+    turnaround_url = Column(Text)
     stl_url = Column(Text)
     glb_url = Column(Text)
     # Tripo3D / Wonder3D のジョブID
