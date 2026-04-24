@@ -116,6 +116,7 @@ export interface WorkResponse {
   is_official: boolean
   price: number
   thumbnail_url: string | null
+  turnaround_url: string | null
   stl_url: string | null
   glb_url: string | null
   task_id: string | null

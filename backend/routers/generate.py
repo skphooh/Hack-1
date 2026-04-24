@@ -115,6 +115,12 @@ async def start_generate_turnaround(
         views[0], f"thumbnails/{uid}/{uuid.uuid4().hex}_turnaround.png"
     )
 
+    # ターンアラウンド画像を Firebase Storage に永続保存
+    # ※ DALL-E 3 の URL は数時間で期限切れになるため必ず保存する
+    saved_turnaround_url = await upload_to_storage(
+        turnaround_bytes, f"turnarounds/{uid}/{uuid.uuid4().hex}_sheet.png"
+    )
+
     # Tripo3D マルチビュー生成
     try:
         task_id = await generate_3d_tripo_multiview(views)
@@ -127,6 +133,7 @@ async def start_generate_turnaround(
         title=title,
         genre=genre,
         thumbnail_url=thumbnail_url,
+        turnaround_url=saved_turnaround_url,
         task_id=task_id,
         status="processing",
     )

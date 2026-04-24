@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Heart, ArrowLeft, Loader2 } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
-import { fetchWork, toggleLike, type WorkResponse } from '../lib/api'
+import { fetchWork, toggleLike, addStrapHole, addBase, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 
 /** ジャンルラベルの日本語マッピング */
@@ -24,6 +24,12 @@ export default function WorkDetail() {
   const [work, setWork] = useState<WorkResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
+
+  // 後処理用の状態
+  const [strapPosition, setStrapPosition] = useState<'top_center' | 'top_left' | 'top_right'>('top_center')
+  const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
+  const [strapHoleUrl, setStrapHoleUrl] = useState<string | null>(null)
+  const [baseUrl, setBaseUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -66,6 +72,56 @@ export default function WorkDetail() {
     a.href = work.glb_url
     a.download = `${work.title ?? 'model'}.glb`
     a.click()
+  }
+
+  /** ストラップ穴追加 */
+  const handleAddStrapHole = async () => {
+    if (!work?.id) return
+    // ログイン必須チェック
+    if (!user) {
+      alert('ストラップ穴の追加にはログインが必要です。')
+      return
+    }
+    // 3Dモデルが存在しない場合はスキップ
+    if (!work.glb_url && !work.stl_url) {
+      alert('3Dモデルデータがまだ生成されていません。')
+      return
+    }
+    setPostProcessing('strap')
+    try {
+      const res = await addStrapHole(work.id, strapPosition)
+      setStrapHoleUrl(res.stl_url)
+    } catch (e) {
+      alert('ストラップ穴の追加に失敗しました。')
+      console.error(e)
+    } finally {
+      setPostProcessing(null)
+    }
+  }
+
+  /** 台座追加 */
+  const handleAddBase = async () => {
+    if (!work?.id) return
+    // ログイン必須チェック
+    if (!user) {
+      alert('台座の追加にはログインが必要です。')
+      return
+    }
+    // 3Dモデルが存在しない場合はスキップ
+    if (!work.glb_url && !work.stl_url) {
+      alert('3Dモデルデータがまだ生成されていません。')
+      return
+    }
+    setPostProcessing('base')
+    try {
+      const res = await addBase(work.id)
+      setBaseUrl(res.stl_url)
+    } catch (e) {
+      alert('台座の追加に失敗しました。')
+      console.error(e)
+    } finally {
+      setPostProcessing(null)
+    }
   }
 
   // ローディング中
@@ -371,6 +427,197 @@ export default function WorkDetail() {
                   }}
                 />
               </div>
+            )}
+
+            {/* ターンアラウンド画像 */}
+            {work.turnaround_url && (
+              <div
+                style={{
+                  background: 'white',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 16,
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: '0.82rem',
+                    marginBottom: 10,
+                    color: 'var(--color-purple)',
+                    fontWeight: 700,
+                  }}
+                >
+                  🌟 生成されたターンアラウンド
+                </p>
+                <img
+                  src={work.turnaround_url}
+                  alt="ターンアラウンド"
+                  style={{
+                    width: '100%',
+                    borderRadius: 'var(--radius-md)',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
+            )}
+
+            {/* ─── 後処理セクション（GLBまたはSTLが存在する場合のみ表示） ─── */}
+            {(work.glb_url || work.stl_url) && (
+              <div
+                style={{
+                  background: 'white',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 'var(--radius-xl)',
+                  padding: '20px',
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
+              <p
+                style={{
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  color: 'var(--color-text-sub)',
+                  marginBottom: 14,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                🔧 3Dプリント用カスタマイズ
+              </p>
+
+              {/* ストラップ穴 */}
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  {(['top_center', 'top_left', 'top_right'] as const).map((pos) => (
+                    <button
+                      key={pos}
+                      onClick={() => setStrapPosition(pos)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 4px',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        border: `2px solid ${strapPosition === pos ? 'var(--color-pink)' : 'var(--color-border)'}`,
+                        background: strapPosition === pos ? '#FFEDF4' : 'white',
+                        color: strapPosition === pos ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                        borderRadius: 'var(--radius-btn)',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-base)',
+                      }}
+                    >
+                      {pos === 'top_center' ? '上中' : pos === 'top_left' ? '上左' : '上右'}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={handleAddStrapHole}
+                  disabled={postProcessing === 'strap'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    width: '100%',
+                    padding: '12px',
+                    background: 'white',
+                    color: postProcessing === 'strap' ? 'var(--color-text-muted)' : 'var(--color-pink)',
+                    border: `2px solid ${postProcessing === 'strap' ? 'var(--color-border)' : 'var(--color-pink-light)'}`,
+                    borderRadius: 'var(--radius-btn)',
+                    cursor: postProcessing === 'strap' ? 'not-allowed' : 'pointer',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-base)',
+                  }}
+                >
+                  {postProcessing === 'strap' ? (
+                    <>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…
+                    </>
+                  ) : (
+                    '🔗 ストラップ穴を開ける'
+                  )}
+                </button>
+                {strapHoleUrl && (
+                  <a
+                    href={strapHoleUrl}
+                    download={`${work.title}_strap.stl`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      justifyContent: 'center',
+                      marginTop: 8,
+                      padding: '10px',
+                      fontSize: '0.85rem',
+                      background: '#E8FFF4',
+                      color: '#22863a',
+                      border: '2px solid #90D4A4',
+                      borderRadius: 'var(--radius-btn)',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Download size={15} /> 穴あきSTLを保存
+                  </a>
+                )}
+              </div>
+
+              {/* 台座追加 */}
+              <div>
+                <button
+                  onClick={handleAddBase}
+                  disabled={postProcessing === 'base'}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    justifyContent: 'center',
+                    width: '100%',
+                    padding: '12px',
+                    background: 'white',
+                    color: postProcessing === 'base' ? 'var(--color-text-muted)' : 'var(--color-purple)',
+                    border: `2px solid ${postProcessing === 'base' ? 'var(--color-border)' : '#DDB3F5'}`,
+                    borderRadius: 'var(--radius-btn)',
+                    cursor: postProcessing === 'base' ? 'not-allowed' : 'pointer',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-base)',
+                  }}
+                >
+                  {postProcessing === 'base' ? (
+                    <>
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…
+                    </>
+                  ) : (
+                    '🔳 専用台座を追加する'
+                  )}
+                </button>
+                {baseUrl && (
+                  <a
+                    href={baseUrl}
+                    download={`${work.title}_base.stl`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      justifyContent: 'center',
+                      marginTop: 8,
+                      padding: '10px',
+                      fontSize: '0.85rem',
+                      background: '#F5EDFF',
+                      color: 'var(--color-purple)',
+                      border: '2px solid #DDB3F5',
+                      borderRadius: 'var(--radius-btn)',
+                      textDecoration: 'none',
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Download size={15} /> 台座付きSTLを保存
+                  </a>
+                )}
+              </div>
+            </div>
             )}
 
             {/* 削除ボタン（本人のみ） */}
