@@ -31,21 +31,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS設定（フロントエンドのドメインを許可）
-# Vercel のプレビューデプロイは毎回URLが変わるため allow_origin_regex で一括許可する
-_allowed_origins = [
-    "http://localhost:5173",
-    "https://utinoko.skphooh.com",
-]
-if os.getenv("FRONTEND_URL"):
-    _allowed_origins.append(os.getenv("FRONTEND_URL"))
-
+# CORS設定
+# フロントエンドは Firebase Auth の Bearer トークン（Authorization ヘッダー）で認証するため
+# Cookie ベースの credentials は不要。allow_origins=["*"] で全オリジンを許可する。
+# ※ allow_credentials=True + allow_origin_regex の組み合わせは一部環境でバグがあるため廃止。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
-    # Vercel プレビューURL (https://hack-1-*-skphoohs-projects.vercel.app) を許可
-    allow_origin_regex=r"https://.*\.vercel\.app",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
