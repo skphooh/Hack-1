@@ -3,7 +3,7 @@
 
 import { auth } from './firebase'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 /** 認証トークン付きヘッダーを生成する */
 async function getAuthHeaders(): Promise<HeadersInit> {

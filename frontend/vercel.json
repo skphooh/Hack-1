@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://utinoko.onrender.com/api/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://utinoko.onrender.com/health"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
