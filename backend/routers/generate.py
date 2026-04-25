@@ -97,21 +97,25 @@ async def turnaround_preview(
     file: UploadFile = File(..., description="元画像"),
 ):
     """
-    アップロード画像から GPT-4o + DALL-E 3 でターンアラウンドシートを生成してURLを返す。
+    アップロード画像から gpt-image-1 でターンアラウンドシートを生成してURLを返す。
     認証不要（プレビューはログイン前でも確認できるよう）。
+    gpt-image-1 は b64 を返すため Firebase に保存して永続 URL を返す。
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="画像ファイルを送信してください")
 
     image_bytes = await file.read()
     try:
-        turnaround_url = await generate_turnaround_image(image_bytes)
+        turnaround_bytes = await generate_turnaround_image(image_bytes)
     except ValueError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         print(f"❌ ターンアラウンド生成失敗: {e}", flush=True)
         raise HTTPException(status_code=500, detail=f"ターンアラウンド生成に失敗しました: {e}")
 
+    turnaround_url = await upload_to_storage(
+        turnaround_bytes, f"turnarounds/preview/{uuid.uuid4().hex}.png"
+    )
     return {"turnaround_url": turnaround_url}
 
 
@@ -137,7 +141,7 @@ async def start_generate_turnaround(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"ターンアラウンド画像のダウンロードに失敗: {e}")
 
-    # 3ビューに分割
+    # 4ビューに分割
     views = split_turnaround(turnaround_bytes)
 
     # サムネイル（正面ビュー）を保存
@@ -145,13 +149,9 @@ async def start_generate_turnaround(
         views[0], f"thumbnails/{uid}/{uuid.uuid4().hex}_turnaround.png"
     )
 
-    # ターンアラウンド画像を Firebase Storage に永続保存
-    # ※ DALL-E 3 の URL は数時間で期限切れになるため必ず保存する
-    saved_turnaround_url = await upload_to_storage(
-        turnaround_bytes, f"turnarounds/{uid}/{uuid.uuid4().hex}_sheet.png"
-    )
+    # turnaround_url は preview 時に既に Firebase に保存済みのため再アップロード不要
 
-    # Tripo3D マルチビュー生成
+    # Tripo3D 複数ビュー生成
     try:
         task_id = await generate_3d_tripo_multiview(views)
     except Exception as e:
@@ -163,7 +163,7 @@ async def start_generate_turnaround(
         title=title,
         genre=genre,
         thumbnail_url=thumbnail_url,
-        turnaround_url=saved_turnaround_url,
+        turnaround_url=turnaround_url,
         task_id=task_id,
         status="processing",
     )
