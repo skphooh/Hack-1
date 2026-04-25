@@ -88,7 +88,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 80, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 104, minHeight: '100vh' }}>
       <div className="page-container section">
         {/* ページタイトル */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>

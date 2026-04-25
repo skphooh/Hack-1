@@ -32,7 +32,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 80,
+          paddingTop: 104,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -56,7 +56,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 80,
+          paddingTop: 104,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
