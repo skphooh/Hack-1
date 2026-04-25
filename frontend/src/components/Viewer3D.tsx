@@ -170,6 +170,14 @@ export function Viewer3D({
           <ambientLight intensity={isMarket ? 0.8 : 0.8} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
 
+          {/* ✅ 正面から照らすライトを追加 (顔などを明るくする用) */}
+          {!isMarket && (
+            <directionalLight
+              position={[0, 0, 5]} // 正面(Z=5)、カメラ(Z=3.5)の少し後ろ
+              intensity={0.8}      // 既存のライトより少し弱くして立体感を保つ
+              color="#ffffff"
+            />
+          )}
           {/* オーバーレイ: GLBモード時のみ、Suspense外で同期描画 */}
           {!stlUrl && holeOverlay && <HoleOverlay {...holeOverlay} />}
           {!stlUrl && baseOverlay && <BaseOverlay {...baseOverlay} />}
