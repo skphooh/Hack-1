@@ -1,77 +1,124 @@
 """
-サービス: gpt-image-1 によるターンアラウンドシート生成
-元画像を images.edit に直接渡すことでデザインを忠実に再現する。
-DALL-E 3 (テキスト経由) と異なり、ピクセル情報を参照するため色・衣装・髪型が保持される。
+サービス: Gemini API によるフィギュア複面投影図生成
+元画像を参照して front / right / left / back の4方向を並列生成し、
+横並びシートに合成して返す。3D変換は Tripo3D multiview で行う。
 """
+import asyncio
 import base64
 import io
 import os
 
-import openai
+from google import genai
+from google.genai import types
 from PIL import Image
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+# Gemini 画像生成モデル
+_MODEL = "gemini-2.0-flash-exp-image-generation"
+
+# 生成する4方向（順序は Tripo3D multiview の入力順に合わせる）
+_VIEWS = [
+    "front view",
+    "right side view",
+    "left side view",
+    "back view",
+]
+
+# フィギュア生成プロンプトテンプレート（Google AI Studio で動作確認済みのプロンプトを踏襲）
+_PROMPT_TEMPLATE = (
+    "Create a 1/7 scale commercialized figurine of the character in the picture, "
+    "{view} only, in a realistic style, isolated on a plain white background. "
+    "The figurine has a round transparent acrylic base, with no text on the base. "
+    "Show only the figurine, with no other objects or environment visible."
+)
+
+
+async def _generate_single_view(
+    client: genai.Client,
+    png_bytes: bytes,
+    view: str,
+) -> bytes:
+    """1方向のフィギュア画像を Gemini で生成する"""
+    prompt = _PROMPT_TEMPLATE.format(view=view)
+
+    response = await client.aio.models.generate_content(
+        model=_MODEL,
+        contents=[
+            types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
+            types.Part.from_text(text=prompt),
+        ],
+        config=types.GenerateContentConfig(
+            response_modalities=["image"],
+        ),
+    )
+
+    for part in response.candidates[0].content.parts:
+        if part.inline_data is not None:
+            raw = part.inline_data.data
+            # SDK バージョンによって bytes / base64 文字列の両方がありうる
+            return raw if isinstance(raw, bytes) else base64.b64decode(raw)
+
+    raise ValueError(f"Gemini から {view} の画像が返ってきませんでした")
 
 
 async def generate_turnaround_image(image_bytes: bytes) -> bytes:
     """
-    アップロード画像からキャラクターのターンアラウンドシートを生成する。
-    gpt-image-1 の images.edit に元画像を直接渡すため、
-    テキスト説明経由の DALL-E 3 より色・衣装・髪型が忠実に再現される。
-    Returns: PNG バイト列（1536×1024）
+    元画像から4方向（front/right/left/back）のフィギュア投影図を並列生成し、
+    横並びシートとして返す。
+    Returns: PNG バイト列（4枚横並び）
     """
-    if not OPENAI_API_KEY:
-        raise ValueError(
-            "OPENAI_API_KEY が設定されていません。Render の環境変数に OPENAI_API_KEY を追加してください。"
-        )
+    if not GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY が設定されていません。Render の環境変数に追加してください。")
 
-    client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
-    # PNG + RGBA に変換（JPEG・透過なし PNG にも対応。edit API は RGBA PNG が必要）
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    # 入力画像を PNG に統一
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     png_buf = io.BytesIO()
     img.save(png_buf, format="PNG")
-    png_buf.seek(0)
-    png_buf.name = "character.png"
+    png_bytes = png_buf.getvalue()
 
-    prompt = (
-        "Create a professional 3D character reference turnaround sheet. "
-        "Show exactly FOUR panels in a single horizontal row, "
-        "each clearly labeled below: [FRONT] [SIDE RIGHT] [SIDE LEFT] [BACK]. "
-        "Reproduce THIS EXACT character with perfectly identical: "
-        "hair color and hairstyle, outfit colors and every design detail, "
-        "skin tone, accessories, body proportions, and art style. "
-        "Pure white background. No shadows. Same scale and pose style across all panels."
+    print(f"🎨 Gemini でフィギュア {len(_VIEWS)} ビュー並列生成開始...", flush=True)
+
+    # 4方向を並列生成
+    results = await asyncio.gather(
+        *[_generate_single_view(client, png_bytes, view) for view in _VIEWS],
+        return_exceptions=True,
     )
 
-    resp = await client.images.edit(
-        model="gpt-image-1",
-        image=png_buf,
-        prompt=prompt,
-        n=1,
-        size="1536x1024",
-    )
+    # エラーチェック
+    for i, r in enumerate(results):
+        if isinstance(r, Exception):
+            raise ValueError(f"{_VIEWS[i]} の生成に失敗しました: {r}")
 
-    b64_data = resp.data[0].b64_json
-    if not b64_data:
-        raise ValueError("gpt-image-1 から画像データが返ってきませんでした")
+    view_images = [Image.open(io.BytesIO(b)).convert("RGB") for b in results]
 
-    print("✅ ターンアラウンド生成完了 (gpt-image-1)", flush=True)
-    return base64.b64decode(b64_data)
+    # 全ビューを同じサイズに揃えて横に並べる
+    max_w = max(vi.width for vi in view_images)
+    max_h = max(vi.height for vi in view_images)
+    sheet = Image.new("RGB", (max_w * len(view_images), max_h), (255, 255, 255))
+    for i, vi in enumerate(view_images):
+        vi_resized = vi.resize((max_w, max_h), Image.LANCZOS)
+        sheet.paste(vi_resized, (i * max_w, 0))
+
+    sheet_buf = io.BytesIO()
+    sheet.save(sheet_buf, format="PNG")
+    print("✅ ターンアラウンドシート生成完了 (Gemini)", flush=True)
+    return sheet_buf.getvalue()
 
 
 def split_turnaround(image_bytes: bytes) -> list[bytes]:
     """
-    ターンアラウンドシート（横4ビュー）を正面・右横・左横・後ろの4枚に均等分割する。
-    Returns: [front_bytes, side_r_bytes, side_l_bytes, back_bytes]
+    ターンアラウンドシート（横4ビュー）を4枚に均等分割する。
+    Returns: [front_bytes, right_bytes, left_bytes, back_bytes]
     """
     img = Image.open(io.BytesIO(image_bytes))
     w, h = img.size
-    count = 4
-    segment = w // count
+    segment = w // 4
 
     views = []
-    for i in range(count):
+    for i in range(4):
         view = img.crop((i * segment, 0, min((i + 1) * segment, w), h))
         buf = io.BytesIO()
         view.save(buf, format="PNG")
