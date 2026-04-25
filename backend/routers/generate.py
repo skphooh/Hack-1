@@ -124,15 +124,17 @@ async def start_generate_turnaround(
     turnaround_url: str = Form(..., description="ターンアラウンドシート画像URL"),
     title: str = Form("新しい作品"),
     genre: str = Form(None),
+    original_image: UploadFile = File(None, description="元画像（サムネイル用）"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    ターンアラウンドシートを3ビューに分割し、Tripo3D multiview_to_model で3D生成する。
+    ターンアラウンドシートを4ビューに分割し、Tripo3D multiview_to_model で3D生成する。
+    original_image が渡された場合はそれをサムネイルに使う（元画像を保持するため）。
     """
     user = await get_or_create_user(uid, db)
 
-    # ターンアラウンド画像をダウンロード
+    # ターンアラウンド画像をダウンロードして4分割
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.get(turnaround_url)
@@ -141,13 +143,19 @@ async def start_generate_turnaround(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"ターンアラウンド画像のダウンロードに失敗: {e}")
 
-    # 4ビューに分割
+    # 4ビューに分割（Tripo3D multiview 用）
     views = split_turnaround(turnaround_bytes)
 
-    # サムネイル（正面ビュー）を保存
-    thumbnail_url = await upload_to_storage(
-        views[0], f"thumbnails/{uid}/{uuid.uuid4().hex}_turnaround.png"
-    )
+    # サムネイル: 元画像があればそれを使う、なければ正面ビューで代用
+    if original_image and original_image.filename:
+        original_bytes = await original_image.read()
+        thumbnail_url = await upload_to_storage(
+            original_bytes, f"thumbnails/{uid}/{uuid.uuid4().hex}_original.png"
+        )
+    else:
+        thumbnail_url = await upload_to_storage(
+            views[0], f"thumbnails/{uid}/{uuid.uuid4().hex}_turnaround.png"
+        )
 
     # turnaround_url は preview 時に既に Firebase に保存済みのため再アップロード不要
 
