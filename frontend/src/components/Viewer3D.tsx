@@ -167,7 +167,7 @@ export function Viewer3D({
           camera={{ position: [0, 0, 3.5], fov: 45 }}
           gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}
         >
-          <ambientLight intensity={isMarket ? 0.8 : 0.5} />
+          <ambientLight intensity={isMarket ? 0.8 : 0.8} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
 
           {/* オーバーレイ: GLBモード時のみ、Suspense外で同期描画 */}
