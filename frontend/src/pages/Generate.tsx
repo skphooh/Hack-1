@@ -230,6 +230,11 @@ export default function Generate() {
       const form = new FormData()
       form.append('turnaround_url', turnaroundUrl)
       form.append('title', title || 'うちの子')
+      // 元画像をサムネイルとして送信（ターンアラウンドの分割ビューではなく元画像を保存するため）
+      if (previewUrl) {
+        const originalBlob = await fetch(previewUrl).then(r => r.blob())
+        form.append('original_image', originalBlob, 'original.png')
+      }
       const newWork = await startGenerateTurnaround(form)
       setWork(newWork)
       setStep('generating')
