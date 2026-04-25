@@ -18,7 +18,7 @@ from db.schemas import TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
 from services.mesh import convert_to_stl
 from services.storage import upload_to_storage
-from services.tripo3d import generate_3d_tripo, generate_3d_tripo_multiview, get_tripo_task_status
+from services.tripo3d import generate_3d_tripo, generate_3d_tripo_multiview, get_tripo_task_status, TripoContentPolicyError
 from services.turnaround import generate_turnaround_image, split_turnaround
 
 router = APIRouter()
@@ -73,6 +73,9 @@ async def start_generate(
 
     try:
         task_id = await generate_3d_tripo(image_bytes, quality=quality)
+    except TripoContentPolicyError as e:
+        print(f"⚠️ コンテンツポリシー違反: {e}", flush=True)
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         print(f"❌ 3D生成ジョブ開始失敗: {e}", flush=True)
         raise HTTPException(status_code=500, detail=f"3D生成の開始に失敗しました: {str(e)}")
@@ -162,6 +165,9 @@ async def start_generate_turnaround(
     # Tripo3D 複数ビュー生成
     try:
         task_id = await generate_3d_tripo_multiview(views)
+    except TripoContentPolicyError as e:
+        print(f"⚠️ コンテンツポリシー違反: {e}", flush=True)
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         print(f"❌ ターンアラウンド3D生成失敗: {e}", flush=True)
         raise HTTPException(status_code=500, detail=f"3D生成の開始に失敗しました: {e}")

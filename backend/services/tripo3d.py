@@ -34,6 +34,29 @@ async def _upload_image(client: httpx.AsyncClient, headers: dict, image_bytes: b
         raise ValueError(f"Unexpected upload response: {upload_resp.json()}")
 
 
+class TripoContentPolicyError(Exception):
+    """Tripo3D がコンテンツポリシー違反として画像を拒否した場合に送出する。"""
+
+
+def _raise_tripo_error(resp: httpx.Response) -> None:
+    """Tripo3D のエラーレスポンスを解析して適切な例外を送出する。"""
+    try:
+        body = resp.json()
+        code = body.get("code")
+        message = body.get("message", "")
+        suggestion = body.get("suggestion", "")
+    except Exception:
+        resp.raise_for_status()
+        return
+
+    if code == 2008:
+        raise TripoContentPolicyError(
+            f"この画像は Tripo3D のコンテンツポリシーに違反しているため処理できません。"
+            f"別の画像を試してください。({suggestion})"
+        )
+    resp.raise_for_status()
+
+
 async def generate_3d_tripo(image_bytes: bytes, quality: str = "standard") -> str:
     """
     実写写真をTripo3D APIに送り、task_idを返す。
@@ -61,6 +84,7 @@ async def generate_3d_tripo(image_bytes: bytes, quality: str = "standard") -> st
         print(f"🚀 Task status: {task_resp.status_code}", flush=True)
         if not task_resp.is_success:
             print(f"❌ Task error: {task_resp.text}", flush=True)
+            _raise_tripo_error(task_resp)
         task_resp.raise_for_status()
 
         task_id = task_resp.json()["data"]["task_id"]
@@ -94,7 +118,11 @@ async def generate_3d_tripo_multiview(image_bytes_list: list[bytes]) -> str:
                 task_id = task_resp.json()["data"]["task_id"]
                 print(f"✅ Multiview task started: {task_id}", flush=True)
                 return task_id
+            # コンテンツポリシー違反はフォールバックせずそのまま例外を投げる
+            _raise_tripo_error(task_resp)
             print(f"⚠️ Multiview task failed ({task_resp.status_code}), falling back to single image", flush=True)
+        except TripoContentPolicyError:
+            raise
         except Exception as e:
             print(f"⚠️ Multiview upload failed: {e}, falling back to single image", flush=True)
 
@@ -105,6 +133,8 @@ async def generate_3d_tripo_multiview(image_bytes_list: list[bytes]) -> str:
             headers={**headers, "Content-Type": "application/json"},
             json={"type": "image_to_model", "file": ref},
         )
+        if not task_resp.is_success:
+            _raise_tripo_error(task_resp)
         task_resp.raise_for_status()
         task_id = task_resp.json()["data"]["task_id"]
         print(f"✅ Fallback single-image task started: {task_id}", flush=True)
