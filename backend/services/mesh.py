@@ -12,6 +12,7 @@ from functools import partial
 
 import numpy as np
 import trimesh
+from scipy import ndimage
 
 
 # ── 共通ヘルパー ───────────────────────────────────────────────────────────────
@@ -86,37 +87,47 @@ def _try_boolean_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> t
 def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh.Trimesh:
     """
     ボクセル化してカッターで穴を掘り、メッシュ化して返す。
-    networkx 不要の numpy ベース実装。
+    scipy.ndimage を使った networkx 不要の実装。
     """
     print("🔁 ボクセルベース差分にフォールバック", flush=True)
     extents = mesh.extents
     voxel_size = min(extents) / 50.0
     voxel_size = max(voxel_size, 0.4)  # 最小0.4mm
 
-    # fill() は networkx 依存のため filled() を使用（外部ドエ方式フィル辺め）
-    vox_mesh   = mesh.voxelized(pitch=voxel_size).filled()
-    vox_cutter = cutter.voxelized(pitch=voxel_size).filled()
+    # surface voxels のみ取得し、scipy で内部を flood-fill して solid にする
+    vox_mesh   = mesh.voxelized(pitch=voxel_size)
+    vox_cutter = cutter.voxelized(pitch=voxel_size)
+
+    def _solidify(vg: trimesh.voxel.VoxelGrid) -> np.ndarray:
+        """surface VoxelGrid を scipy で内部充填して solid boolean 配列を返す。"""
+        # binary_fill_holes は穴（空洞）を埋める → 外側が False, 内部が True
+        return ndimage.binary_fill_holes(vg.matrix)
+
+    solid_mesh   = _solidify(vox_mesh)
+    solid_cutter = _solidify(vox_cutter)
 
     # ボクセル差分（numpy操作のみ）
-    vox_result = vox_mesh.matrix.copy()
-    # カッターボクセルのoriginとサイズのミスマッチを安全に処理
+    vox_result = solid_mesh.copy()
     try:
         c_origin = np.round(
             (vox_cutter.origin - vox_mesh.origin) / voxel_size
         ).astype(int)
-        c_shape = vox_cutter.matrix.shape
-        for dz in range(c_shape[0]):
-            for dy in range(c_shape[1]):
-                for dx in range(c_shape[2]):
-                    if not vox_cutter.matrix[dz, dy, dx]:
-                        continue
-                    mz = c_origin[2] + dz
-                    my = c_origin[1] + dy
-                    mx = c_origin[0] + dx
-                    if 0 <= mz < vox_result.shape[0] and \
-                       0 <= my < vox_result.shape[1] and \
-                       0 <= mx < vox_result.shape[2]:
-                        vox_result[mz, my, mx] = False
+        c_shape = solid_cutter.shape
+        # numpy スライスで一括処理（ループより高速）
+        mx_s = max(c_origin[0], 0)
+        my_s = max(c_origin[1], 0)
+        mz_s = max(c_origin[2], 0)
+        cx_s = mx_s - c_origin[0]
+        cy_s = my_s - c_origin[1]
+        cz_s = mz_s - c_origin[2]
+        mx_e = min(c_origin[0] + c_shape[0], vox_result.shape[0])
+        my_e = min(c_origin[1] + c_shape[1], vox_result.shape[1])
+        mz_e = min(c_origin[2] + c_shape[2], vox_result.shape[2])
+        cx_e = cx_s + (mx_e - mx_s)
+        cy_e = cy_s + (my_e - my_s)
+        cz_e = cz_s + (mz_e - mz_s)
+        if mx_e > mx_s and my_e > my_s and mz_e > mz_s:
+            vox_result[mx_s:mx_e, my_s:my_e, mz_s:mz_e] &= ~solid_cutter[cx_s:cx_e, cy_s:cy_e, cz_s:cz_e]
     except Exception as e:
         print(f"⚠️ ボクセル差分計算エラー: {e}", flush=True)
 
@@ -129,40 +140,43 @@ def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh
 def _add_strap_hole_sync(
     file_bytes: bytes,
     extension: str,
-    offset_x_pct: float = 0.0,
+    offset_x_pct: float = 0.0,  # 現在未使用（横貫通のため）
     offset_y_pct: float = 0.0,
     depth_from_top_mm: float = 5.0,
     hole_radius_mm: float = 1.0,
 ) -> bytes:
     """
-    モデルに自由位置でストラップ穴を開ける。
+    モデルに横方向（左右貫通）のストラップ穴を開ける。
 
     Parameters
     ----------
-    offset_x_pct : モデル幅に対するX方向オフセット（-50〜+50 %）
-    offset_y_pct : モデル奥行きに対するY方向オフセット（-50〜+50 %）
-    depth_from_top_mm : 上端からの穴の深さ（mm）
-    hole_radius_mm : 穴の半径（mm）。デフォルト1mm=直径2mm
+    offset_y_pct      : モデル奥行きに対する前後オフセット（-50〜+50 %）
+    depth_from_top_mm : 上端からの穴の高さ位置（mm）
+    hole_radius_mm    : 穴の半径（mm）。デフォルト1mm=直径2mm
     """
     mesh = _load_mesh(file_bytes, extension)
     _repair_mesh(mesh)
 
     bounds = mesh.bounds
-    cx = (bounds[0][0] + bounds[1][0]) / 2
-    cy = (bounds[0][1] + bounds[1][1]) / 2
+    cx    = (bounds[0][0] + bounds[1][0]) / 2
+    cy    = (bounds[0][1] + bounds[1][1]) / 2
     top_z = bounds[1][2]
-    width  = bounds[1][0] - bounds[0][0]
-    depth  = bounds[1][1] - bounds[0][1]
+    depth = bounds[1][1] - bounds[0][1]
+    width = bounds[1][0] - bounds[0][0]
 
-    hx = cx + (offset_x_pct / 100.0) * width
-    hy = cy + (offset_y_pct / 100.0) * depth
-    hz = top_z - depth_from_top_mm  # 穴の中心Z
+    # 穴の中心座標
+    hx = cx                                      # 左右中央（左右貫通なので固定）
+    hy = cy + (offset_y_pct / 100.0) * depth     # 前後位置
+    hz = top_z - depth_from_top_mm               # 上端からの高さ位置
 
-    # 穴シリンダー: モデルの高さより十分大きく貫通させる
-    model_height = bounds[1][2] - bounds[0][2]
-    hole_height  = model_height * 2.0
+    # 穴シリンダー: X軸方向（横向き）に左右貫通
+    hole_length = width * 2.0  # モデル幅の2倍で確実に貫通
     hole = trimesh.creation.cylinder(
-        radius=hole_radius_mm, height=hole_height, sections=48
+        radius=hole_radius_mm, height=hole_length, sections=48
+    )
+    # デフォルトはZ軸方向 → Y軸周りに90度回転してX軸方向にする
+    hole.apply_transform(
+        trimesh.transformations.rotation_matrix(np.pi / 2, [0, 1, 0])
     )
     hole.apply_translation([hx, hy, hz])
 
