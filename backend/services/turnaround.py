@@ -1,5 +1,7 @@
 """
-サービス: GPT-4o + DALL-E 3 によるターンアラウンドシート生成
+サービス: gpt-image-1 によるターンアラウンドシート生成
+元画像を images.edit に直接渡すことでデザインを忠実に再現する。
+DALL-E 3 (テキスト経由) と異なり、ピクセル情報を参照するため色・衣装・髪型が保持される。
 """
 import base64
 import io
@@ -11,11 +13,12 @@ from PIL import Image
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 
-async def generate_turnaround_image(image_bytes: bytes) -> str:
+async def generate_turnaround_image(image_bytes: bytes) -> bytes:
     """
     アップロード画像からキャラクターのターンアラウンドシートを生成する。
-    GPT-4o でキャラクター説明を取得し、DALL-E 3 で正面・横・後ろの3ビューを生成。
-    Returns: DALL-E 3 が返す一時画像URL
+    gpt-image-1 の images.edit に元画像を直接渡すため、
+    テキスト説明経由の DALL-E 3 より色・衣装・髪型が忠実に再現される。
+    Returns: PNG バイト列（1536×1024）
     """
     if not OPENAI_API_KEY:
         raise ValueError(
@@ -23,74 +26,53 @@ async def generate_turnaround_image(image_bytes: bytes) -> str:
         )
 
     client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
-    b64 = base64.b64encode(image_bytes).decode()
 
-    # Step 1: GPT-4o でキャラクター説明を生成（英語で詳細に）
-    analysis = await client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{b64}"},
-                    },
-                    {
-                        "type": "text",
-                        "text": (
-                            "Describe this character for a 3D reference turnaround sheet. "
-                            "Cover: art style (anime/realistic/etc), body proportions, "
-                            "hair (color, length, style), outfit (colors, details), "
-                            "accessories, color palette. Max 80 words. English only."
-                        ),
-                    },
-                ],
-            }
-        ],
-        max_tokens=150,
-    )
-    description = analysis.choices[0].message.content or "anime character"
-    print(f"🎨 ターンアラウンド用キャラ説明: {description[:60]}...", flush=True)
+    # PNG + RGBA に変換（JPEG・透過なし PNG にも対応。edit API は RGBA PNG が必要）
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    png_buf = io.BytesIO()
+    img.save(png_buf, format="PNG")
+    png_buf.seek(0)
+    png_buf.name = "character.png"
 
-    # Step 2: DALL-E 3 でターンアラウンドシートを生成
     prompt = (
-        f"Professional 3D character reference turnaround sheet. "
-        f"Exactly three panels arranged horizontally, clearly labeled: "
-        f"[FRONT] [SIDE RIGHT] [BACK]. "
-        f"Character: {description}. "
-        f"Pure white background. Same character in all panels with identical colors, "
-        f"proportions, and design. Clean anime style. High quality reference art."
+        "Create a professional 3D character reference turnaround sheet. "
+        "Show exactly FOUR panels in a single horizontal row, "
+        "each clearly labeled below: [FRONT] [SIDE RIGHT] [SIDE LEFT] [BACK]. "
+        "Reproduce THIS EXACT character with perfectly identical: "
+        "hair color and hairstyle, outfit colors and every design detail, "
+        "skin tone, accessories, body proportions, and art style. "
+        "Pure white background. No shadows. Same scale and pose style across all panels."
     )
 
-    resp = await client.images.generate(
-        model="dall-e-3",
+    resp = await client.images.edit(
+        model="gpt-image-1",
+        image=png_buf,
         prompt=prompt,
         n=1,
-        size="1792x1024",
-        quality="standard",
-        response_format="url",
+        size="1536x1024",
     )
 
-    url = resp.data[0].url
-    if not url:
-        raise ValueError("DALL-E 3 から画像URLが返ってきませんでした")
-    print(f"✅ ターンアラウンド生成完了", flush=True)
-    return url
+    b64_data = resp.data[0].b64_json
+    if not b64_data:
+        raise ValueError("gpt-image-1 から画像データが返ってきませんでした")
+
+    print("✅ ターンアラウンド生成完了 (gpt-image-1)", flush=True)
+    return base64.b64decode(b64_data)
 
 
 def split_turnaround(image_bytes: bytes) -> list[bytes]:
     """
-    ターンアラウンドシート（横3ビュー）を正面・横・後ろの3枚に均等分割する。
-    Returns: [front_bytes, side_bytes, back_bytes]
+    ターンアラウンドシート（横4ビュー）を正面・右横・左横・後ろの4枚に均等分割する。
+    Returns: [front_bytes, side_r_bytes, side_l_bytes, back_bytes]
     """
     img = Image.open(io.BytesIO(image_bytes))
     w, h = img.size
-    third = w // 3
+    count = 4
+    segment = w // count
 
     views = []
-    for i in range(3):
-        view = img.crop((i * third, 0, min((i + 1) * third, w), h))
+    for i in range(count):
+        view = img.crop((i * segment, 0, min((i + 1) * segment, w), h))
         buf = io.BytesIO()
         view.save(buf, format="PNG")
         views.append(buf.getvalue())
