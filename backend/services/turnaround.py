@@ -15,7 +15,7 @@ from PIL import Image
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Gemini 画像生成モデル
-_MODEL = "gemini-2.0-flash-exp-image-generation"
+_MODEL = "gemini-2.5-flash"
 
 # 生成する4方向（順序は Tripo3D multiview の入力順に合わせる）
 _VIEWS = [
