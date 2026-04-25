@@ -168,7 +168,7 @@ export function Viewer3D({
           gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}
         >
           <ambientLight intensity={isMarket ? 0.8 : 0.8} />
-          <directionalLight position={[5, 5, 5]} intensity={1} />
+          <directionalLight position={[5, 5, 5]} intensity={1.5} />
 
           {/* ✅ 正面から照らすライトを追加 (顔などを明るくする用) */}
           {!isMarket && (
