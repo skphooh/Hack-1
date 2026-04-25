@@ -759,26 +759,9 @@ export default function Generate() {
                 <Viewer3D
                   glbUrl={taskStatus.glb_url}
                   stlUrl={showStl && stlViewUrl ? stlViewUrl : undefined}
-                  holeOverlay={!showStl ? {
-                    offsetX: holeOffsetX, offsetY: holeOffsetY,
-                    depthMm: holeDepthMm, radiusMm: holeRadiusMm,
-                  } : undefined}
-                  baseOverlay={!showStl ? {
-                    heightMm: baseHeightMm, marginPct: baseMarginPct,
-                  } : undefined}
                   height={350}
                 />
 
-                {/* オーバーレイ凡例 */}
-                {!showStl && (
-                  <div style={{
-                    padding: '6px 16px', display: 'flex', gap: 16,
-                    fontSize: '0.68rem', color: 'var(--color-text-muted)',
-                  }}>
-                    <span>🔴 ストラップ穴の位置</span>
-                    <span>🟣 台座のサイズ</span>
-                  </div>
-                )}
                 {taskStatus.stl_url && (
                   <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {/* STL + 印刷ボタン */}
