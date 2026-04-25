@@ -97,9 +97,9 @@ async def turnaround_preview(
     file: UploadFile = File(..., description="元画像"),
 ):
     """
-    アップロード画像から gpt-image-1 でターンアラウンドシートを生成してURLを返す。
+    アップロード画像から Gemini でフィギュア4方向ビューを生成してURLを返す。
     認証不要（プレビューはログイン前でも確認できるよう）。
-    gpt-image-1 は b64 を返すため Firebase に保存して永続 URL を返す。
+    生成画像は Firebase に保存して永続 URL を返す。
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="画像ファイルを送信してください")

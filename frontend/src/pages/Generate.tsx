@@ -549,7 +549,7 @@ export default function Generate() {
                     : '🌟 高品質（ターンアラウンド）で生成'}
                 </button>
                 <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-                  ターンアラウンド: GPT-4oで正面・横・後ろを生成してからTripo3Dに送ります（+GPT費用）
+                  ターンアラウンド: Geminiでフィギュア4方向（正面・左右・後ろ）を生成してからTripo3Dに送ります
                 </p>
               </div>
             )}
