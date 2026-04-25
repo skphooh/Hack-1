@@ -271,12 +271,12 @@ export default function Top() {
                   transition: 'all 0.25s ease',
                 }}
                 onMouseEnter={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
+                  ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
+                    ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
                 }}
                 onMouseLeave={(e) => {
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                  ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+                  ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+                    ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
                 }}
               >
                 <p style={{ fontSize: '2.2rem', marginBottom: 10 }}>{emoji}</p>
@@ -332,14 +332,14 @@ export default function Top() {
                     overflow: 'hidden',
                   }}
                   onMouseEnter={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-                    ;(e.currentTarget as HTMLElement).style.borderColor = card.tagBorder
+                    ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'
+                      ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
+                      ; (e.currentTarget as HTMLElement).style.borderColor = card.tagBorder
                   }}
                   onMouseLeave={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
-                    ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-                    ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
+                    ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
+                      ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+                      ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
                   }}
                 >
                   {/* 背景デコサークル */}
@@ -449,12 +449,12 @@ export default function Top() {
             src={logo03Img}
             alt="うちの子製作所"
             style={{
-              height: 32,
+              height: 64,
               width: 'auto',
             }}
           />
         </div>
-        <p>Hack-1 グランプリ 2026「小さくなる日本」</p>
+        <p>Hack-1 グランプリ 2026</p>
       </footer>
 
       <style>{`
