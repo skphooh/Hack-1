@@ -1,13 +1,10 @@
-// ナビゲーションバーコンポーネント（ポップ・かわいいデザイン）
 import { Link, useLocation } from 'react-router-dom'
 import { LogIn, LogOut, User } from 'lucide-react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
-
 import logoImg from '../assets/logo02.png'
 
-/** ナビゲーションリンク定義 */
 const NAV_LINKS = [
   { path: '/', label: '🏠 ホーム' },
   { path: '/generate', label: '✨ 3Dにする！' },
@@ -31,47 +28,96 @@ export function Navbar() {
   }
 
   return (
-    <nav
+    <header
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '12px 32px',
-        background: 'rgba(255, 255, 255, 0.88)',
+        background: 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '2px solid #FFDCEC',
         boxShadow: '0 2px 16px rgba(255, 107, 157, 0.1)',
       }}
     >
-      {/* ロゴ */}
-      <Link
-        to="/"
+      {/* 1段目: ロゴ + 認証エリア */}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 10,
-          textDecoration: 'none',
+          justifyContent: 'space-between',
+          padding: '10px 32px',
+          borderBottom: '1px solid #FFEDF4',
         }}
       >
-        <img
-          src={logoImg}
-          alt="うちの子製作所 ロゴ"
-          style={{
-            height: 40,
-            width: 'auto',
-            objectFit: 'contain',
-          }}
-        />
-      </Link>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <img
+            src={logoImg}
+            alt="うちの子製作所 ロゴ"
+            style={{ height: 52, width: 'auto', objectFit: 'contain' }}
+          />
+        </Link>
 
-      {/* ナビリンク */}
-      <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {user ? (
+            <>
+              <Link
+                to="/mypage"
+                id="mypage-link"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 100,
+                  textDecoration: 'none',
+                  color: 'var(--color-text-sub)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  background: '#F5EDFF',
+                  border: '1.5px solid #DDB3F5',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <User size={14} />
+                {user.displayName?.split(' ')[0] ?? 'マイページ'}
+              </Link>
+              <button
+                id="logout-btn"
+                onClick={handleLogout}
+                className="btn-outline"
+                style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+              >
+                <LogOut size={13} />
+                ログアウト
+              </button>
+            </>
+          ) : (
+            <button
+              id="login-btn"
+              onClick={handleLogin}
+              className="btn-primary"
+              style={{ padding: '8px 20px', fontSize: '0.88rem' }}
+            >
+              <LogIn size={15} />
+              Googleでログイン
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 2段目: 主要ナビゲーション導線 */}
+      <nav
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 4,
+          padding: '6px 32px',
+        }}
+      >
         {NAV_LINKS.map(({ path, label }) => {
           const isActive = location.pathname === path
           return (
@@ -79,10 +125,10 @@ export function Navbar() {
               key={path}
               to={path}
               style={{
-                padding: '8px 18px',
+                padding: '6px 22px',
                 borderRadius: 100,
                 textDecoration: 'none',
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? 'var(--color-pink)' : 'var(--color-text-sub)',
                 background: isActive ? '#FFEDF4' : 'transparent',
@@ -94,50 +140,7 @@ export function Navbar() {
             </Link>
           )
         })}
-      </div>
-
-      {/* 認証ボタン */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        {user ? (
-          <>
-            <Link
-              to="/mypage"
-              id="mypage-link"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '8px 16px',
-                borderRadius: 100,
-                textDecoration: 'none',
-                color: 'var(--color-text-sub)',
-                fontSize: '0.88rem',
-                fontWeight: 600,
-                background: '#F5EDFF',
-                border: '1.5px solid #DDB3F5',
-                transition: 'all 0.2s',
-              }}
-            >
-              <User size={15} />
-              {user.displayName?.split(' ')[0] ?? 'マイページ'}
-            </Link>
-            <button
-              id="logout-btn"
-              onClick={handleLogout}
-              className="btn-outline"
-              style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-            >
-              <LogOut size={14} />
-              ログアウト
-            </button>
-          </>
-        ) : (
-          <button id="login-btn" onClick={handleLogin} className="btn-primary" style={{ padding: '10px 22px' }}>
-            <LogIn size={16} />
-            Googleでログイン
-          </button>
-        )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }
