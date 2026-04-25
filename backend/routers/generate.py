@@ -1,14 +1,18 @@
 """
 ルーター: 3D生成ジョブ（/api/generate, /api/task/{task_id}, /api/generate/turnaround）
+
+設計方針:
+  - GLB保存完了直後に status=done をコミット → マーケットに即反映
+  - STL変換は BackgroundTasks で非同期実行 → 失敗してもGLBには影響なし
 """
 import uuid
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
+from db.database import get_db, AsyncSessionLocal
 from db.models import Work
 from db.schemas import TaskStatusResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
@@ -19,6 +23,32 @@ from services.turnaround import generate_turnaround_image, split_turnaround
 
 router = APIRouter()
 
+
+# ── バックグラウンド: STL変換（失敗してもGLB/doneには影響しない） ─────────────
+
+async def _convert_and_save_stl(work_id: int, glb_bytes: bytes, user_id: int, task_id: str) -> None:
+    """
+    GLBをSTLに変換してFirebaseに保存し、DBを更新する。
+    BackgroundTasks で呼ばれるため、失敗しても生成結果(GLB・done)に影響しない。
+    """
+    async with AsyncSessionLocal() as db:
+        try:
+            print(f"🔧 バックグラウンドSTL変換開始: {task_id}", flush=True)
+            stl_bytes = await convert_to_stl(glb_bytes, "glb")
+            firebase_stl_url = await upload_to_storage(
+                stl_bytes, f"stl/{user_id}/{task_id}.stl"
+            )
+            result = await db.execute(select(Work).where(Work.id == work_id))
+            work = result.scalar_one_or_none()
+            if work:
+                work.stl_url = firebase_stl_url
+                await db.commit()
+                print(f"✅ STL保存完了 (Firebase): {task_id}", flush=True)
+        except Exception as stl_err:
+            print(f"⚠️ バックグラウンドSTL変換失敗（GLBは保存済み）: {stl_err}", flush=True)
+
+
+# ── エンドポイント ─────────────────────────────────────────────────────────────
 
 @router.post("/generate", response_model=WorkResponse)
 async def start_generate(
@@ -147,17 +177,22 @@ async def start_generate_turnaround(
 @router.get("/task/{task_id}", response_model=TaskStatusResponse)
 async def get_task_status(
     task_id: str,
+    background_tasks: BackgroundTasks,
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
     """
     ジョブのステータスをポーリングする（フロントは3秒ごとに呼ぶ）。
+
+    GLB保存完了と同時に status=done をコミットしてマーケットに即反映する。
+    STL変換は BackgroundTasks で非同期実行し、失敗しても作品には影響しない。
     """
     result = await db.execute(select(Work).where(Work.task_id == task_id))
     work = result.scalar_one_or_none()
     if not work:
         raise HTTPException(status_code=404, detail="タスクが見つかりません")
 
+    # すでに完了・失敗済みならTripo3D APIを叩かない
     if work.status in ("done", "failed"):
         return TaskStatusResponse(
             task_id=task_id,
@@ -172,36 +207,38 @@ async def get_task_status(
         tripo_data = await get_tripo_task_status(task_id)
         progress = tripo_data.get("progress", 0)
         new_status = tripo_data.get("status", "processing")
+        glb_url_from_tripo = tripo_data.get("glb_url")
 
-        if new_status != work.status or tripo_data.get("glb_url"):
-            work.status = new_status
+        if glb_url_from_tripo and not work.glb_url:
+            # ─── ① GLBをダウンロードしてFirebaseに保存 ────────────────────
+            print(f"🔄 GLBダウンロード中: {glb_url_from_tripo}", flush=True)
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                glb_resp = await client.get(glb_url_from_tripo)
+                glb_resp.raise_for_status()
+                glb_bytes = glb_resp.content
 
-            if tripo_data.get("glb_url"):
-                raw_glb_url = tripo_data["glb_url"]
-                print(f"🔄 downloading {raw_glb_url} to firebase...", flush=True)
+            firebase_glb_url = await upload_to_storage(
+                glb_bytes, f"models/{work.user_id}/{task_id}.glb"
+            )
+            work.glb_url = firebase_glb_url
+            print(f"✅ GLB保存完了 (Firebase): {task_id}", flush=True)
 
-                async with httpx.AsyncClient(timeout=120.0) as client:
-                    glb_resp = await client.get(raw_glb_url)
-                    glb_resp.raise_for_status()
-                    glb_bytes = glb_resp.content
+            # ─── ② GLB保存直後に status=done でコミット（マーケット即反映） ─
+            # STL変換が重くてクラッシュしても、ここですでにDBが確定している
+            work.status = "done"
+            await db.commit()
+            await db.refresh(work)
+            print(f"✅ status=done コミット済み（マーケット反映）: {task_id}", flush=True)
 
-                firebase_glb_url = await upload_to_storage(
-                    glb_bytes, f"models/{work.user_id}/{task_id}.glb"
-                )
-                work.glb_url = firebase_glb_url
-                print(f"✅ GLB保存完了 (Firebase): {task_id}", flush=True)
+            # ─── ③ STL変換はバックグラウンドで実行（失敗してもdoneは保持） ─
+            background_tasks.add_task(
+                _convert_and_save_stl,
+                work.id, glb_bytes, work.user_id, task_id
+            )
 
-                try:
-                    print(f"🔧 GLB→STL変換中: {task_id}", flush=True)
-                    stl_bytes = await convert_to_stl(glb_bytes, "glb")
-                    firebase_stl_url = await upload_to_storage(
-                        stl_bytes, f"stl/{work.user_id}/{task_id}.stl"
-                    )
-                    work.stl_url = firebase_stl_url
-                    print(f"✅ STL保存完了 (Firebase): {task_id}", flush=True)
-                except Exception as stl_err:
-                    print(f"⚠️ STL変換失敗（GLBは保存済み）: {stl_err}", flush=True)
-
+        elif new_status == "failed" and work.status != "failed":
+            # Tripo3D側でfailed になった場合
+            work.status = "failed"
             await db.commit()
             await db.refresh(work)
 
