@@ -56,7 +56,6 @@ export default function Generate() {
   const [showStl, setShowStl] = useState(false)
 
   // ストラップ穴パラメータ
-  const [holeOffsetX,  setHoleOffsetX]  = useState(0)
   const [holeOffsetY,  setHoleOffsetY]  = useState(0)
   const [holeDepthMm,  setHoleDepthMm]  = useState(5)
   const [holeRadiusMm, setHoleRadiusMm] = useState(1.0)
@@ -156,7 +155,7 @@ export default function Generate() {
     if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
       const blobUrl = await addStrapHole(work.id, {
-        offset_x:  holeOffsetX,
+        offset_x:  0,
         offset_y:  holeOffsetY,
         depth_mm:  holeDepthMm,
         radius_mm: holeRadiusMm,
@@ -174,7 +173,7 @@ export default function Generate() {
     } finally {
       setPostProcessing(null)
     }
-  }, [work, strapBlobUrl, holeOffsetX, holeOffsetY, holeDepthMm, holeRadiusMm, title])
+  }, [work, strapBlobUrl, holeOffsetY, holeDepthMm, holeRadiusMm, title])
 
   /** 台座追加 */
   const handleAddBase = useCallback(async () => {
@@ -823,13 +822,12 @@ export default function Generate() {
                         }}
                       >
                         <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 10 }}>
-                          🔗 ストラップ穴の位置を指定
+                          🔗 ストラップ穴（横向き・左右貫通）
                         </p>
                         {[
-                          { label: 'X方向 (左↔右)',    value: holeOffsetX,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetX },
-                          { label: 'Y方向 (前↔奥)',    value: holeOffsetY,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetY },
-                          { label: '深さ（上端から）', value: holeDepthMm,  min: 1,   max: 20, step: 0.5,  unit: 'mm', setter: setHoleDepthMm },
-                          { label: '穴の半径',          value: holeRadiusMm, min: 0.5, max: 3,  step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                          { label: '前後位置 (前↔奥)', value: holeOffsetY,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetY },
+                          { label: '高さ（上端から）',  value: holeDepthMm,  min: 1,   max: 20, step: 0.5,  unit: 'mm', setter: setHoleDepthMm },
+                          { label: '穴の半径',           value: holeRadiusMm, min: 0.5, max: 3,  step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
                         ].map(({ label, value, min, max, step, unit, setter }) => (
                           <div key={label} style={{ marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
