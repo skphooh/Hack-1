@@ -214,7 +214,7 @@ export default function Generate() {
       setTurnaroundUrl(res.turnaround_url)
       setTurnaroundConfirming(true)
     } catch (e) {
-      alert('ターンアラウンド生成に失敗しました。OPENAI_API_KEY が設定されているか確認してください。')
+      alert('ターンアラウンド生成に失敗しました。しばらく待ってから再試行してください。')
       console.error(e)
     } finally {
       setTurnaroundLoading(false)
