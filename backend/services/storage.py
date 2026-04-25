@@ -30,9 +30,8 @@ async def upload_to_storage(file_bytes: bytes, path: str) -> str:
         blob.make_public()
         return blob.public_url
     except Exception as e:
-        print(f"⚠️ Storage アップロード失敗: {e}", flush=True)
-        # アップロード失敗してもサービス全体を落とさない
-        return f"https://mock-storage.example.com/{path}"
+        print(f"❌ Storage アップロード失敗: {e}", flush=True)
+        raise RuntimeError(f"Firebase Storage へのアップロードに失敗しました: {e}")
 
 import httpx
 
