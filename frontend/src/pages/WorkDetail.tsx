@@ -154,7 +154,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 80,
+          paddingTop: 104,
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -178,7 +178,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 80,
+          paddingTop: 104,
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
