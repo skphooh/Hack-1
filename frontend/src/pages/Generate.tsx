@@ -14,7 +14,6 @@ import { useAuthState } from '../components/useAuthState'
 /** ステップインジケーターのラベルと絵文字 */
 const STEPS = [
   { label: '画像を選んでね', emoji: '🖼️' },
-  { label: 'プレビュー確認', emoji: '👀' },
   { label: '3D生成中…', emoji: '⚙️' },
   { label: 'できた！', emoji: '🎉' },
 ]
@@ -262,135 +261,78 @@ export default function Generate() {
   }, [user, turnaroundUrl, title, setStep, setWork, setTaskStatus, setError])
 
   const currentStepIndex = {
-    idle: 0, depth_preview: 1, uploading: 2, generating: 2, done: 3, error: 0,
+    idle: 0, depth_preview: 0, uploading: 1, generating: 1, done: 2, error: 0,
   }[step] ?? 0
 
   return (
-    <main style={{ paddingTop: 104, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 132, minHeight: '100vh' }}>
       <div className="page-container section">
-        {/* ページタイトル */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 20px',
-              background: '#FFEDF4',
-              border: '2px solid var(--color-pink-light)',
-              borderRadius: 100,
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              color: 'var(--color-pink)',
-              marginBottom: 16,
-            }}
-          >
-            🎨 3D生成ページ
-          </div>
-          <h1
-            style={{
-              fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-              fontWeight: 900,
-              marginBottom: 12,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--color-text)',
-            }}
-          >
-            <span className="gradient-text">うちの子</span>を3Dにする✨
-          </h1>
-          <p style={{ color: 'var(--color-text-sub)', fontWeight: 500 }}>
-            写真またはイラストを1枚アップするだけで、STLデータが生成されます！
-          </p>
-        </div>
-
         {/* ステップインジケーター */}
         <div
           style={{
             display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
             gap: 0,
             marginBottom: 48,
-            overflowX: 'auto',
-            padding: '0 8px',
+            flexWrap: 'nowrap',
           }}
         >
           {STEPS.map(({ label, emoji }, i) => {
-            const isActive = i <= currentStepIndex
+            const isDone = i < currentStepIndex
             const isCurrent = i === currentStepIndex
             return (
-              <div
-                key={label}
-                style={{ display: 'flex', alignItems: 'center' }}
-              >
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    minWidth: 88,
-                  }}
-                >
-                  {/* ステップ丸 */}
-                  <div
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: isActive
-                        ? 'var(--color-pink)'
-                        : 'white',
-                      border: `2.5px solid ${isActive ? 'var(--color-pink)' : 'var(--color-border)'}`,
-                      fontSize: isActive ? '1.1rem' : '0.9rem',
-                      boxShadow: isCurrent
-                        ? '0 0 0 6px rgba(255, 107, 157, 0.2)'
-                        : 'none',
-                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      transform: isCurrent ? 'scale(1.12)' : 'scale(1)',
-                    }}
-                  >
-                    {isActive ? emoji : (
-                      <span
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 800,
-                          color: 'var(--color-text-muted)',
-                        }}
-                      >
-                        {i + 1}
-                      </span>
-                    )}
-                  </div>
-                  {/* ラベル */}
+              <div key={label} style={{ display: 'flex', alignItems: 'center' }}>
+                {/* 番号上・バッジ下 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                  {/* 番号 */}
                   <span
                     style={{
-                      fontSize: '0.72rem',
-                      marginTop: 6,
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? 'var(--color-pink)' : 'var(--color-text-muted)',
-                      whiteSpace: 'nowrap',
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      color: isCurrent ? 'var(--color-pink)' : isDone ? 'var(--color-purple)' : '#ccc',
+                      transition: 'color 0.3s',
                     }}
                   >
-                    {label}
+                    {isDone ? '✓' : i + 1}
                   </span>
-                </div>
-                {/* コネクターライン */}
-                {i < STEPS.length - 1 && (
+                  {/* バッジ */}
                   <div
                     style={{
-                      width: 36,
-                      height: 3,
-                      background:
-                        i < currentStepIndex
-                          ? 'var(--color-pink)'
-                          : 'var(--color-border)',
-                      marginBottom: 22,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '7px 16px',
                       borderRadius: 100,
-                      transition: 'background 0.3s',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.3s ease',
+                      ...(isCurrent
+                        ? { background: 'var(--color-pink)', color: 'white', boxShadow: '0 4px 14px rgba(107,159,255,0.35)' }
+                        : isDone
+                        ? { background: '#EDF2FF', color: 'var(--color-pink)', border: 'none' }
+                        : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
                     }}
-                  />
+                  >
+                    {emoji} {label}
+                  </div>
+                </div>
+                {/* 接続線（バッジに揃える） */}
+                {i < STEPS.length - 1 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+                    <span style={{ fontSize: '1rem', visibility: 'hidden', lineHeight: 1 }}>0</span>
+                    <div
+                      style={{
+                        width: 40,
+                        height: 2,
+                        borderRadius: 100,
+                        background: i < currentStepIndex ? 'var(--color-pink)' : '#ddd',
+                        transition: 'background 0.3s',
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             )
@@ -430,22 +372,19 @@ export default function Generate() {
               </div>
             )}
 
+            {/* ドロップゾーン */}
+            {(step === 'idle' || step === 'depth_preview') && (
+              <Dropzone onFile={handleFile} disabled={!user} />
+            )}
+
             {/* タイトル入力 */}
-            <div
-              style={{
-                background: 'white',
-                border: '2px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: '18px 20px',
-                boxShadow: 'var(--shadow-card)',
-              }}
-            >
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: 'var(--nm-bg)' }}>
               <label
                 htmlFor="work-title"
                 style={{
                   display: 'block',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
+                  fontSize: '1rem',
                   marginBottom: 10,
                   color: 'var(--color-text-sub)',
                   textTransform: 'uppercase',
@@ -463,8 +402,9 @@ export default function Generate() {
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  background: '#FFF9FB',
-                  border: '2px solid var(--color-border)',
+                  background: '#ffffff',
+                  border: '1.5px solid #d0d8e8',
+                  boxShadow: 'none',
                   borderRadius: 'var(--radius-btn)',
                   color: 'var(--color-text)',
                   fontSize: '0.95rem',
@@ -479,17 +419,9 @@ export default function Generate() {
             </div>
 
             {/* 品質オプション */}
-            <div
-              style={{
-                background: 'white',
-                border: '2px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                padding: '18px 20px',
-                boxShadow: 'var(--shadow-card)',
-              }}
-            >
-              <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                ⚙️ テクスチャ品質
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: 'var(--nm-bg)' }}>
+              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                ⚙️ 品質
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 {(['standard', 'high'] as const).map((q) => {
@@ -501,8 +433,9 @@ export default function Generate() {
                       style={{
                         flex: 1, padding: '10px 12px',
                         borderRadius: 'var(--radius-btn)',
-                        border: `2.5px solid ${selected ? 'var(--color-pink)' : 'var(--color-border)'}`,
-                        background: selected ? '#FFEDF4' : 'white',
+                        border: `1.5px solid ${selected ? 'var(--color-pink-light)' : '#d0d8e8'}`,
+                        background: 'var(--nm-bg)',
+                        boxShadow: selected ? 'var(--nm-inset)' : 'var(--nm-raised-sm)',
                         color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
                         fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
                         transition: 'all 0.2s ease',
@@ -521,9 +454,34 @@ export default function Generate() {
               )}
             </div>
 
-            {/* ドロップゾーン */}
-            {(step === 'idle' || step === 'depth_preview') && (
-              <Dropzone onFile={handleFile} disabled={!user} />
+            {/* ダミーボタン（画像未選択時） */}
+            {step === 'idle' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '100%', padding: '16px',
+                    background: '#D1D5DB', color: '#888',
+                    border: 'none', borderRadius: 'var(--radius-btn)',
+                    fontSize: '1.05rem', fontWeight: 700,
+                    cursor: 'not-allowed', userSelect: 'none',
+                  }}
+                >
+                  ✨ 3Dにする！
+                </div>
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '100%', padding: '14px',
+                    background: '#E5E7EB', color: '#888',
+                    border: '2px solid #D1D5DB', borderRadius: 'var(--radius-btn)',
+                    fontSize: '0.9rem', fontWeight: 700,
+                    cursor: 'not-allowed', userSelect: 'none',
+                  }}
+                >
+                  🌟 土台を付けて生成
+                </div>
+              </div>
             )}
 
             {/* 生成スタートボタン群 */}
@@ -542,8 +500,8 @@ export default function Generate() {
                   disabled={turnaroundLoading}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                    padding: '14px', background: 'white', color: 'var(--color-purple)',
-                    border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)',
+                    padding: '14px', background: 'var(--nm-bg)', color: 'var(--color-purple)',
+                    border: 'none', borderRadius: 'var(--radius-btn)',
                     cursor: turnaroundLoading ? 'not-allowed' : 'pointer',
                     fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-base)',
                     opacity: turnaroundLoading ? 0.6 : 1, width: '100%',
@@ -551,7 +509,7 @@ export default function Generate() {
                 >
                   {turnaroundLoading
                     ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> ターンアラウンド生成中…</>
-                    : '🌟 高品質（ターンアラウンド）で生成'}
+                    : '🌟 土台を付けて生成'}
                 </button>
                 <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
                   ターンアラウンド: Geminiでフィギュア4方向（正面・左右・後ろ）を生成してからTripo3Dに送ります
@@ -561,7 +519,7 @@ export default function Generate() {
 
             {/* ターンアラウンド確認UI */}
             {turnaroundConfirming && turnaroundUrl && (
-              <div style={{ background: 'white', border: '2px solid #DDB3F5', borderRadius: 'var(--radius-md)', padding: 16, boxShadow: 'var(--shadow-card)' }}>
+              <div style={{ background: 'var(--nm-bg)', border: 'none', borderRadius: 'var(--radius-md)', padding: 16, boxShadow: 'var(--shadow-card)' }}>
                 <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10, color: 'var(--color-purple)' }}>
                   🌟 ターンアラウンドプレビュー（確認してください）
                 </p>
@@ -614,8 +572,8 @@ export default function Generate() {
             {previewUrl && step !== 'done' && (
               <div
                 style={{
-                  background: 'white',
-                  border: '2px solid var(--color-border)',
+                  background: 'var(--nm-bg)',
+                  border: 'none', boxShadow: 'var(--shadow-card)',
                   borderRadius: 'var(--radius-lg)',
                   padding: 16,
                   boxShadow: 'var(--shadow-card)',
@@ -636,7 +594,7 @@ export default function Generate() {
             {(step === 'uploading' || step === 'generating') && (
               <div
                 style={{
-                  background: 'white',
+                  background: 'var(--nm-bg)',
                   border: '2.5px solid var(--color-pink-light)',
                   borderRadius: 'var(--radius-lg)',
                   padding: '48px 32px',
@@ -705,8 +663,8 @@ export default function Generate() {
             {step === 'done' && taskStatus?.glb_url && (
               <div
                 style={{
-                  background: 'white',
-                  border: '2.5px solid #90D4A4',
+                  background: 'var(--nm-bg)',
+                  border: 'none',
                   borderRadius: 'var(--radius-lg)',
                   overflow: 'hidden',
                   boxShadow: '0 8px 32px rgba(40, 167, 69, 0.15)',
@@ -783,8 +741,8 @@ export default function Generate() {
                         onClick={() => alert('印刷機能は近日公開予定です！')}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 6, padding: '14px 16px',
-                          background: 'white', color: 'var(--color-text-sub)',
-                          border: '2px solid var(--color-border)', borderRadius: 'var(--radius-btn)',
+                          background: 'var(--nm-bg)', color: 'var(--color-text-sub)',
+                          border: 'none', boxShadow: 'var(--shadow-card)', borderRadius: 'var(--radius-btn)',
                           cursor: 'pointer', fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-base)',
                           whiteSpace: 'nowrap',
                         }}
@@ -800,8 +758,8 @@ export default function Generate() {
                         onClick={handleDownloadGlb}
                         style={{
                           display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                          padding: '12px', background: 'white', color: 'var(--color-purple)',
-                          border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)',
+                          padding: '12px', background: 'var(--nm-bg)', color: 'var(--color-purple)',
+                          border: 'none', borderRadius: 'var(--radius-btn)',
                           cursor: 'pointer', fontSize: '0.9rem', fontWeight: 700,
                           fontFamily: 'var(--font-base)', width: '100%',
                         }}
@@ -822,7 +780,7 @@ export default function Generate() {
                       {/* ストラップ穴 */}
                       <div
                         style={{
-                          background: '#FFF9FB', border: '1.5px solid var(--color-pink-light)',
+                          background: 'var(--nm-bg)', border: 'none',
                           borderRadius: 'var(--radius-md)', padding: '12px 14px', marginBottom: 10,
                         }}
                       >
@@ -867,7 +825,7 @@ export default function Generate() {
                               display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
                               marginTop: 6, padding: '8px', fontSize: '0.78rem',
                               background: '#E8FFF4', color: '#22863a',
-                              border: '2px solid #90D4A4', borderRadius: 'var(--radius-btn)',
+                              border: 'none', borderRadius: 'var(--radius-btn)',
                               textDecoration: 'none', fontWeight: 700,
                             }}
                           >
@@ -879,7 +837,7 @@ export default function Generate() {
                       {/* 台座追加 */}
                       <div
                         style={{
-                          background: '#F9F5FF', border: '1.5px solid #DDB3F5',
+                          background: '#F9F5FF', border: 'none',
                           borderRadius: 'var(--radius-md)', padding: '12px 14px',
                         }}
                       >
@@ -923,7 +881,7 @@ export default function Generate() {
                               display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
                               marginTop: 6, padding: '8px', fontSize: '0.78rem',
                               background: '#F5EDFF', color: 'var(--color-purple)',
-                              border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)',
+                              border: 'none', borderRadius: 'var(--radius-btn)',
                               textDecoration: 'none', fontWeight: 700,
                             }}
                           >
@@ -941,8 +899,8 @@ export default function Generate() {
             {step === 'error' && (
               <div
                 style={{
-                  background: 'white',
-                  border: '2px solid #FFAAAA',
+                  background: 'var(--nm-bg)',
+                  border: 'none',
                   borderRadius: 'var(--radius-lg)',
                   padding: '40px 32px',
                   textAlign: 'center',

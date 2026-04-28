@@ -159,7 +159,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 104,
+          paddingTop: 132,
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -183,7 +183,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 104,
+          paddingTop: 132,
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
@@ -214,7 +214,7 @@ export default function WorkDetail() {
   }
 
   return (
-    <main style={{ paddingTop: 80, minHeight: '100vh', paddingBottom: 60 }}>
+    <main style={{ paddingTop: 132, minHeight: '100vh', paddingBottom: 60 }}>
       <div className="page-container section">
         {/* 戻るボタン */}
         <button

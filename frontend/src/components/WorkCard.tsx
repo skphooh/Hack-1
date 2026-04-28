@@ -49,8 +49,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       id={`work-card-${work.id}`}
       onClick={onClick}
       style={{
-        background: 'white',
-        border: '2px solid var(--color-border)',
+        background: 'var(--nm-bg)',
+        border: 'none',
         borderRadius: 'var(--radius-lg)',
         overflow: 'hidden',
         cursor: onClick ? 'pointer' : 'default',
@@ -61,13 +61,11 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         setIsHovered(true)
           ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
           ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-          ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-pink-light)'
       }}
       onMouseLeave={(e) => {
         setIsHovered(false)
           ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
           ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-          ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
       }}
     >
       {/* 3Dモデル または プレースホルダー */}
@@ -75,7 +73,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         style={{
           position: 'relative',
           height: '200px',
-          background: 'linear-gradient(135deg, #FFF0F6 0%, #F5EDFF 100%)',
+          background: 'var(--nm-bg)',
           overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
