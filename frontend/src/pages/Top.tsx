@@ -8,7 +8,6 @@ import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, type WorkResponse } from '../lib/api'
 import logo02Img from '../assets/logo02.png'
 import logo03Img from '../assets/logo03.png'
-import heroImg from '../assets/hero.png'
 
 const FLOW_CARDS = [
   {
