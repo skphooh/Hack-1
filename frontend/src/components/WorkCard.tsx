@@ -28,18 +28,20 @@ const GENRE_LABELS: Record<string, string> = {
 
 /** ジャンルごとの色 */
 const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }> = {
-  figure:   { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
-  anime:    { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
-  cosplay:  { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
+  figure: { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
+  anime: { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
+  cosplay: { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
   original: { bg: '#FFF9E6', color: '#E67E22', border: '#FFD699' },
   official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
-  other:    { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
+  other: { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
 }
 
 export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const [has3DError, setHas3DError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const show3D = (index < 15 || isHovered) && work.glb_url && !has3DError
+  // WebGLコンテキストの限界（多くのブラウザで8〜16）を確実に回避するため、
+  // デフォルトで3D表示するのは最新の12件のみに制限します。
+  const show3D = (index < 12 || isHovered) && work.glb_url && !has3DError
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
@@ -57,15 +59,15 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       }}
       onMouseEnter={(e) => {
         setIsHovered(true)
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-pink-light)'
+          ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
+          ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
+          ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-pink-light)'
       }}
       onMouseLeave={(e) => {
         setIsHovered(false)
-        ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
+          ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
+          ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+          ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
       }}
     >
       {/* 3Dモデル または プレースホルダー */}
@@ -81,14 +83,29 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         }}
       >
         {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
-        {show3D ? (
+        {show3D && (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
             <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={200} onError={() => setHas3DError(true)} />
           </div>
-        ) : (
+        )}
+
+        {/* 通常時（3Dが起動していない時）は元の2D画像を背景として表示 */}
+        {!show3D && work.thumbnail_url ? (
+          <img
+            src={work.thumbnail_url}
+            alt={work.title}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        ) : !show3D && (
           <div style={{ textAlign: 'center', color: 'var(--color-purple)', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: '2.5rem' }}>📦</span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>ホバーで3Dモデルを表示</span>
+            <span style={{ fontSize: '2.5rem' }}>🎭</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>No Image</span>
           </div>
         )}
 
