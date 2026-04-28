@@ -92,43 +92,8 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 104, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 132, minHeight: '100vh' }}>
       <div className="page-container section">
-        {/* ページタイトル */}
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '6px 20px',
-              background: '#F5EDFF',
-              border: '2px solid #DDB3F5',
-              borderRadius: 100,
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              color: 'var(--color-purple)',
-              marginBottom: 16,
-            }}
-          >
-            🛍️ みんなの作品を探そう
-          </div>
-          <h1
-            style={{
-              fontSize: 'clamp(1.8rem, 4vw, 2.6rem)',
-              fontWeight: 900,
-              marginBottom: 12,
-              fontFamily: 'var(--font-display)',
-              color: 'var(--color-text)',
-            }}
-          >
-            3Dデータ <span className="gradient-text">マーケット</span> 🛍️
-          </h1>
-          <p style={{ color: 'var(--color-text-sub)', fontWeight: 500 }}>
-            コミュニティが作った3Dデータをダウンロードして印刷しよう！
-          </p>
-        </div>
-
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
           <div style={{ flex: '1 1 300px', position: 'relative' }}>
@@ -142,10 +107,12 @@ export default function Market() {
                 width: '100%',
                 padding: '12px 16px 12px 42px',
                 borderRadius: 100,
-                border: '2px solid var(--color-border)',
+                border: '1.5px solid #d0d8e8',
                 outline: 'none',
                 fontFamily: 'var(--font-base)',
                 fontSize: '0.95rem',
+                background: '#ffffff',
+                boxShadow: 'none',
               }}
               onFocus={e => e.target.style.borderColor = 'var(--color-pink-light)'}
               onBlur={e => e.target.style.borderColor = 'var(--color-border)'}

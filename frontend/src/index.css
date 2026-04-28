@@ -7,40 +7,47 @@
 /* ===== デザイントークン ===== */
 :root {
   /* カラーパレット */
-  --color-pink:     #FF6B9D;
-  --color-pink-light: #FFAECB;
-  --color-purple:   #9B59B6;
-  --color-purple-light: #C39BD3;
-  --color-mint:     #4ECDC4;
-  --color-yellow:   #FFE566;
-  --color-peach:    #FFB347;
+  --color-pink:         #6B9FFF;
+  --color-pink-light:   #A8C4FF;
+  --color-purple:       #8B70D4;
+  --color-purple-light: #C0B0EE;
+  --color-mint:         #74D0F0;
+  --color-yellow:       #FFE566;
+  --color-peach:        #B0C8FF;
 
-  /* 背景 */
-  --color-bg:       #FFFBFE;
-  --color-bg-soft:  #FFF0F6;
-  --color-bg-card:  #FFFFFF;
-  --color-bg-section: #FEF9FF;
+  /* ニューモフィズム ベースカラー */
+  --nm-bg:    #f0f3fa;
+  --nm-dark:  #c8d0e0;
+  --nm-light: #ffffff;
+
+  /* 背景（全て同色で統一） */
+  --color-bg:         #f0f3fa;
+  --color-bg-soft:    #f0f3fa;
+  --color-bg-card:    #f0f3fa;
+  --color-bg-section: #f0f3fa;
 
   /* テキスト */
-  --color-text:     #2D1B4E;
-  --color-text-sub: #6B5380;
-  --color-text-muted: #A89BBF;
+  --color-text:       #2a3558;
+  --color-text-sub:   #4a5680;
+  --color-text-muted: #8a98be;
 
-  /* ボーダー */
-  --color-border:   #F0C4DE;
-  --color-border-purple: rgba(155, 89, 182, 0.2);
+  /* ボーダー（ニューモフィズムでは不要） */
+  --color-border:        transparent;
+  --color-border-purple: transparent;
 
   /* グラデーション */
-  --gradient-hero:  linear-gradient(135deg, #FF6B9D 0%, #9B59B6 60%, #4ECDC4 100%);
-  --gradient-pink:  linear-gradient(135deg, #FF6B9D 0%, #FFB347 100%);
-  --gradient-purple: linear-gradient(135deg, #9B59B6 0%, #4ECDC4 100%);
-  --gradient-button: linear-gradient(135deg, #FF6B9D 0%, #C06CD0 100%);
-  --gradient-bg:    linear-gradient(160deg, #FFF0F6 0%, #F5EDFF 50%, #EDFCFB 100%);
+  --gradient-hero:   linear-gradient(135deg, #6B9FFF 0%, #8B70D4 60%, #74D0F0 100%);
+  --gradient-pink:   linear-gradient(135deg, #6B9FFF 0%, #8B70D4 100%);
+  --gradient-purple: linear-gradient(135deg, #8B70D4 0%, #74D0F0 100%);
+  --gradient-button: linear-gradient(135deg, #6B9FFF 0%, #A080DC 100%);
+  --gradient-bg:     #dde4f0;
 
-  /* シャドウ */
-  --shadow-card:    0 4px 20px rgba(255, 107, 157, 0.12);
-  --shadow-hover:   0 8px 32px rgba(155, 89, 182, 0.22);
-  --shadow-pink:    0 4px 20px rgba(255, 107, 157, 0.35);
+  /* ニューモフィズム シャドウ */
+  --shadow-card:   6px 6px 14px #c8d0e0, -6px -6px 14px #ffffff;
+  --shadow-hover:  9px 9px 20px #b0bad0, -9px -9px 20px #f4faff;
+  --shadow-pink:   4px 4px 12px #c8d0e0, -2px -2px 8px #ffffff;
+  --nm-inset:      inset 4px 4px 10px #c8d0e0, inset -4px -4px 10px #ffffff;
+  --nm-raised-sm:  3px 3px 8px #c8d0e0, -3px -3px 8px #ffffff;
 
   /* フォント */
   --font-display:   'Paytone One', 'Fredoka One', 'Noto Sans JP', sans-serif;
@@ -68,8 +75,7 @@ html {
 
 body {
   font-family: var(--font-base);
-  background: var(--gradient-bg);
-  background-attachment: fixed;
+  background: var(--nm-bg);
   color: var(--color-text);
   min-height: 100vh;
   line-height: 1.7;
@@ -88,8 +94,8 @@ main {
 
 /* ===== カード ===== */
 .pop-card {
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border);
+  background: var(--nm-bg);
+  border: none;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   transition: all 0.25s ease;
@@ -97,14 +103,13 @@ main {
 
 .pop-card:hover {
   box-shadow: var(--shadow-hover);
-  border-color: var(--color-pink-light);
   transform: translateY(-3px);
 }
 
 /* glass-card を pop-card に上書き（後方互換）*/
 .glass-card {
-  background: var(--color-bg-card);
-  border: 2px solid var(--color-border);
+  background: var(--nm-bg);
+  border: none;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
 }
@@ -115,7 +120,7 @@ main {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: var(--color-pink);
+  background: var(--gradient-button);
   color: white;
   font-family: var(--font-base);
   font-weight: 700;
@@ -124,19 +129,19 @@ main {
   border-radius: var(--radius-btn);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.4);
+  box-shadow: 4px 4px 12px #b0bad0, -2px -2px 8px #ffffff;
   text-decoration: none;
   letter-spacing: 0.02em;
 }
 
 .btn-primary:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px rgba(255, 107, 157, 0.55);
-  background: #FF5090;
+  transform: scale(1.04);
+  box-shadow: 6px 6px 16px #a8b4cc, -3px -3px 10px #f4faff;
 }
 
 .btn-primary:active {
   transform: scale(0.98);
+  box-shadow: inset 3px 3px 8px rgba(0,0,0,0.2);
 }
 
 /* ===== アウトラインボタン ===== */
@@ -145,26 +150,27 @@ main {
   align-items: center;
   gap: 8px;
   padding: 12px 28px;
-  background: white;
+  background: var(--nm-bg);
   color: var(--color-purple);
   font-family: var(--font-base);
   font-weight: 700;
   font-size: 0.95rem;
-  border: 2px solid var(--color-purple);
+  border: none;
   border-radius: var(--radius-btn);
   cursor: pointer;
   transition: all 0.2s ease;
   text-decoration: none;
   letter-spacing: 0.02em;
+  box-shadow: var(--nm-raised-sm);
 }
 
 .btn-outline:hover {
-  background: #F5EDFF;
-  transform: scale(1.04);
-  box-shadow: 0 4px 16px rgba(155, 89, 182, 0.2);
+  box-shadow: var(--shadow-card);
+  transform: scale(1.03);
 }
 
 .btn-outline:active {
+  box-shadow: var(--nm-inset);
   transform: scale(0.98);
 }
 
@@ -196,7 +202,7 @@ main {
   background: var(--color-bg-soft);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-pink-light);
+  background: var(--color-purple-light);
   border-radius: 100px;
 }
 
@@ -228,8 +234,8 @@ main {
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 16px rgba(255, 107, 157, 0.3); }
-  50%       { box-shadow: 0 0 32px rgba(255, 107, 157, 0.6); }
+  0%, 100% { box-shadow: 6px 6px 14px #c8d0e0, -6px -6px 14px #ffffff; }
+  50%       { box-shadow: 9px 9px 20px #b0bad0, -9px -9px 20px #f4faff; }
 }
 
 .animate-float {
@@ -282,12 +288,13 @@ main {
 .tag-badge {
   display: inline-block;
   padding: 3px 12px;
-  background: #FFEDF4;
+  background: var(--nm-bg);
   color: var(--color-pink);
-  border: 1.5px solid var(--color-pink-light);
+  border: none;
   border-radius: 100px;
   font-size: 0.72rem;
   font-weight: 700;
+  box-shadow: var(--nm-raised-sm);
 }
 
 /* ===== インプット ===== */
