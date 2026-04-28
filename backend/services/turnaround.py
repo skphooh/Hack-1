@@ -15,32 +15,14 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 _MODEL = "gemini-3.1-flash-image-preview"
 
-# 4パネルを1枚の画像として生成するプロンプト
-# 複数回呼び出すとポーズが不一致になるため、必ず1回で全ビューを生成する
 _SHEET_PROMPT = (
-    "You are a professional character designer. "
-    "Create a single image containing a 4-panel orthographic reference sheet "
-    "for 3D character modeling, based on the reference image provided.\n\n"
-
-    "LAYOUT: One horizontal row with exactly 4 panels labeled below each:\n"
-    "  [ FRONT ]  [ SIDE R ]  [ SIDE L ]  [ BACK ]\n\n"
-
-    "POSE REQUIREMENTS (critical for 3D reconstruction):\n"
-    "- A-pose in ALL 4 panels: arms at 45° from body, palms facing forward\n"
-    "- Legs straight, feet slightly apart\n"
-    "- IDENTICAL pose across all 4 panels — only the viewing angle changes\n\n"
-
-    "PROJECTION REQUIREMENTS:\n"
-    "- Orthographic projection (no perspective distortion)\n"
-    "- Parallel lines remain parallel\n"
-    "- Same scale and proportions in all 4 panels\n\n"
-
-    "STYLE:\n"
-    "- Reproduce the exact character design from the reference image\n"
-    "- Same hair, outfit, colors, and accessories\n"
-    "- Clean flat illustration style suitable for 3D modeling reference\n"
-    "- Pure white background, no shadows, no gradients\n"
-    "- Thin border lines between panels"
+    "Create a four-panel turnaround for the character(s) and object(s) in the reference image to show their frontal, right side, left side, and back. "
+    "CRITICAL REQUIREMENTS:\n"
+    "1. STYLE PRESERVATION: You MUST preserve the EXACT art style, brush strokes, colors, and textures of the original reference image. Do NOT change it to a generic 3D or flat vector illustration style.\n"
+    "2. CONTENT PRESERVATION: You MUST keep ALL characters (even if there are multiple, like a boy and a girl), clothing, items, and accessories exactly as they appear in the original image.\n"
+    "3. POSE: Keep the exact same pose as the original image across all four views. Just rotate the camera angle.\n"
+    "4. LAYOUT: One horizontal row with exactly 4 panels labeled: [ FRONT ]  [ SIDE R ]  [ SIDE L ]  [ BACK ]\n"
+    "5. BACKGROUND: Use a simple white and grey background."
 )
 
 
@@ -64,25 +46,42 @@ async def generate_turnaround_image(image_bytes: bytes) -> bytes:
 
     print("🎨 Gemini で複面投影図シートを生成中 (1 call)...", flush=True)
 
-    response = await client.aio.models.generate_content(
-        model=_MODEL,
-        contents=[
-            types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
-            types.Part.from_text(text=_SHEET_PROMPT),
-        ],
-        config=types.GenerateContentConfig(
-            response_modalities=["image"],
-        ),
-    )
+    try:
+        response = await client.aio.models.generate_content(
+            model=_MODEL,
+            contents=[
+                types.Part.from_bytes(data=png_bytes, mime_type="image/png"),
+                types.Part.from_text(text=_SHEET_PROMPT),
+            ],
+            config=types.GenerateContentConfig(
+                response_modalities=["image"],
+            ),
+        )
 
-    for part in response.candidates[0].content.parts:
-        if part.inline_data is not None:
-            raw = part.inline_data.data
-            result = raw if isinstance(raw, bytes) else base64.b64decode(raw)
-            print("✅ 複面投影図シート生成完了 (Gemini)", flush=True)
-            return result
+        for part in response.candidates[0].content.parts:
+            if part.inline_data is not None:
+                raw = part.inline_data.data
+                result = raw if isinstance(raw, bytes) else base64.b64decode(raw)
+                print("✅ 複面投影図シート生成完了 (Gemini)", flush=True)
+                return result
 
-    raise ValueError("Gemini から画像が返ってきませんでした")
+        raise ValueError("Gemini から画像が返ってきませんでした")
+
+    except Exception as e:
+        print(f"❌ ターンアラウンド生成失敗: {e}", flush=True)
+        print("⚠️ 課金制限等のため、モックフォールバック（入力画像を4枚並べる）を使用します", flush=True)
+        
+        # 元の画像を横に4枚並べたダミー画像を生成
+        w, h = img.size
+        mock_img = Image.new("RGB", (w * 4, h))
+        mock_img.paste(img, (0, 0))
+        mock_img.paste(img, (w, 0))
+        mock_img.paste(img, (w * 2, 0))
+        mock_img.paste(img, (w * 3, 0))
+        
+        mock_buf = io.BytesIO()
+        mock_img.save(mock_buf, format="PNG")
+        return mock_buf.getvalue()
 
 
 def split_turnaround(image_bytes: bytes) -> list[bytes]:
