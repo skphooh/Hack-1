@@ -39,7 +39,7 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
 export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const [has3DError, setHas3DError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const show3D = (index < 16 || isHovered) && work.glb_url && !has3DError
+  const show3D = (index < 15 || isHovered) && work.glb_url && !has3DError
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
@@ -68,60 +68,27 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
       }}
     >
-      {/* 3Dモデル または サムネイル */}
+      {/* 3Dモデル または プレースホルダー */}
       <div
         style={{
           position: 'relative',
           height: '200px',
           background: 'linear-gradient(135deg, #FFF0F6 0%, #F5EDFF 100%)',
           overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
-        {show3D && (
+        {show3D ? (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
             <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={200} onError={() => setHas3DError(true)} />
           </div>
-        )}
-
-        {/* 通常時はターンアラウンド画像の「FRONT（左端）」を背景として表示 */}
-        {work.turnaround_url ? (
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-            <img
-              src={work.turnaround_url}
-              alt={work.title}
-              style={{
-                width: '400%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'left center',
-                transform: 'translateX(0%)', // 明示的に左端に寄せる
-              }}
-            />
-          </div>
-        ) : work.thumbnail_url ? (
-          <img
-            src={work.thumbnail_url}
-            alt={work.title}
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
         ) : (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span style={{ fontSize: '3rem' }}>🎭</span>
+          <div style={{ textAlign: 'center', color: 'var(--color-purple)', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '2.5rem' }}>📦</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>ホバーで3Dモデルを表示</span>
           </div>
         )}
 
