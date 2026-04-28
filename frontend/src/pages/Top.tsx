@@ -1,10 +1,13 @@
 // トップページ（ランディングページ）- ポップ・かわいいデザイン
-import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowRight, LogIn, Sparkles, ShoppingBag, Upload, Cpu, Download } from 'lucide-react'
+import { auth, googleProvider } from '../lib/firebase'
+import { signInWithPopup } from 'firebase/auth'
+import { useAuthState } from '../components/useAuthState'
 import logo02Img from '../assets/logo02.png'
 import logo03Img from '../assets/logo03.png'
+import heroImg from '../assets/hero.png'
 
-/** サービスの3つのフローを紹介するカード */
 const FLOW_CARDS = [
   {
     emoji: '🎨',
@@ -41,7 +44,6 @@ const FLOW_CARDS = [
   },
 ]
 
-/** ユーザーの課題（イシュー）を示す問題提起カード */
 const ISSUES = [
   { emoji: '😢', label: 'マイナーキャラのグッズ', value: '存在しない…' },
   { emoji: '😤', label: '人気すぎて買えない', value: '転売問題！' },
@@ -49,7 +51,56 @@ const ISSUES = [
   { emoji: '💪', label: '送料・納期の壁', value: '解決します！' },
 ]
 
+const DEMO_STEPS = [
+  {
+    icon: Upload,
+    step: 'STEP 1',
+    title: '写真をアップロード',
+    description: 'スマホで撮った写真でもOK！イラスト・フィギュア・キャラクター画像を選ぶだけ。',
+    color: '#FF6B9D',
+    bg: '#FFEDF4',
+    border: '#FFAECB',
+    mockLines: ['📁 ファイルを選択', '✅ character.png (2.4MB)', '🖼️ プレビュー表示中...'],
+  },
+  {
+    icon: Cpu,
+    step: 'STEP 2',
+    title: 'AIが自動で3D変換',
+    description: 'ターンアラウンド画像を生成してから、Tripo AIが高精度な3Dメッシュを作成します。',
+    color: '#9B59B6',
+    bg: '#F5EDFF',
+    border: '#DDB3F5',
+    mockLines: ['🎨 ターンアラウンド生成中...', '🤖 3Dメッシュ変換中...', '✨ 最適化処理中...'],
+  },
+  {
+    icon: Download,
+    step: 'STEP 3',
+    title: 'STLをダウンロード',
+    description: '3Dプリンター対応のSTLファイルをダウンロード。マーケットへの出品もワンクリック！',
+    color: '#4ECDC4',
+    bg: '#EDFCFB',
+    border: '#9EEAE6',
+    mockLines: ['📦 model.stl (8.2MB)', '🖨️ 3Dプリンター対応', '🛍️ マーケットへ出品する →'],
+  },
+]
+
 export default function Top() {
+  const navigate = useNavigate()
+  const { user } = useAuthState()
+
+  const handleAuthAction = async (path: string) => {
+    if (user) {
+      navigate(path)
+      return
+    }
+    try {
+      await signInWithPopup(auth, googleProvider)
+      navigate(path)
+    } catch (e) {
+      console.error('ログインエラー:', e)
+    }
+  }
+
   return (
     <main>
       {/* ===== ヒーローセクション ===== */}
@@ -66,234 +117,178 @@ export default function Top() {
           overflow: 'hidden',
         }}
       >
-        {/* 背景デコレーション（パステルサークル） */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '15%',
-            right: '8%',
-            width: 200,
-            height: 200,
-            borderRadius: '50%',
-            background: 'rgba(255, 107, 157, 0.1)',
-            filter: 'blur(40px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '20%',
-            left: '5%',
-            width: 250,
-            height: 250,
-            borderRadius: '50%',
-            background: 'rgba(78, 205, 196, 0.12)',
-            filter: 'blur(50px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            top: '40%',
-            left: '12%',
-            width: 150,
-            height: 150,
-            borderRadius: '50%',
-            background: 'rgba(155, 89, 182, 0.08)',
-            filter: 'blur(30px)',
-            pointerEvents: 'none',
-          }}
-        />
+        {/* 背景デコレーション */}
+        <div style={{ position: 'absolute', top: '15%', right: '8%', width: 200, height: 200, borderRadius: '50%', background: 'rgba(255, 107, 157, 0.1)', filter: 'blur(40px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '20%', left: '5%', width: 250, height: 250, borderRadius: '50%', background: 'rgba(78, 205, 196, 0.12)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '40%', left: '12%', width: 150, height: 150, borderRadius: '50%', background: 'rgba(155, 89, 182, 0.08)', filter: 'blur(30px)', pointerEvents: 'none' }} />
 
-        {/* フローティング絵文字デコ */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '18%',
-            left: '7%',
-            fontSize: '2rem',
-            pointerEvents: 'none',
-            animation: 'float 4s ease-in-out infinite',
-            opacity: 0.7,
-          }}
-        >
-          ✨
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            top: '25%',
-            right: '9%',
-            fontSize: '2.5rem',
-            pointerEvents: 'none',
-            animation: 'float 3s ease-in-out infinite 0.5s',
-            opacity: 0.65,
-          }}
-        >
-          💫
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '28%',
-            right: '6%',
-            fontSize: '2rem',
-            pointerEvents: 'none',
-            animation: 'float 5s ease-in-out infinite 1s',
-            opacity: 0.6,
-          }}
-        >
-          🌟
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '32%',
-            left: '9%',
-            fontSize: '1.8rem',
-            pointerEvents: 'none',
-            animation: 'float 3.5s ease-in-out infinite 1.5s',
-            opacity: 0.6,
-          }}
-        >
-          🎀
-        </div>
+        {/* フローティング絵文字 */}
+        <div style={{ position: 'absolute', top: '18%', left: '7%', fontSize: '2rem', pointerEvents: 'none', animation: 'float 4s ease-in-out infinite', opacity: 0.7 }}>✨</div>
+        <div style={{ position: 'absolute', top: '25%', right: '9%', fontSize: '2.5rem', pointerEvents: 'none', animation: 'float 3s ease-in-out infinite 0.5s', opacity: 0.65 }}>💫</div>
+        <div style={{ position: 'absolute', bottom: '28%', right: '6%', fontSize: '2rem', pointerEvents: 'none', animation: 'float 5s ease-in-out infinite 1s', opacity: 0.6 }}>🌟</div>
+        <div style={{ position: 'absolute', bottom: '32%', left: '9%', fontSize: '1.8rem', pointerEvents: 'none', animation: 'float 3.5s ease-in-out infinite 1.5s', opacity: 0.6 }}>🎀</div>
 
-        {/* ロゴ画像（ヒーロー） */}
+        {/* ロゴ */}
         <div style={{ marginBottom: 40 }} className="animate-fade-in">
-          <img
-            src={logo02Img}
-            alt="うちの子製作所"
-            style={{
-              height: 'clamp(80px, 15vw, 140px)',
-              width: 'auto',
-              filter: 'drop-shadow(0 10px 20px rgba(255, 107, 157, 0.25))',
-            }}
-          />
+          <img src={logo02Img} alt="うちの子製作所" style={{ height: 'clamp(80px, 15vw, 140px)', width: 'auto', filter: 'drop-shadow(0 10px 20px rgba(255, 107, 157, 0.25))' }} />
         </div>
 
         {/* バッジ */}
         <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 22px',
-            background: 'white',
-            border: '2px solid var(--color-pink-light)',
-            borderRadius: 100,
-            fontSize: '0.875rem',
-            fontWeight: 700,
-            color: 'var(--color-pink)',
-            marginBottom: 32,
-            boxShadow: '0 4px 14px rgba(255, 107, 157, 0.15)',
-          }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 22px', background: 'white', border: '2px solid var(--color-pink-light)', borderRadius: 100, fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 32, boxShadow: '0 4px 14px rgba(255, 107, 157, 0.15)' }}
           className="animate-fade-in"
         >
           ✨ 写真1枚から3Dフィギュアへ
         </div>
 
-        {/* メインキャッチコピー */}
-        <h1
-          style={{
-            fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-            fontWeight: 900,
-            lineHeight: 1.2,
-            marginBottom: 24,
-            fontFamily: 'var(--font-display)',
-            color: 'var(--color-text)',
-          }}
-          className="animate-fade-in"
-        >
+        {/* キャッチコピー */}
+        <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900, lineHeight: 1.2, marginBottom: 24, fontFamily: 'var(--font-display)', color: 'var(--color-text)' }} className="animate-fade-in">
           <span className="gradient-text">うちの子</span>を、
           <br />
           自分の手で立体にする。🎉
         </h1>
 
-        <p
-          style={{
-            fontSize: 'clamp(1rem, 2vw, 1.2rem)',
-            color: 'var(--color-text-sub)',
-            maxWidth: 540,
-            marginBottom: 48,
-            lineHeight: 1.85,
-            fontWeight: 500,
-          }}
-          className="animate-fade-in"
-        >
+        <p style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: 'var(--color-text-sub)', maxWidth: 540, marginBottom: 48, lineHeight: 1.85, fontWeight: 500 }} className="animate-fade-in">
           写真・イラスト1枚から3Dメッシュを生成。
           <br />
           STLデータで出力して、3Dプリンターで印刷できます！
         </p>
 
+        {/* CTAボタン */}
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link to="/generate" id="cta-generate" className="btn-primary" style={{ padding: '14px 32px', fontSize: '1.05rem' }}>
-            ✨ いますぐつくる
+          <button
+            id="cta-generate"
+            onClick={() => handleAuthAction('/generate')}
+            className="btn-primary"
+            style={{ padding: '14px 32px', fontSize: '1.05rem', cursor: 'pointer' }}
+          >
+            {user ? <Sparkles size={18} /> : <LogIn size={18} />}
+            {user ? '✨ いますぐつくる' : 'ログインしてつくる'}
             <ArrowRight size={18} />
-          </Link>
-          <Link to="/market" id="cta-market" className="btn-outline" style={{ padding: '14px 32px', fontSize: '1.05rem' }}>
-            🛍️ マーケットを見る
-          </Link>
+          </button>
+          <button
+            id="cta-market"
+            onClick={() => handleAuthAction('/market')}
+            className="btn-outline"
+            style={{ padding: '14px 32px', fontSize: '1.05rem', cursor: 'pointer' }}
+          >
+            {user ? <ShoppingBag size={18} /> : <LogIn size={18} />}
+            {user ? '🛍️ マーケットを見る' : 'ログインしてみる'}
+          </button>
+        </div>
+
+        {/* 未ログイン時のヒント */}
+        {!user && (
+          <p style={{ marginTop: 16, fontSize: '0.82rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
+            🔒 Googleアカウントで無料ログイン — 30秒で完了！
+          </p>
+        )}
+      </section>
+
+      {/* ===== デモセクション（使い方3ステップ） ===== */}
+      <section className="section" style={{ background: 'linear-gradient(135deg, #FFF9FB 0%, #F0EAFF 100%)' }}>
+        <div className="page-container">
+          <h2 className="section-title">使い方はたった3ステップ 🚀</h2>
+          <p className="section-sub">アカウント登録してすぐに使えます。難しい操作は一切なし！</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
+            {DEMO_STEPS.map((s, i) => {
+              const Icon = s.icon
+              return (
+                <div key={s.step} style={{ position: 'relative' }}>
+                  {/* ステップ間の矢印 */}
+                  {i < DEMO_STEPS.length - 1 && (
+                    <div style={{ position: 'absolute', top: 60, right: -16, zIndex: 1, fontSize: '1.4rem', display: 'none' }}>→</div>
+                  )}
+                  <div
+                    style={{
+                      background: 'white',
+                      border: `2px solid ${s.border}`,
+                      borderRadius: 'var(--radius-xl)',
+                      padding: '28px 24px',
+                      boxShadow: 'var(--shadow-card)',
+                      height: '100%',
+                    }}
+                  >
+                    {/* ステップバッジ */}
+                    <span style={{ display: 'inline-block', padding: '3px 12px', background: s.bg, color: s.color, border: `1.5px solid ${s.border}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 16 }}>
+                      {s.step}
+                    </span>
+
+                    {/* アイコン */}
+                    <div style={{ width: 52, height: 52, borderRadius: 14, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                      <Icon size={26} color={s.color} />
+                    </div>
+
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text)', marginBottom: 8 }}>{s.title}</h3>
+                    <p style={{ fontSize: '0.88rem', color: 'var(--color-text-sub)', lineHeight: 1.75, marginBottom: 20 }}>{s.description}</p>
+
+                    {/* モックUI */}
+                    <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '14px 16px', border: '1px solid #EEF0F5' }}>
+                      {s.mockLines.map((line, li) => (
+                        <div
+                          key={li}
+                          style={{
+                            fontSize: '0.8rem',
+                            color: li === s.mockLines.length - 1 ? s.color : 'var(--color-text-sub)',
+                            fontWeight: li === s.mockLines.length - 1 ? 700 : 400,
+                            padding: '4px 0',
+                            borderBottom: li < s.mockLines.length - 1 ? '1px solid #EEF0F5' : 'none',
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* hero.png を使ったビジュアル */}
+          <div style={{ marginTop: 56, textAlign: 'center' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: 16, fontWeight: 600 }}>▼ 実際の変換イメージ</p>
+            <div style={{ display: 'inline-block', borderRadius: 'var(--radius-xl)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(155,89,182,0.18)', border: '3px solid #DDB3F5', maxWidth: 600, width: '100%' }}>
+              <img src={heroImg} alt="変換イメージ" style={{ width: '100%', display: 'block' }} />
+            </div>
+          </div>
+
+          {/* ログインCTA */}
+          {!user && (
+            <div style={{ textAlign: 'center', marginTop: 48 }}>
+              <button
+                onClick={() => handleAuthAction('/generate')}
+                className="btn-primary"
+                style={{ padding: '16px 40px', fontSize: '1.1rem', cursor: 'pointer' }}
+              >
+                <LogIn size={20} />
+                Googleで無料ログインして始める
+                <ArrowRight size={18} />
+              </button>
+              <p style={{ marginTop: 12, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>クレジットカード不要 · 30秒で完了</p>
+            </div>
+          )}
         </div>
       </section>
 
       {/* ===== 課題提起セクション ===== */}
-      <section
-        className="section"
-        style={{ background: 'linear-gradient(135deg, #FFF9FB 0%, #F9F5FF 100%)' }}
-      >
+      <section className="section" style={{ background: 'linear-gradient(135deg, #FFF9FB 0%, #F9F5FF 100%)' }}>
         <div className="page-container">
-          <h2 className="section-title">
-            「欲しい」と「買える」の間にある壁 🧱
-          </h2>
-          <p className="section-sub">
-            製造・流通・在庫の巨大なコストが、グッズの世界を遠ざけている
-          </p>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: 16,
-            }}
-          >
+          <h2 className="section-title">「欲しい」と「買える」の間にある壁 🧱</h2>
+          <p className="section-sub">製造・流通・在庫の巨大なコストが、グッズの世界を遠ざけている</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
             {ISSUES.map(({ emoji, label, value }) => (
               <div
                 key={label}
-                style={{
-                  background: 'white',
-                  border: '2px solid var(--color-border)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '28px 20px',
-                  textAlign: 'center',
-                  boxShadow: 'var(--shadow-card)',
-                  transition: 'all 0.25s ease',
-                }}
-                onMouseEnter={(e) => {
-                  ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
-                    ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-                }}
-                onMouseLeave={(e) => {
-                  ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                    ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-                }}
+                style={{ background: 'white', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '28px 20px', textAlign: 'center', boxShadow: 'var(--shadow-card)', transition: 'all 0.25s ease' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)' }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}
               >
                 <p style={{ fontSize: '2.2rem', marginBottom: 10 }}>{emoji}</p>
-                <p
-                  style={{
-                    fontSize: '1.1rem',
-                    fontWeight: 800,
-                    color: 'var(--color-pink)',
-                    marginBottom: 6,
-                    fontFamily: 'var(--font-base)',
-                  }}
-                >
-                  {value}
-                </p>
-                <p style={{ fontSize: '0.82rem', color: 'var(--color-text-sub)', fontWeight: 500 }}>
-                  {label}
-                </p>
+                <p style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-pink)', marginBottom: 6, fontFamily: 'var(--font-base)' }}>{value}</p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--color-text-sub)', fontWeight: 500 }}>{label}</p>
               </div>
             ))}
           </div>
@@ -305,154 +300,40 @@ export default function Top() {
         <div className="page-container">
           <h2 className="section-title">3つの使い方 🎯</h2>
           <p className="section-sub">あなたにぴったりの使い方を見つけてね！</p>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: 24,
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {FLOW_CARDS.map((card) => (
-              <Link
+              <div
                 key={card.tag}
-                to={card.link}
                 id={`flow-card-${card.tag}`}
-                style={{ textDecoration: 'none' }}
+                onClick={() => handleAuthAction(card.link)}
+                style={{ cursor: 'pointer', textDecoration: 'none' }}
               >
                 <div
-                  style={{
-                    background: 'white',
-                    border: '2px solid var(--color-border)',
-                    borderRadius: 'var(--radius-xl)',
-                    padding: '32px 28px',
-                    height: '100%',
-                    transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    boxShadow: 'var(--shadow-card)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                  onMouseEnter={(e) => {
-                    ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'
-                      ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-                      ; (e.currentTarget as HTMLElement).style.borderColor = card.tagBorder
-                  }}
-                  onMouseLeave={(e) => {
-                    ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
-                      ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-                      ; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
-                  }}
+                  style={{ background: 'white', border: '2px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '32px 28px', height: '100%', transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)', boxShadow: 'var(--shadow-card)', position: 'relative', overflow: 'hidden' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-8px) scale(1.02)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'; (e.currentTarget as HTMLElement).style.borderColor = card.tagBorder }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)' }}
                 >
-                  {/* 背景デコサークル */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: -20,
-                      right: -20,
-                      width: 100,
-                      height: 100,
-                      borderRadius: '50%',
-                      background: card.tagBg,
-                      opacity: 0.6,
-                      pointerEvents: 'none',
-                    }}
-                  />
-
-                  {/* 大きめ絵文字 */}
-                  <div
-                    style={{
-                      fontSize: '3rem',
-                      marginBottom: 16,
-                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
-                    }}
-                  >
-                    {card.emoji}
-                  </div>
-
-                  {/* タグバッジ */}
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      padding: '3px 12px',
-                      background: card.tagBg,
-                      color: card.tagColor,
-                      border: `1.5px solid ${card.tagBorder}`,
-                      borderRadius: 100,
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      marginBottom: 12,
-                    }}
-                  >
+                  <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: card.tagBg, opacity: 0.6, pointerEvents: 'none' }} />
+                  <div style={{ fontSize: '3rem', marginBottom: 16, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }}>{card.emoji}</div>
+                  <span style={{ display: 'inline-block', padding: '3px 12px', background: card.tagBg, color: card.tagColor, border: `1.5px solid ${card.tagBorder}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 12 }}>
                     {card.tag}
                   </span>
-
-                  <h3
-                    style={{
-                      fontSize: '1.15rem',
-                      fontWeight: 800,
-                      marginBottom: 10,
-                      color: 'var(--color-text)',
-                      fontFamily: 'var(--font-base)',
-                    }}
-                  >
-                    {card.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: '0.9rem',
-                      color: 'var(--color-text-sub)',
-                      lineHeight: 1.75,
-                    }}
-                  >
-                    {card.description}
-                  </p>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      marginTop: 20,
-                      color: card.tagColor,
-                      fontSize: '0.88rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    試してみる！ <ArrowRight size={14} />
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 10, color: 'var(--color-text)', fontFamily: 'var(--font-base)' }}>{card.title}</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--color-text-sub)', lineHeight: 1.75 }}>{card.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 20, color: card.tagColor, fontSize: '0.88rem', fontWeight: 700 }}>
+                    {user ? '試してみる！' : 'ログインして試す！'} <ArrowRight size={14} />
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== フッター ===== */}
-      <footer
-        style={{
-          padding: '40px 24px',
-          borderTop: '2px solid var(--color-border)',
-          textAlign: 'center',
-          color: 'var(--color-text-muted)',
-          fontSize: '0.875rem',
-          background: 'white',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            marginBottom: 10,
-          }}
-        >
-          <img
-            src={logo03Img}
-            alt="うちの子製作所"
-            style={{
-              height: 64,
-              width: 'auto',
-            }}
-          />
+      <footer style={{ padding: '40px 24px', borderTop: '2px solid var(--color-border)', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem', background: 'white' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
+          <img src={logo03Img} alt="うちの子製作所" style={{ height: 64, width: 'auto' }} />
         </div>
         <p>Hack-1 グランプリ 2026</p>
       </footer>
