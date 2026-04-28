@@ -5,8 +5,11 @@ import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
 import logoImg from '../assets/logo02.png'
 
-const NAV_LINKS = [
+const GUEST_NAV_LINKS = [
   { path: '/', label: '🏠 ホーム' },
+]
+
+const AUTH_NAV_LINKS = [
   { path: '/generate', label: '✨ 3Dにする！' },
   { path: '/market', label: '🛍️ マーケット' },
 ]
@@ -14,6 +17,8 @@ const NAV_LINKS = [
 export function Navbar() {
   const location = useLocation()
   const { user } = useAuthState()
+
+  const navLinks = user ? AUTH_NAV_LINKS : GUEST_NAV_LINKS
 
   const handleLogin = async () => {
     try {
@@ -118,7 +123,7 @@ export function Navbar() {
           padding: '6px 32px',
         }}
       >
-        {NAV_LINKS.map(({ path, label }) => {
+        {navLinks.map(({ path, label }) => {
           const isActive = location.pathname === path
           return (
             <Link
