@@ -573,7 +573,7 @@ export default function Generate() {
               <div
                 style={{
                   background: 'var(--nm-bg)',
-                  border: 'none', boxShadow: 'var(--shadow-card)',
+                  border: 'none',
                   borderRadius: 'var(--radius-lg)',
                   padding: 16,
                   boxShadow: 'var(--shadow-card)',
