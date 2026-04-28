@@ -92,7 +92,7 @@ def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh
     print("🔁 ボクセルベース差分にフォールバック", flush=True)
     extents = mesh.extents
     voxel_size = min(extents) / 50.0
-    voxel_size = max(voxel_size, 0.4)  # 最小0.4mm
+    voxel_size = max(voxel_size, 2.0)  # OOM対策のため最小解像度を2.0mmに下げる
 
     # surface voxels のみ取得し、scipy で内部を flood-fill して solid にする
     vox_mesh   = mesh.voxelized(pitch=voxel_size)
@@ -140,19 +140,24 @@ def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh
 def _add_strap_hole_sync(
     file_bytes: bytes,
     extension: str,
-    offset_x_pct: float = 0.0,  # 現在未使用（横貫通のため）
+    offset_x_pct: float = 0.0,
     offset_y_pct: float = 0.0,
     depth_from_top_mm: float = 5.0,
     hole_radius_mm: float = 1.0,
+    angle_x: float = 0.0,
+    angle_y: float = 0.0,
+    angle_z: float = 0.0,
 ) -> bytes:
     """
-    モデルに横方向（左右貫通）のストラップ穴を開ける。
+    モデルにストラップ穴を開ける。
 
     Parameters
     ----------
+    offset_x_pct      : モデル幅に対する左右オフセット（-50〜+50 %）
     offset_y_pct      : モデル奥行きに対する前後オフセット（-50〜+50 %）
     depth_from_top_mm : 上端からの穴の高さ位置（mm）
     hole_radius_mm    : 穴の半径（mm）。デフォルト1mm=直径2mm
+    angle_x, angle_y, angle_z : 穴の回転角度（度）
     """
     mesh = _load_mesh(file_bytes, extension)
     _repair_mesh(mesh)
@@ -165,19 +170,29 @@ def _add_strap_hole_sync(
     width = bounds[1][0] - bounds[0][0]
 
     # 穴の中心座標
-    hx = cx                                      # 左右中央（左右貫通なので固定）
-    hy = cy + (offset_y_pct / 100.0) * depth     # 前後位置
-    hz = top_z - depth_from_top_mm               # 上端からの高さ位置
+    hx = cx + (offset_x_pct / 100.0) * width
+    hy = cy + (offset_y_pct / 100.0) * depth
+    hz = top_z - depth_from_top_mm
 
-    # 穴シリンダー: X軸方向（横向き）に左右貫通
-    hole_length = width * 2.0  # モデル幅の2倍で確実に貫通
+    # 穴シリンダー: 初期状態はZ軸方向
+    hole_length = max(width, depth) * 3.0  # 十分な長さ
     hole = trimesh.creation.cylinder(
-        radius=hole_radius_mm, height=hole_length, sections=48
+        radius=hole_radius_mm, height=hole_length, sections=32 # セクション数を減らしてメモリ節約
     )
-    # デフォルトはZ軸方向 → Y軸周りに90度回転してX軸方向にする
-    hole.apply_transform(
-        trimesh.transformations.rotation_matrix(np.pi / 2, [0, 1, 0])
-    )
+    
+    # ユーザー指定の角度（度 -> ラジアン）
+    rad_x = np.radians(angle_x)
+    rad_y = np.radians(angle_y)
+    rad_z = np.radians(angle_z)
+
+    # デフォルトはZ軸方向なので、まずY軸に90度倒してX軸方向（左右貫通）にする
+    hole.apply_transform(trimesh.transformations.rotation_matrix(np.pi / 2, [0, 1, 0]))
+
+    # 追加の回転を適用
+    if rad_x != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_x, [1, 0, 0]))
+    if rad_y != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_y, [0, 1, 0]))
+    if rad_z != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_z, [0, 0, 1]))
+
     hole.apply_translation([hx, hy, hz])
 
     result = _try_boolean_difference(mesh, hole)
@@ -192,6 +207,9 @@ async def add_strap_hole(
     offset_y_pct: float = 0.0,
     depth_from_top_mm: float = 5.0,
     hole_radius_mm: float = 1.0,
+    angle_x: float = 0.0,
+    angle_y: float = 0.0,
+    angle_z: float = 0.0,
 ) -> bytes:
     """ストラップ穴を追加したSTLバイト列を返す。"""
     loop = asyncio.get_event_loop()
@@ -202,6 +220,7 @@ async def add_strap_hole(
             file_bytes, extension,
             offset_x_pct, offset_y_pct,
             depth_from_top_mm, hole_radius_mm,
+            angle_x, angle_y, angle_z,
         )
     )
 

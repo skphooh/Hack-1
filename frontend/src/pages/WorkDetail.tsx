@@ -1,7 +1,7 @@
 // 作品詳細ページ - ポップ・かわいいデザイン
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Download, Heart, ArrowLeft, Loader2 } from 'lucide-react'
+import { Download, Heart, ArrowLeft, Loader2, Flag } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
 import { fetchWork, toggleLike, addStrapHole, addBase, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -36,11 +36,13 @@ export default function WorkDetail() {
   const [showHoleOverlay, setShowHoleOverlay] = useState(false)
   const [showBaseOverlay, setShowBaseOverlay] = useState(false)
 
-  // ストラップ穴パラメータ
   const [holeOffsetX,  setHoleOffsetX]  = useState(0)    // モデル幅の%
   const [holeOffsetY,  setHoleOffsetY]  = useState(0)    // モデル奥行きの%
   const [holeDepthMm,  setHoleDepthMm]  = useState(5)    // 上端からの深さmm
   const [holeRadiusMm, setHoleRadiusMm] = useState(1.0)  // 穴の半径mm
+  const [holeAngleX,   setHoleAngleX]   = useState(0)    // X軸回転
+  const [holeAngleY,   setHoleAngleY]   = useState(0)    // Y軸回転
+  const [holeAngleZ,   setHoleAngleZ]   = useState(0)    // Z軸回転
 
   // 台座パラメータ
   const [baseHeightMm,  setBaseHeightMm]  = useState(3)   // 台座の高さmm
@@ -104,6 +106,9 @@ export default function WorkDetail() {
         offset_y:  holeOffsetY,
         depth_mm:  holeDepthMm,
         radius_mm: holeRadiusMm,
+        angle_x:   holeAngleX,
+        angle_y:   holeAngleY,
+        angle_z:   holeAngleZ,
       })
       setStrapBlobUrl(blobUrl)
       setStlViewUrl(blobUrl)   // 加工後STLをビューアに反映
@@ -586,6 +591,9 @@ export default function WorkDetail() {
                         { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetY },
                         { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 20, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
                         { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 3.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                        { label: `X軸回転（上下の傾き）`, value: holeAngleX, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleX },
+                        { label: `Y軸回転（左右の傾き）`, value: holeAngleY, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleY },
+                        { label: `Z軸回転（ねじれ）`, value: holeAngleZ, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleZ },
                       ].map(({ label, value, min, max, step, unit, setter }) => (
                         <div key={label} style={{ marginBottom: 10 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -777,6 +785,23 @@ export default function WorkDetail() {
                 🗑️ 作品を削除する
               </button>
             )}
+
+            {/* モックアップ: 通報・ライセンス管理 */}
+            <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+              <button
+                onClick={() => alert('著作権侵害の通報機能は準備中です。')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'center',
+                  padding: '10px', background: 'transparent', color: 'var(--color-text-sub)',
+                  border: '1px solid var(--color-border)', borderRadius: 'var(--radius-btn)',
+                  fontSize: '0.8rem', cursor: 'pointer', transition: 'all 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <Flag size={14} /> 通報する
+              </button>
+            </div>
           </div>
         </div>
       </div>

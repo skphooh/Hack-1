@@ -1,7 +1,7 @@
 // マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Search, Building2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -35,6 +35,8 @@ export default function Market() {
   const [loading, setLoading] = useState(true)
   const [retrying, setRetrying] = useState(false)
   const [genre, setGenre] = useState('')
+  const [search, setSearch] = useState('')
+  const [isOfficial, setIsOfficial] = useState(false)
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
 
   // 作品一覧を取得（Render スリープ対策のリトライ付き）
@@ -47,8 +49,10 @@ export default function Market() {
       setRetrying(false)
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const params: Record<string, string> = { status: 'done', page: '1', per_page: '20' }
+          const params: Record<string, string | boolean> = { status: 'done', page: '1', per_page: '20' }
           if (genre) params.genre = genre
+          if (search) params.search = search
+          if (isOfficial) params.is_official = true
           const res = await fetchWorks(params)
           setWorks(res.items)
           setTotal(res.total)
@@ -66,7 +70,7 @@ export default function Market() {
       }
     }
     load()
-  }, [genre])
+  }, [genre, search, isOfficial])
 
   const handleLike = async (workId: string) => {
     if (!user) return
@@ -123,6 +127,43 @@ export default function Market() {
           <p style={{ color: 'var(--color-text-sub)', fontWeight: 500 }}>
             コミュニティが作った3Dデータをダウンロードして印刷しよう！
           </p>
+        </div>
+
+        {/* 検索バーとフィルタ */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
+          <div style={{ flex: '1 1 300px', position: 'relative' }}>
+            <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+            <input
+              type="text"
+              placeholder="作品名で検索..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px 12px 42px',
+                borderRadius: 100,
+                border: '2px solid var(--color-border)',
+                outline: 'none',
+                fontFamily: 'var(--font-base)',
+                fontSize: '0.95rem',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--color-pink-light)'}
+              onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
+            />
+          </div>
+          <button
+            onClick={() => setIsOfficial(!isOfficial)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 20px', borderRadius: 100, cursor: 'pointer',
+              border: `2px solid ${isOfficial ? 'var(--color-purple)' : 'var(--color-border)'}`,
+              background: isOfficial ? '#F5EDFF' : 'white',
+              color: isOfficial ? 'var(--color-purple)' : 'var(--color-text-sub)',
+              fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.2s',
+            }}
+          >
+            🌟 公式ライセンスのみ表示
+          </button>
         </div>
 
         {/* ジャンルフィルターバー */}
@@ -237,6 +278,14 @@ export default function Market() {
             ))}
           </div>
         )}
+
+        {/* 企業向けコンペモックアップ */}
+        <div style={{ marginTop: 60, padding: '30px', background: 'linear-gradient(135deg, #FFF9FB 0%, #F5EDFF 100%)', borderRadius: 'var(--radius-xl)', border: '2px solid #DDB3F5', textAlign: 'center' }}>
+          <Building2 size={32} color="var(--color-purple)" style={{ marginBottom: 12 }} />
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-purple)', marginBottom: 8 }}>企業向けコンテスト開催中！</h3>
+          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-sub)', marginBottom: 16 }}>あなたの3Dデータが公式グッズに採用されるかも？</p>
+          <button className="btn-primary" onClick={() => alert('機能準備中です！')} style={{ margin: '0 auto' }}>🏆 コンペティションに参加する</button>
+        </div>
       </div>
 
       <style>{`

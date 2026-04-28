@@ -1,9 +1,11 @@
-// トップページ（ランディングページ）- ポップ・かわいいデザイン
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, LogIn, Sparkles, ShoppingBag, Upload, Cpu, Download } from 'lucide-react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup } from 'firebase/auth'
 import { useAuthState } from '../components/useAuthState'
+import { WorkCard } from '../components/WorkCard'
+import { fetchWorks, type WorkResponse } from '../lib/api'
 import logo02Img from '../assets/logo02.png'
 import logo03Img from '../assets/logo03.png'
 import heroImg from '../assets/hero.png'
@@ -87,6 +89,14 @@ const DEMO_STEPS = [
 export default function Top() {
   const navigate = useNavigate()
   const { user } = useAuthState()
+  const [demoWorks, setDemoWorks] = useState<WorkResponse[]>([])
+
+  useEffect(() => {
+    // デモ用に最新の作品を4件取得
+    fetchWorks({ status: 'done', per_page: 4 })
+      .then(res => setDemoWorks(res.items))
+      .catch(err => console.error("デモ作品の取得に失敗しました", err))
+  }, [])
 
   const handleAuthAction = async (path: string) => {
     if (user) {
@@ -272,6 +282,37 @@ export default function Top() {
           )}
         </div>
       </section>
+
+      {/* ===== デモマーケットセクション ===== */}
+      {demoWorks.length > 0 && (
+        <section className="section" style={{ background: '#FFFFFF' }}>
+          <div className="page-container">
+            <h2 className="section-title">みんなの作品を見てみよう！ 👀</h2>
+            <p className="section-sub">マーケットにはたくさんの3Dモデルが並んでいます。</p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginTop: 32 }}>
+              {demoWorks.map(work => (
+                <div key={work.id} onClick={() => handleAuthAction(`/works/${work.id}`)} style={{ cursor: 'pointer' }}>
+                  {/* 未ログイン状態でも表示させるが、クリック時はログインを促す */}
+                  <div style={{ pointerEvents: user ? 'auto' : 'none' }}>
+                    <WorkCard work={work} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 40 }}>
+              <button
+                onClick={() => handleAuthAction('/market')}
+                className="btn-outline"
+                style={{ padding: '12px 28px', fontSize: '1rem', cursor: 'pointer', background: 'white' }}
+              >
+                🛍️ もっと見る
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== 課題提起セクション ===== */}
       <section className="section" style={{ background: 'linear-gradient(135deg, #FFF9FB 0%, #F9F5FF 100%)' }}>

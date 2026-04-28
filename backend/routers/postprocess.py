@@ -45,43 +45,51 @@ async def add_strap_hole_endpoint(
     offset_y: float = Query(0.0, description="Y方向オフセット（モデル奥行きの%。-50〜50）"),
     depth_mm: float = Query(5.0, description="上端からの穴の深さ（mm）"),
     radius_mm: float = Query(1.0, description="穴の半径（mm）。1.0=直径2mm"),
+    angle_x: float = Query(0.0, description="X軸回転角（度）"),
+    angle_y: float = Query(0.0, description="Y軸回転角（度）"),
+    angle_z: float = Query(0.0, description="Z軸回転角（度）"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
     """
     既存作品のGLB/STLにストラップ穴を開け、STLファイルとして直接返す。
-    Firebase/DBへの保存は行わない。ユーザーがその場でダウンロードする。
     """
-    work = await _get_work_or_404(work_id, db)
-
-    source_url = work.glb_url or work.stl_url
-    if not source_url:
-        raise HTTPException(status_code=400, detail="3Dモデルデータがありません")
-
-    extension = "glb" if work.glb_url else "stl"
-    model_bytes = await _download_model(source_url)
-
     try:
+        work = await _get_work_or_404(work_id, db)
+
+        source_url = work.glb_url or work.stl_url
+        if not source_url:
+            raise HTTPException(status_code=400, detail="3Dモデルデータがありません")
+
+        extension = "glb" if work.glb_url else "stl"
+        model_bytes = await _download_model(source_url)
+
         stl_bytes = await add_strap_hole(
             model_bytes, extension,
             offset_x_pct=offset_x,
             offset_y_pct=offset_y,
             depth_from_top_mm=depth_mm,
             hole_radius_mm=radius_mm,
+            angle_x=angle_x,
+            angle_y=angle_y,
+            angle_z=angle_z,
         )
+
+        safe_title = (work.title or "model").replace(" ", "_")
+        filename = f"{safe_title}_hole_r{radius_mm}mm.stl"
+        print(f"✅ ストラップ穴STL生成完了: {filename}", flush=True)
+
+        return Response(
+            content=stl_bytes,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"❌ ストラップ穴追加失敗: {e}", flush=True)
-        raise HTTPException(status_code=500, detail=f"ストラップ穴の追加に失敗しました: {e}")
-
-    safe_title = (work.title or "model").replace(" ", "_")
-    filename = f"{safe_title}_hole_r{radius_mm}mm.stl"
-    print(f"✅ ストラップ穴STL生成完了（直接返却）: {filename}", flush=True)
-
-    return Response(
-        content=stl_bytes,
-        media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
+        print(f"❌ ストラップ穴追加エラー: {e}", flush=True)
+        # 500エラーだとCORSが外れることがあるため、400または明示的な例外として返す
+        raise HTTPException(status_code=400, detail=f"モデルの処理に失敗しました (メモリ不足の可能性があります): {e}")
 
 
 @router.post("/works/{work_id}/base")
