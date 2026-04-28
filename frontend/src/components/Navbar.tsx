@@ -5,10 +5,6 @@ import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
 import logoImg from '../assets/logo02.png'
 
-const GUEST_NAV_LINKS = [
-  { path: '/', label: '🏠 ホーム' },
-]
-
 const AUTH_NAV_LINKS = [
   { path: '/generate', label: '✨ 3Dにする！' },
   { path: '/market', label: '🛍️ マーケット' },
@@ -18,7 +14,7 @@ export function Navbar() {
   const location = useLocation()
   const { user } = useAuthState()
 
-  const navLinks = user ? AUTH_NAV_LINKS : GUEST_NAV_LINKS
+  const navLinks = user ? AUTH_NAV_LINKS : []
 
   const handleLogin = async () => {
     try {
@@ -113,7 +109,8 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* 2段目: 主要ナビゲーション導線 */}
+      {/* 2段目: 主要ナビゲーション導線（ログイン時のみ表示） */}
+      {navLinks.length > 0 && (
       <nav
         style={{
           display: 'flex',
@@ -146,6 +143,7 @@ export function Navbar() {
           )
         })}
       </nav>
+      )}
     </header>
   )
 }
