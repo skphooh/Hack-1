@@ -14,10 +14,14 @@ async function getAuthHeaders(): Promise<HeadersInit> {
 }
 
 /** 汎用GETリクエスト */
-export async function apiGet<T>(path: string, params?: Record<string, string>): Promise<T> {
+export async function apiGet<T>(path: string, params?: Record<string, any>): Promise<T> {
   const url = new URL(`${API_BASE}${path}`)
   if (params) {
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v))
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') {
+        url.searchParams.set(k, String(v))
+      }
+    })
   }
   const headers = await getAuthHeaders()
   const res = await fetch(url.toString(), { headers })
@@ -63,7 +67,7 @@ export async function apiDelete<T>(path: string): Promise<T> {
 // ===== エンドポイント別APIメソッド =====
 
 /** 作品一覧取得 */
-export const fetchWorks = (params?: Record<string, string>) =>
+export const fetchWorks = (params?: Record<string, any>) =>
   apiGet<WorkListResponse>('/api/works', params)
 
 /** 作品詳細取得 */
@@ -97,10 +101,13 @@ export const toggleLike = (workId: string) =>
 export async function addStrapHole(
   workId: string,
   params: {
-    offset_x?: number   // モデル幅の%（-50〜50）
-    offset_y?: number   // モデル奥行きの%（-50〜50）
-    depth_mm?: number   // 上端からの深さmm
-    radius_mm?: number  // 穴の半径mm（1.0=直径2mm）
+    offset_x?: number
+    offset_y?: number
+    depth_mm?: number
+    radius_mm?: number
+    angle_x?: number
+    angle_y?: number
+    angle_z?: number
   } = {}
 ): Promise<string> {
   const headers = await getAuthHeaders()
@@ -109,6 +116,9 @@ export async function addStrapHole(
   if (params.offset_y  !== undefined) q.set('offset_y',  String(params.offset_y))
   if (params.depth_mm  !== undefined) q.set('depth_mm',  String(params.depth_mm))
   if (params.radius_mm !== undefined) q.set('radius_mm', String(params.radius_mm))
+  if (params.angle_x   !== undefined) q.set('angle_x',   String(params.angle_x))
+  if (params.angle_y   !== undefined) q.set('angle_y',   String(params.angle_y))
+  if (params.angle_z   !== undefined) q.set('angle_z',   String(params.angle_z))
   const res = await fetch(`${API_BASE}/api/works/${workId}/strap-hole?${q.toString()}`, {
     method: 'POST',
     headers,

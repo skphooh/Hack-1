@@ -21,15 +21,24 @@ router = APIRouter()
 @router.get("/works", response_model=WorkListResponse)
 async def list_works(
     genre: Optional[str] = Query(None, description="ジャンルでフィルタ"),
+    user_id: Optional[str] = Query(None, description="Firebase UIDでフィルタ"),
+    search: Optional[str] = Query(None, description="タイトル検索"),
+    is_official: Optional[bool] = Query(None, description="公式作品フィルタ"),
     status: str = Query("done", description="ステータスでフィルタ"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    """作品一覧取得（ジャンル・ページネーション対応）"""
+    """作品一覧取得（フィルタ・ページネーション対応）"""
     query = select(Work).where(Work.status == status)
     if genre:
         query = query.where(Work.genre == genre)
+    if user_id:
+        query = query.join(Work.user).where(User.firebase_uid == user_id)
+    if search:
+        query = query.where(Work.title.ilike(f"%{search}%"))
+    if is_official is not None:
+        query = query.where(Work.is_official == is_official)
 
     # 全件数カウント
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))
