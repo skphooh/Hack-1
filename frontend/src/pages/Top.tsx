@@ -92,8 +92,8 @@ export default function Top() {
   const [demoWorks, setDemoWorks] = useState<WorkResponse[]>([])
 
   useEffect(() => {
-    // デモ用に最新の作品を4件取得
-    fetchWorks({ status: 'done', per_page: 4 })
+    // デモ用に最新の作品を6件取得
+    fetchWorks({ status: 'done', per_page: 6 })
       .then(res => setDemoWorks(res.items))
       .catch(err => console.error("デモ作品の取得に失敗しました", err))
   }, [])
@@ -255,14 +255,6 @@ export default function Top() {
                 </div>
               )
             })}
-          </div>
-
-          {/* hero.png を使ったビジュアル */}
-          <div style={{ marginTop: 56, textAlign: 'center' }}>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: 16, fontWeight: 600 }}>▼ 実際の変換イメージ</p>
-            <div style={{ display: 'inline-block', borderRadius: 'var(--radius-xl)', overflow: 'hidden', boxShadow: '0 12px 40px rgba(155,89,182,0.18)', border: '3px solid #DDB3F5', maxWidth: 600, width: '100%' }}>
-              <img src={heroImg} alt="変換イメージ" style={{ width: '100%', display: 'block' }} />
-            </div>
           </div>
 
           {/* ログインCTA */}
