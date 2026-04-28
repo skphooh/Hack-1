@@ -267,10 +267,11 @@ export default function Market() {
               gap: 20,
             }}
           >
-            {works.map((work) => (
+            {works.map((work, index) => (
               <WorkCard
                 key={work.id}
                 work={work}
+                index={index}
                 isLiked={likedIds.has(work.id)}
                 onLike={() => handleLike(work.id)}
                 onClick={() => navigate(`/works/${work.id}`)}

@@ -282,11 +282,11 @@ export default function Top() {
             <p className="section-sub">マーケットにはたくさんの3Dモデルが並んでいます。</p>
             
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginTop: 32 }}>
-              {demoWorks.map(work => (
+              {demoWorks.map((work, index) => (
                 <div key={work.id} onClick={() => handleAuthAction(`/works/${work.id}`)} style={{ cursor: 'pointer' }}>
                   {/* 未ログイン状態でも表示させるが、クリック時はログインを促す */}
                   <div style={{ pointerEvents: user ? 'auto' : 'none' }}>
-                    <WorkCard work={work} />
+                    <WorkCard work={work} index={index} />
                   </div>
                 </div>
               ))}
