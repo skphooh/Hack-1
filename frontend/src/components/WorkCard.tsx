@@ -12,6 +12,8 @@ interface WorkCardProps {
   onLike?: () => void
   /** 現在ユーザーがいいね済みか */
   isLiked?: boolean
+  /** 順番（上位16件をデフォルト3D表示するため） */
+  index?: number
 }
 
 /** ジャンルラベルの日本語マッピング */
@@ -34,8 +36,10 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
   other:    { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
 }
 
-export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardProps) {
+export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const [has3DError, setHas3DError] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  const show3D = (index < 16 || isHovered) && work.glb_url && !has3DError
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
@@ -52,11 +56,13 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
         boxShadow: 'var(--shadow-card)',
       }}
       onMouseEnter={(e) => {
+        setIsHovered(true)
         ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
         ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
         ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-pink-light)'
       }}
       onMouseLeave={(e) => {
+        setIsHovered(false)
         ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
         ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
         ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
@@ -71,9 +77,27 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
           overflow: 'hidden',
         }}
       >
-        {work.glb_url && !has3DError ? (
-          <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0 }}>
-            <Viewer3D glbUrl={work.glb_url} isMarket={true} height={200} onError={() => setHas3DError(true)} />
+        {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
+        {show3D && (
+          <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
+            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={200} onError={() => setHas3DError(true)} />
+          </div>
+        )}
+
+        {/* 通常時はターンアラウンド画像の「FRONT（左端）」を背景として表示 */}
+        {work.turnaround_url ? (
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+            <img
+              src={work.turnaround_url}
+              alt={work.title}
+              style={{
+                width: '400%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'left center',
+                transform: 'translateX(0%)', // 明示的に左端に寄せる
+              }}
+            />
           </div>
         ) : work.thumbnail_url ? (
           <img

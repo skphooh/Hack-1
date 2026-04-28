@@ -311,8 +311,8 @@ export default function MyPage() {
               gap: 20,
             }}
           >
-            {works.map((work) => (
-              <WorkCard key={work.id} work={work} />
+            {works.map((work, index) => (
+              <WorkCard key={work.id} work={work} index={index} />
             ))}
           </div>
         )}
