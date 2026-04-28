@@ -19,8 +19,11 @@ _SHEET_PROMPT = (
     "Create a four-panel turnaround for the character(s) and object(s) in the reference image to show their frontal, right side, left side, and back. "
     "CRITICAL REQUIREMENTS:\n"
     "1. STYLE PRESERVATION: You MUST preserve the EXACT art style, brush strokes, colors, and textures of the original reference image. Do NOT change it to a generic 3D or flat vector illustration style.\n"
-    "2. CONTENT PRESERVATION: You MUST keep ALL characters (even if there are multiple, like a boy and a girl), clothing, items, and accessories exactly as they appear in the original image.\n"
-    "3. POSE: Keep the exact same pose as the original image across all four views. Just rotate the camera angle.\n"
+    "2. MULTIPLE CHARACTERS (Crucial): If there are multiple characters (e.g. a boy and a girl), you MUST keep ALL of them in EVERY panel. DO NOT merge their clothes, hair, or features into a single person! \n"
+    "   - In the [ FRONT ] view: Draw them exactly as they are.\n"
+    "   - In the [ SIDE R ] and [ SIDE L ] views: One character should partially or fully overlap/occlude the other, because we are looking from the side. Draw both if visible.\n"
+    "   - In the [ BACK ] view: Their left-to-right order MUST be swapped (e.g., if Boy is on the left in the front, the Boy must be on the right in the back).\n"
+    "3. POSE: Keep the exact same pose as the original image across all four views. Just rotate the camera angle around the entire group.\n"
     "4. LAYOUT: One horizontal row with exactly 4 panels labeled: [ FRONT ]  [ SIDE R ]  [ SIDE L ]  [ BACK ]\n"
     "5. BACKGROUND: Use a simple white and grey background."
 )
