@@ -49,7 +49,7 @@ export default function Market() {
       setRetrying(false)
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
-          const params: Record<string, string | boolean> = { status: 'done', page: '1', per_page: '20' }
+          const params: Record<string, string | boolean> = { status: 'done', page: '1', per_page: '100' }
           if (genre) params.genre = genre
           if (search) params.search = search
           if (isOfficial) params.is_official = true
