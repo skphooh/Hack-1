@@ -94,6 +94,10 @@ export const estimateDepth = (form: FormData) =>
 export const toggleLike = (workId: string) =>
   apiPost<LikeResponse>(`/api/works/${workId}/like`, {})
 
+/** 自分がいいねした作品一覧 */
+export const fetchLikedWorks = () =>
+  apiGet<WorkListResponse>('/api/works/liked')
+
 /**
  * ストラップ穴追加 → STLファイルを直接Blobで受け取る
  * @returns ダウンロード用のURL (blob:)

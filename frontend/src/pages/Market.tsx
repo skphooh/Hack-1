@@ -92,7 +92,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 132, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 40, paddingRight: 40 }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
@@ -118,19 +118,6 @@ export default function Market() {
               onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
             />
           </div>
-          <button
-            onClick={() => setIsOfficial(!isOfficial)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '10px 20px', borderRadius: 100, cursor: 'pointer',
-              border: `2px solid ${isOfficial ? 'var(--color-purple)' : 'var(--color-border)'}`,
-              background: isOfficial ? '#F5EDFF' : 'white',
-              color: isOfficial ? 'var(--color-purple)' : 'var(--color-text-sub)',
-              fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.2s',
-            }}
-          >
-            🌟 公式ライセンスのみ表示
-          </button>
         </div>
 
         {/* ジャンルフィルターバー */}
@@ -152,12 +139,12 @@ export default function Market() {
                 id={`genre-filter-${value || 'all'}`}
                 onClick={() => setGenre(value)}
                 style={{
-                  padding: '8px 18px',
+                  padding: '5px 12px',
                   borderRadius: 100,
                   border: `2px solid ${isSelected ? (style?.border ?? 'transparent') : 'var(--color-border)'}`,
                   background: isSelected ? (style?.bg ?? '#FFEDF4') : 'white',
                   color: isSelected ? (style?.color ?? 'white') : 'var(--color-text-sub)',
-                  fontSize: '0.875rem',
+                  fontSize: '0.75rem',
                   fontWeight: isSelected ? 800 : 500,
                   cursor: 'pointer',
                   transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
