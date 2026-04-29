@@ -36,7 +36,7 @@ export default function Market() {
   const [retrying, setRetrying] = useState(false)
   const [genre, setGenre] = useState('')
   const [search, setSearch] = useState('')
-  const [isOfficial, setIsOfficial] = useState(false)
+  const [isOfficial] = useState(false)
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
 
   // 作品一覧を取得（Render スリープ対策のリトライ付き）

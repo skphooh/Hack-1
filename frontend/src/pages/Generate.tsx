@@ -465,7 +465,7 @@ export default function Generate() {
                 {([
                   { value: 'private', label: '🔒 自分のみ',         desc: '非公開' },
                   { value: 'public',  label: '🌐 マーケットに投稿', desc: 'みんなに公開' },
-                ] as const).map(({ value, label, desc }) => {
+                ] as const).map(({ value, label }) => {
                   const selected = visibility === value
                   return (
                     <button
