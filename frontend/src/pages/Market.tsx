@@ -92,7 +92,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 40, paddingRight: 40 }}>
+    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
@@ -122,6 +122,7 @@ export default function Market() {
 
         {/* ジャンルフィルターバー */}
         <div
+          className="genre-filter-bar"
           style={{
             display: 'flex',
             gap: 8,
