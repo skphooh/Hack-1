@@ -60,6 +60,9 @@
   --radius-lg:  20px;
   --radius-xl:  28px;
   --radius-btn: 24px;
+
+  /* レスポンシブ余白 */
+  --page-px: 40px;
 }
 
 /* ===== ベーススタイル ===== */
@@ -192,6 +195,70 @@ main {
 /* ===== セクション余白 ===== */
 .section {
   padding: 80px 0;
+}
+
+/* ===== Navbar ===== */
+.navbar-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 40px;
+  border-bottom: none;
+}
+
+.navbar-username {
+  /* PC: 表示 */
+}
+
+/* ===== モバイル対応 (max-width: 640px) ===== */
+@media (max-width: 640px) {
+  :root {
+    --page-px: 16px;
+  }
+
+  /* セクション余白 */
+  .section {
+    padding: 28px 0;
+  }
+
+  /* ページコンテナ */
+  .page-container {
+    padding: 0 4px;
+  }
+
+  /* Navbar 上段 */
+  .navbar-top-row {
+    padding: 6px 14px;
+  }
+
+  /* ロゴ */
+  .navbar-logo {
+    height: 48px !important;
+  }
+
+  /* プロフィールボタンの名前を非表示 */
+  .navbar-username {
+    display: none;
+  }
+
+  /* ジャンルフィルターを横スクロール */
+  .genre-filter-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+  .genre-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ボタン類のフォントサイズ */
+  .btn-primary,
+  .btn-outline {
+    font-size: 0.85rem;
+    padding: 10px 18px;
+  }
 }
 
 /* ===== スクロールバー ===== */
