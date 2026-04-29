@@ -48,6 +48,7 @@ export default function Generate() {
 
   const [title, setTitle] = useState('')
   const [quality, setQuality] = useState<'standard' | 'high'>('standard')
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
   const [strapBlobUrl, setStrapBlobUrl] = useState<string | null>(null)
   const [baseBlobUrl, setBaseBlobUrl] = useState<string | null>(null)
@@ -97,6 +98,7 @@ export default function Generate() {
       form.append('file', blob, 'upload.png')
       form.append('title', title || 'うちの子')
       form.append('quality', quality)
+      form.append('is_public', visibility === 'public' ? 'true' : 'false')
 
       const newWork = await startGenerate(form)
       setWork(newWork)
@@ -265,7 +267,7 @@ export default function Generate() {
   }[step] ?? 0
 
   return (
-    <main style={{ paddingTop: 132, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 40, paddingRight: 40 }}>
       <div className="page-container section">
         {/* ステップインジケーター */}
         <div
@@ -378,7 +380,7 @@ export default function Generate() {
             )}
 
             {/* タイトル入力 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: 'var(--nm-bg)' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
               <label
                 htmlFor="work-title"
                 style={{
@@ -419,7 +421,7 @@ export default function Generate() {
             </div>
 
             {/* 品質オプション */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: 'var(--nm-bg)' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
               <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 ⚙️ 品質
               </p>
@@ -452,6 +454,41 @@ export default function Generate() {
                   ⚠️ テクスチャ・PBR有効。生成に時間がかかります
                 </p>
               )}
+            </div>
+
+            {/* 公開設定 */}
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                🔒 公開設定
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {([
+                  { value: 'private', label: '🔒 自分のみ',         desc: '非公開' },
+                  { value: 'public',  label: '🌐 マーケットに投稿', desc: 'みんなに公開' },
+                ] as const).map(({ value, label, desc }) => {
+                  const selected = visibility === value
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setVisibility(value)}
+                      style={{
+                        flex: 1, padding: '10px 12px',
+                        borderRadius: 'var(--radius-btn)',
+                        border: `1.5px solid ${selected ? 'var(--color-pink-light)' : '#d0d8e8'}`,
+                        background: 'var(--nm-bg)',
+                        boxShadow: selected ? 'var(--nm-inset)' : 'var(--nm-raised-sm)',
+                        color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                        fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        fontFamily: 'var(--font-base)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                      }}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* ダミーボタン（画像未選択時） */}
@@ -568,6 +605,7 @@ export default function Generate() {
 
           {/* 右カラム: プレビューエリア */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
             {/* アップロード画像プレビュー（Depth API の代わりに元画像を即時表示） */}
             {previewUrl && step !== 'done' && (
               <div
