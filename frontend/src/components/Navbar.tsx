@@ -63,25 +63,23 @@ export function Navbar() {
         boxShadow: '0 4px 14px #c8d0e0',
       }}
     >
-      {/* 1段目: ロゴ + 認証エリア */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 40px',
-          borderBottom: 'none',
-        }}
-      >
+      {/* 1段目: ロゴ（中央） + 認証エリア（右） */}
+      <div className="navbar-top-row">
+        {/* 左スペーサー */}
+        <div style={{ flex: 1 }} />
+
+        {/* ロゴ（中央） */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <img
             src={logoImg}
             alt="うちの子製作所 ロゴ"
+            className="navbar-logo"
             style={{ height: 68, width: 'auto', objectFit: 'contain' }}
           />
         </Link>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* 右エリア */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10 }}>
           {user ? (
             <div ref={menuRef} style={{ position: 'relative' }}>
               <button
@@ -121,7 +119,7 @@ export function Navbar() {
                 ) : (
                   <User size={14} />
                 )}
-                {user.displayName?.split(' ')[0] ?? 'マイページ'}
+                <span className="navbar-username">{user.displayName?.split(' ')[0] ?? 'マイページ'}</span>
               </button>
 
               {menuOpen && (
