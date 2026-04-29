@@ -1,7 +1,7 @@
 // マイページ（ユーザーの投稿した作品一覧）- ポップ・かわいいデザイン
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { User, Loader2, LogIn } from 'lucide-react'
+import { User, Loader2, LogIn, Pencil } from 'lucide-react'
 import { useAuthState } from '../components/useAuthState'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, type WorkResponse } from '../lib/api'
@@ -31,7 +31,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 132,
+          paddingTop: 112,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -55,7 +55,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 132,
+          paddingTop: 112,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -128,19 +128,19 @@ export default function MyPage() {
   }
 
   return (
-    <main style={{ paddingTop: 132, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 112, minHeight: '100vh' }}>
       <div className="page-container section">
         {/* プロフィールヘッダー */}
         <div
           style={{
-            background: 'white',
-            border: '2px solid var(--color-border)',
-            borderRadius: 'var(--radius-xl)',
+            background: 'var(--nm-bg)',
+            border: '1.5px solid #d0d8e8',
+            borderRadius: 'var(--radius-lg)',
             display: 'flex',
             alignItems: 'center',
-            gap: 24,
-            padding: '28px 36px',
-            marginBottom: 36,
+            gap: 14,
+            padding: '14px 20px',
+            marginBottom: 24,
             boxShadow: 'var(--shadow-card)',
             flexWrap: 'wrap',
           }}
@@ -151,37 +151,36 @@ export default function MyPage() {
               src={user.photoURL}
               alt={user.displayName ?? 'ユーザーアイコン'}
               style={{
-                width: 76,
-                height: 76,
+                width: 48,
+                height: 48,
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '3px solid var(--color-pink-light)',
-                boxShadow: '0 4px 16px rgba(255,107,157,0.3)',
+                border: '2px solid var(--color-pink-light)',
               }}
             />
           ) : (
             <div
               style={{
-                width: 76,
-                height: 76,
+                width: 48,
+                height: 48,
                 borderRadius: '50%',
                 background: '#FFEDF4',
-                border: '3px solid var(--color-pink-light)',
+                border: '2px solid var(--color-pink-light)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <User size={32} color="var(--color-pink)" />
+              <User size={22} color="var(--color-pink)" />
             </div>
           )}
 
           {/* ユーザー情報 */}
-          <div style={{ flex: 1, minWidth: 150 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <h1
                 style={{
-                  fontSize: '1.4rem',
+                  fontSize: '1rem',
                   fontWeight: 800,
                   color: 'var(--color-text)',
                   fontFamily: 'var(--font-heading)',
@@ -189,39 +188,54 @@ export default function MyPage() {
               >
                 {user.displayName ?? 'ユーザー'}
               </h1>
-              <span style={{ fontSize: '1.2rem' }}>👑</span>
+              <span style={{ fontSize: '0.9rem' }}>👑</span>
+              <span
+                style={{
+                  padding: '2px 10px',
+                  background: '#FFEDF4',
+                  border: '1.5px solid var(--color-pink-light)',
+                  borderRadius: 100,
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: 'var(--color-pink)',
+                }}
+              >
+                ✨ {works.length}件
+              </span>
             </div>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem' }}>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem', marginTop: 2 }}>
               {user.email}
             </p>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                marginTop: 8,
-                padding: '3px 12px',
-                background: '#FFEDF4',
-                border: '1.5px solid var(--color-pink-light)',
-                borderRadius: 100,
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                color: 'var(--color-pink)',
-              }}
-            >
-              ✨ 作品数: {works.length}件
-            </div>
           </div>
 
-          {/* 作成ボタン */}
-          <Link
-            to="/generate"
-            className="btn-primary"
-            id="mypage-create-btn"
-            style={{ whiteSpace: 'nowrap' }}
+          {/* プロフィール編集ボタン */}
+          <button
+            onClick={() => alert('プロフィール編集は準備中です！')}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              border: '1.5px solid #d0d8e8',
+              background: 'var(--nm-bg)',
+              boxShadow: 'var(--nm-raised-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow = 'var(--shadow-card)'
+              e.currentTarget.style.borderColor = 'var(--color-pink-light)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow = 'var(--nm-raised-sm)'
+              e.currentTarget.style.borderColor = '#d0d8e8'
+            }}
           >
-            ✨ 新しく作る！
-          </Link>
+            <Pencil size={18} color="var(--color-text-sub)" />
+          </button>
         </div>
 
         {/* 作品一覧見出し */}
