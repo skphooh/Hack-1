@@ -53,6 +53,31 @@ async def list_works(
     return WorkListResponse(items=items, total=total, page=page, per_page=per_page)
 
 
+@router.get("/works/liked", response_model=WorkListResponse)
+async def get_liked_works(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """自分がいいねした作品一覧を取得"""
+    user = await get_or_create_user(uid, db)
+    
+    query = select(Work).join(Like, Work.id == Like.work_id).where(Like.user_id == user.id)
+    
+    # 全件数カウント
+    count_result = await db.execute(select(func.count()).select_from(query.subquery()))
+    total = count_result.scalar_one()
+    
+    # ページネーション
+    query = query.options(selectinload(Work.user)).order_by(Like.created_at.desc())
+    query = query.offset((page - 1) * per_page).limit(per_page)
+    result = await db.execute(query)
+    items = result.scalars().all()
+    
+    return WorkListResponse(items=items, total=total, page=page, per_page=per_page)
+
+
 @router.get("/works/{work_id}", response_model=WorkResponse)
 async def get_work(work_id: UUID, db: AsyncSession = Depends(get_db)):
     """作品詳細取得"""
