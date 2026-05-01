@@ -135,6 +135,7 @@ main {
   box-shadow: 4px 4px 12px #b0bad0, -2px -2px 8px #ffffff;
   text-decoration: none;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .btn-primary:hover {
@@ -165,6 +166,7 @@ main {
   text-decoration: none;
   letter-spacing: 0.02em;
   box-shadow: var(--nm-raised-sm);
+  white-space: nowrap;
 }
 
 .btn-outline:hover {
@@ -362,6 +364,7 @@ main {
   font-size: 0.72rem;
   font-weight: 700;
   box-shadow: var(--nm-raised-sm);
+  white-space: nowrap;
 }
 
 /* ===== インプット ===== */

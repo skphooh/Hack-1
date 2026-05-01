@@ -163,6 +163,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
               fontSize: '0.7rem',
               fontWeight: 700,
               marginBottom: 7,
+              whiteSpace: 'nowrap',
             }}
           >
             {GENRE_LABELS[work.genre] ?? work.genre}

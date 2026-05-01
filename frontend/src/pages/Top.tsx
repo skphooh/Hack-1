@@ -144,20 +144,20 @@ export default function Top() {
 
         {/* バッジ */}
         <div
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 22px', background: 'white', border: '2px solid var(--color-pink-light)', borderRadius: 100, fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 32, boxShadow: '0 4px 14px rgba(255, 107, 157, 0.15)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 22px', background: 'white', border: '2px solid var(--color-pink-light)', borderRadius: 100, fontSize: '0.875rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 32, boxShadow: '0 4px 14px rgba(255, 107, 157, 0.15)', whiteSpace: 'nowrap' }}
           className="animate-fade-in"
         >
           ✨ 写真1枚から3Dフィギュアへ
         </div>
 
         {/* キャッチコピー */}
-        <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontWeight: 900, lineHeight: 1.2, marginBottom: 24, fontFamily: 'var(--font-display)', color: 'var(--color-text)' }} className="animate-fade-in">
+        <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 4.5rem)', fontWeight: 900, lineHeight: 1.2, marginBottom: 24, fontFamily: 'var(--font-display)', color: 'var(--color-text)', wordBreak: 'keep-all', overflowWrap: 'break-word' }} className="animate-fade-in">
           <span className="gradient-text">うちの子</span>を、
           <br />
           自分の手で立体にする。🎉
         </h1>
 
-        <p style={{ fontSize: 'clamp(1rem, 2vw, 1.2rem)', color: 'var(--color-text-sub)', maxWidth: 540, marginBottom: 48, lineHeight: 1.85, fontWeight: 500 }} className="animate-fade-in">
+        <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1.2rem)', color: 'var(--color-text-sub)', maxWidth: 540, marginBottom: 48, lineHeight: 1.85, fontWeight: 500, wordBreak: 'keep-all', overflowWrap: 'break-word' }} className="animate-fade-in">
           写真・イラスト1枚から3Dメッシュを生成。
           <br />
           STLデータで出力して、3Dプリンターで印刷できます！
@@ -220,7 +220,7 @@ export default function Top() {
                     }}
                   >
                     {/* ステップバッジ */}
-                    <span style={{ display: 'inline-block', padding: '3px 12px', background: s.bg, color: s.color, border: `1.5px solid ${s.border}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 16 }}>
+                    <span style={{ display: 'inline-block', padding: '3px 12px', background: s.bg, color: s.color, border: `1.5px solid ${s.border}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 16, whiteSpace: 'nowrap' }}>
                       {s.step}
                     </span>
 
@@ -347,7 +347,7 @@ export default function Top() {
                 >
                   <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: card.tagBg, opacity: 0.6, pointerEvents: 'none' }} />
                   <div style={{ fontSize: '3rem', marginBottom: 16, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))' }}>{card.emoji}</div>
-                  <span style={{ display: 'inline-block', padding: '3px 12px', background: card.tagBg, color: card.tagColor, border: `1.5px solid ${card.tagBorder}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 12 }}>
+                  <span style={{ display: 'inline-block', padding: '3px 12px', background: card.tagBg, color: card.tagColor, border: `1.5px solid ${card.tagBorder}`, borderRadius: 100, fontSize: '0.72rem', fontWeight: 800, marginBottom: 12, whiteSpace: 'nowrap' }}>
                     {card.tag}
                   </span>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: 10, color: 'var(--color-text)', fontFamily: 'var(--font-base)' }}>{card.title}</h3>
