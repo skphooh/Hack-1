@@ -281,7 +281,7 @@ export default function Top() {
             <h2 className="section-title">みんなの作品を見てみよう！ 👀</h2>
             <p className="section-sub">マーケットにはたくさんの3Dモデルが並んでいます。</p>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginTop: 32 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(var(--card-min-width, 240px), 1fr))', gap: 20, marginTop: 32 }}>
               {demoWorks.map((work, index) => (
                 <div key={work.id} onClick={() => handleAuthAction(`/works/${work.id}`)} style={{ cursor: 'pointer' }}>
                   {/* 未ログイン状態でも表示させるが、クリック時はログインを促す */}

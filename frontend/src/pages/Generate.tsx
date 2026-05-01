@@ -305,9 +305,9 @@ export default function Generate() {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '7px 16px',
+                      padding: '7px clamp(8px, 2vw, 16px)',
                       borderRadius: 100,
-                      fontSize: '0.88rem',
+                      fontSize: 'clamp(0.75rem, 2vw, 0.88rem)',
                       fontWeight: 700,
                       whiteSpace: 'nowrap',
                       transition: 'all 0.3s ease',
@@ -327,7 +327,7 @@ export default function Generate() {
                     <span style={{ fontSize: '1rem', visibility: 'hidden', lineHeight: 1 }}>0</span>
                     <div
                       style={{
-                        width: 40,
+                        width: 'clamp(15px, 4vw, 40px)',
                         height: 2,
                         borderRadius: 100,
                         background: i < currentStepIndex ? 'var(--color-pink)' : '#ddd',
@@ -345,7 +345,7 @@ export default function Generate() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: 28,
             alignItems: 'start',
           }}

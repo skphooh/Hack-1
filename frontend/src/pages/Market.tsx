@@ -218,7 +218,7 @@ export default function Market() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
               gap: 20,
             }}
           >

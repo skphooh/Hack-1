@@ -61,8 +61,9 @@
   --radius-xl:  28px;
   --radius-btn: 24px;
 
-  /* レスポンシブ余白 */
+  /* レスポンシブ余白・サイズ */
   --page-px: 40px;
+  --card-min-width: 240px;
 }
 
 /* ===== ベーススタイル ===== */
@@ -216,6 +217,7 @@ main {
 @media (max-width: 640px) {
   :root {
     --page-px: 16px;
+    --card-min-width: 150px;
   }
 
   /* セクション余白 */
