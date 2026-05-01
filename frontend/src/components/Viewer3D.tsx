@@ -1,6 +1,6 @@
 // Three.js 3Dビューアコンポーネント（GLB / OBJ / STL 対応）
 import { Suspense, useMemo, useRef } from 'react'
-import { Canvas, useFrame, useLoader } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
@@ -8,7 +8,7 @@ import { Box3, Vector3 } from 'three'
 import type { BufferGeometry, Mesh } from 'three'
 import { ErrorBoundary } from './ErrorBoundary'
 
-// ─── GLBモデル ────────────────────────────────────────────────────────────────
+// ─── GLBモデル（自動回転） ────────────────────────────────────────────────────
 
 function RotatingModel({ url }: { url: string }) {
   const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
@@ -17,6 +17,23 @@ function RotatingModel({ url }: { url: string }) {
   const groupRef = useRef<Mesh>(null!)
   useFrame(() => { if (groupRef.current) groupRef.current.rotation.y += 0.005 })
   return <primitive ref={groupRef} object={cloned} scale={2.2} />
+}
+
+// ─── GLBモデル（クリックで穴位置指定モード） ─────────────────────────────────
+
+function PickableModel({ url, onPick }: { url: string; onPick: (point: Vector3) => void }) {
+  const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
+  const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
+  return (
+    <primitive
+      object={cloned}
+      scale={2.2}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation()
+        onPick(e.point)
+      }}
+    />
+  )
 }
 
 // ─── STLモデル ────────────────────────────────────────────────────────────────
@@ -52,28 +69,19 @@ function STLModel({ url }: { url: string }) {
   )
 }
 
-// ─── ストラップ穴 オーバーレイ ────────────────────────────────────────────────
+// ─── 穴マーカー（赤い発光球） ─────────────────────────────────────────────────
 
-export interface HoleOverlayConfig {
-  offsetX: number   // % (-50 to 50)
-  offsetY: number   // % (-50 to 50)
-  depthMm: number
-  radiusMm: number
-}
-
-// モデルは scale=2.2 ≈ 100mm → 1mm ≈ 0.022 world units
-const MM = 0.022
-
-function HoleOverlay({ offsetX, offsetY, depthMm, radiusMm }: HoleOverlayConfig) {
-  const r = Math.max(radiusMm * MM, 0.02)
-  const h = depthMm * MM
-  const x = (offsetX / 50) * 0.8
-  const z = (offsetY / 50) * 0.8
-  const y = 1.1 - h / 2   // モデル上端から掘り下げる
+function HoleMarker({ pos }: { pos: [number, number, number] }) {
   return (
-    <mesh position={[x, y, z]}>
-      <cylinderGeometry args={[r, r, h, 24]} />
-      <meshStandardMaterial color="#ef4444" opacity={0.72} transparent />
+    <mesh position={pos}>
+      <sphereGeometry args={[0.07, 20, 20]} />
+      <meshStandardMaterial
+        color="#ef4444"
+        emissive="#ef4444"
+        emissiveIntensity={0.6}
+        opacity={0.92}
+        transparent
+      />
     </mesh>
   )
 }
@@ -86,6 +94,7 @@ export interface BaseOverlayConfig {
 }
 
 function BaseOverlay({ heightMm, marginPct }: BaseOverlayConfig) {
+  const MM = 0.022
   const h = Math.max(heightMm * MM, 0.01)
   const w = 1.5 * (1 + marginPct / 100)  // モデル底面フットプリント推定
   const y = -1.1 - h / 2                  // モデル下端に接続
@@ -117,10 +126,16 @@ interface Viewer3DProps {
   onError?: () => void
   /** 加工済みSTLを表示する場合に指定（設定するとGLBの代わりにSTLを表示） */
   stlUrl?: string
-  /** ストラップ穴位置のオーバーレイ（GLBモード時のみ表示） */
-  holeOverlay?: HoleOverlayConfig
-  /** 台座サイズのオーバーレイ（GLBモード時のみ表示） */
+  /** 台座サイズのオーバーレイ */
   baseOverlay?: BaseOverlayConfig
+  /**
+   * 穴位置クリック指定モード。
+   * このコールバックが渡された場合、モデルをクリック/タップすると交点の3D座標を返す。
+   * 自動回転は停止し、カーソルが crosshair になる。
+   */
+  onHolePick?: (point: Vector3) => void
+  /** ピック済みの穴マーカー座標 [x, y, z]（ワールド座標） */
+  holeMarkerPos?: [number, number, number]
 }
 
 // ─── コンポーネント ───────────────────────────────────────────────────────────
@@ -131,9 +146,13 @@ export function Viewer3D({
   isMarket = false,
   onError,
   stlUrl,
-  holeOverlay,
   baseOverlay,
+  onHolePick,
+  holeMarkerPos,
 }: Viewer3DProps) {
+  // ピックモード中はカーソルを crosshair にする
+  const isPickMode = !!onHolePick
+
   return (
     <div
       id="model-viewer"
@@ -148,8 +167,33 @@ export function Viewer3D({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        position: 'relative',
+        cursor: isPickMode ? 'crosshair' : 'grab',
       }}
     >
+      {/* ピックモード中の案内オーバーレイ */}
+      {isPickMode && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(239, 68, 68, 0.85)',
+            color: 'white',
+            padding: '6px 16px',
+            borderRadius: 100,
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            zIndex: 20,
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          👆 モデルをタップして穴位置を指定
+        </div>
+      )}
+
       <ErrorBoundary
         onCatch={onError}
         fallback={
@@ -167,23 +211,30 @@ export function Viewer3D({
           camera={{ position: [0, 0, 3.5], fov: 45 }}
           gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}
         >
-          <ambientLight intensity={isMarket ? 0.8 : 0.8} />
+          <ambientLight intensity={0.8} />
           <directionalLight position={[5, 5, 5]} intensity={1.5} />
 
-          {/* ✅ 正面から照らすライトを追加 (顔などを明るくする用) */}
+          {/* 正面ライト（詳細ビュー時） */}
           {!isMarket && (
-            <directionalLight
-              position={[0, 0, 5]} // 正面(Z=5)、カメラ(Z=3.5)の少し後ろ
-              intensity={0.8}      // 既存のライトより少し弱くして立体感を保つ
-              color="#ffffff"
-            />
+            <directionalLight position={[0, 0, 5]} intensity={0.8} color="#ffffff" />
           )}
-          {/* オーバーレイ: GLBモード時のみ、Suspense外で同期描画 */}
-          {!stlUrl && holeOverlay && <HoleOverlay {...holeOverlay} />}
+
+          {/* 穴マーカー */}
+          {holeMarkerPos && <HoleMarker pos={holeMarkerPos} />}
+
+          {/* 台座オーバーレイ（GLBモード時のみ） */}
           {!stlUrl && baseOverlay && <BaseOverlay {...baseOverlay} />}
 
           <Suspense fallback={<LoadingFallback />}>
-            {stlUrl ? <STLModel url={stlUrl} /> : <RotatingModel url={glbUrl} />}
+            {stlUrl ? (
+              <STLModel url={stlUrl} />
+            ) : isPickMode ? (
+              // ピックモード: クリック可能モデル（自動回転なし）
+              <PickableModel url={glbUrl} onPick={onHolePick!} />
+            ) : (
+              // 通常モード: 自動回転モデル
+              <RotatingModel url={glbUrl} />
+            )}
             {!isMarket && <Environment preset="city" />}
             {!isMarket && <ContactShadows position={[0, -2.0, 0]} opacity={0.4} blur={2} />}
           </Suspense>
@@ -191,7 +242,8 @@ export function Viewer3D({
           <OrbitControls
             enablePan={false}
             enableZoom={!isMarket}
-            autoRotate={isMarket}
+            // ピックモード中は自動回転OFF、通常は市場カードのみON
+            autoRotate={!isPickMode && isMarket}
             autoRotateSpeed={2}
           />
         </Canvas>

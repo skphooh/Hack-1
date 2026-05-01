@@ -6,6 +6,7 @@ import { Viewer3D } from '../components/Viewer3D'
 import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
+import type { Vector3 } from 'three'
 
 /** ジャンルラベルの日本語マッピング */
 const GENRE_LABELS: Record<string, string> = {
@@ -34,17 +35,13 @@ export default function WorkDetail() {
   // STLビュー切り替え
   const [stlViewUrl, setStlViewUrl] = useState<string | null>(null)
   const [showStl,    setShowStl]    = useState(false)
-  // オーバーレイ表示フラグ（チェックボックスでON/OFF）
-  const [showHoleOverlay, setShowHoleOverlay] = useState(false)
+  // オーバーレイ表示フラグ
   const [showBaseOverlay, setShowBaseOverlay] = useState(false)
 
-  const [holeOffsetX,  setHoleOffsetX]  = useState(0)    // モデル幅の%
-  const [holeOffsetY,  setHoleOffsetY]  = useState(0)    // モデル奥行きの%
-  const [holeDepthMm,  setHoleDepthMm]  = useState(5)    // 上端からの深さmm
+  // ストラップ穴ピックモードの状態
+  const [isPickingHole, setIsPickingHole] = useState(false)
+  const [holePickPoint, setHolePickPoint] = useState<{ x: number; y: number; z: number } | null>(null)
   const [holeRadiusMm, setHoleRadiusMm] = useState(1.0)  // 穴の半径mm
-  const [holeAngleX,   setHoleAngleX]   = useState(0)    // X軸回転
-  const [holeAngleY,   setHoleAngleY]   = useState(0)    // Y軸回転
-  const [holeAngleZ,   setHoleAngleZ]   = useState(0)    // Z軸回転
 
   // 台座パラメータ
   const [baseHeightMm,  setBaseHeightMm]  = useState(3)   // 台座の高さmm
@@ -101,28 +98,33 @@ export default function WorkDetail() {
     a.click()
   }
 
-  /** ストラップ穴追加：パラメータ指定してSTLを直接ダウンロード */
+  /** ストラップ穴追加：ピック座標からSTLを生成・ダウンロード */
   const handleAddStrapHole = async () => {
     if (!work?.id) return
     if (!user) { alert('ストラップ穴の追加にはログインが必要です。'); return }
     if (!work.glb_url && !work.stl_url) { alert('3Dモデルデータがまだ生成されていません。'); return }
+
+    // ピック座標をAPIパラメータに変換（未ピックの場合は中央上部をデフォルト）
+    // モデルはscale=2.2のため、1.1 = 上端・ -1.1 = 下端
+    const pt = holePickPoint ?? { x: 0, y: 1.0, z: 0 }
+    const offset_x = (pt.x / 1.1) * 100
+    const offset_y = (pt.z / 1.1) * 100   // Three.jsのz軸が前後方向
+    const depth_mm  = Math.max(0.5, Math.min(50, (1.1 - pt.y) / 0.022))
+
     setPostProcessing('strap')
     setStlViewUrl(null)
     setShowStl(false)
     if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
       const blobUrl = await addStrapHole(work.id, {
-        offset_x:  holeOffsetX,
-        offset_y:  holeOffsetY,
-        depth_mm:  holeDepthMm,
+        offset_x,
+        offset_y,
+        depth_mm,
         radius_mm: holeRadiusMm,
-        angle_x:   holeAngleX,
-        angle_y:   holeAngleY,
-        angle_z:   holeAngleZ,
       })
       setStrapBlobUrl(blobUrl)
-      setStlViewUrl(blobUrl)   // 加工後STLをビューアに反映
-      setShowStl(true)          // STLビューに自動切り替え
+      setStlViewUrl(blobUrl)
+      setShowStl(true)
       const a = document.createElement('a')
       a.href = blobUrl
       a.download = `${work.title ?? 'model'}_hole.stl`
@@ -296,10 +298,17 @@ export default function WorkDetail() {
               <Viewer3D
                 glbUrl={work.glb_url}
                 stlUrl={showStl && stlViewUrl ? stlViewUrl : undefined}
-                holeOverlay={!showStl && showHoleOverlay ? {
-                  offsetX: holeOffsetX, offsetY: holeOffsetY,
-                  depthMm: holeDepthMm, radiusMm: holeRadiusMm,
-                } : undefined}
+                onHolePick={(!showStl && isPickingHole)
+                  ? (point: Vector3) => {
+                      setHolePickPoint({ x: point.x, y: point.y, z: point.z })
+                      setIsPickingHole(false)
+                    }
+                  : undefined
+                }
+                holeMarkerPos={!showStl && holePickPoint
+                  ? [holePickPoint.x, holePickPoint.y, holePickPoint.z]
+                  : undefined
+                }
                 baseOverlay={!showStl && showBaseOverlay ? {
                   heightMm: baseHeightMm, marginPct: baseMarginPct,
                 } : undefined}
@@ -563,68 +572,85 @@ export default function WorkDetail() {
                 <div
                   style={{
                     background: '#FFF9FB',
-                    border: `1.5px solid ${showHoleOverlay ? 'var(--color-pink)' : 'var(--color-pink-light)'}`,
+                    border: `1.5px solid ${holePickPoint ? 'var(--color-pink)' : 'var(--color-pink-light)'}`,
                     borderRadius: 'var(--radius-md)',
                     padding: '14px 16px',
                     marginBottom: 12,
                   }}
                 >
-                  {/* チェックボックス付きタイトル */}
-                  <label
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-pink)',
-                      marginBottom: showHoleOverlay ? 12 : 0, cursor: 'pointer',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={showHoleOverlay}
-                      onChange={e => setShowHoleOverlay(e.target.checked)}
-                      style={{ accentColor: 'var(--color-pink)', width: 16, height: 16, cursor: 'pointer' }}
-                    />
-                    🔴 ストラップ穴の位置をビューアに表示
-                  </label>
+                  <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 12 }}>
+                    🔴 ストラップ穴の追加
+                  </p>
 
-                  {/* スライダー群（チェック時のみ表示） */}
-                  {showHoleOverlay && (
-                    <>
-                      {[
-                        { label: `X方向オフセット (左↔右)`, value: holeOffsetX, min: -100, max: 100, step: 1, unit: '%', setter: setHoleOffsetX },
-                        { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -100, max: 100, step: 1, unit: '%', setter: setHoleOffsetY },
-                        { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 100, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
-                        { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 10.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
-                        { label: `X軸回転（上下の傾き）`, value: holeAngleX, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleX },
-                        { label: `Y軸回転（左右の傾き）`, value: holeAngleY, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleY },
-                        { label: `Z軸回転（ねじれ）`, value: holeAngleZ, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleZ },
-                      ].map(({ label, value, min, max, step, unit, setter }) => (
-                        <div key={label} style={{ marginBottom: 10 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>{label}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--color-pink)', fontWeight: 700 }}>
-                              {value}{unit}
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={min}
-                            max={max}
-                            step={step}
-                            value={value}
-                            onChange={(e) => setter(Number(e.target.value))}
-                            style={{ width: '100%', accentColor: 'var(--color-pink)' }}
-                          />
-                        </div>
-                      ))}
-                    </>
+                  {/* ピック状態に応じてボタン/確認表示を切り替え */}
+                  {!holePickPoint ? (
+                    <button
+                      onClick={() => setIsPickingHole((v) => !v)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        background: isPickingHole ? '#FFEDF4' : 'white',
+                        border: `2px dashed ${isPickingHole ? 'var(--color-pink)' : 'var(--color-pink-light)'}`,
+                        borderRadius: 'var(--radius-btn)',
+                        color: isPickingHole ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-base)',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {isPickingHole
+                        ? '👆 3Dモデルをタップして位置を指定中…'
+                        : '📍 3Dビューアをタップして穴位置を指定'}
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--color-pink)', fontWeight: 700, flex: 1 }}>
+                        📍 穴位置を指定しました！
+                      </span>
+                      <button
+                        onClick={() => { setHolePickPoint(null); setIsPickingHole(false) }}
+                        style={{
+                          padding: '4px 10px',
+                          background: 'white',
+                          border: '1.5px solid var(--color-pink-light)',
+                          borderRadius: 100,
+                          fontSize: '0.75rem',
+                          color: 'var(--color-text-sub)',
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-base)',
+                        }}
+                      >
+                        やり直す
+                      </button>
+                    </div>
                   )}
 
+                  {/* 穴の半径スライダー */}
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 600 }}>穴の半径</span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-pink)', fontWeight: 700 }}>
+                        {holeRadiusMm}mm（直径 {(holeRadiusMm * 2).toFixed(1)}mm）
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.5} max={5.0} step={0.25}
+                      value={holeRadiusMm}
+                      onChange={(e) => setHoleRadiusMm(Number(e.target.value))}
+                      style={{ width: '100%', accentColor: 'var(--color-pink)' }}
+                    />
+                  </div>
+
+                  {/* 生成ボタン */}
                   <button
                     onClick={handleAddStrapHole}
                     disabled={postProcessing === 'strap'}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                      width: '100%', padding: '11px', marginTop: showHoleOverlay ? 4 : 12,
+                      width: '100%', padding: '11px', marginTop: 12,
                       background: postProcessing === 'strap' ? '#f3f4f6' : 'var(--color-pink)',
                       color: postProcessing === 'strap' ? 'var(--color-text-muted)' : 'white',
                       border: 'none', borderRadius: 'var(--radius-btn)',

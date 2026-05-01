@@ -7,6 +7,7 @@ Firebase への保存・DB更新は行わない。
 ユーザーはその場でダウンロードするだけ。
 """
 from uuid import UUID
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -77,12 +78,14 @@ async def add_strap_hole_endpoint(
 
         safe_title = (work.title or "model").replace(" ", "_")
         filename = f"{safe_title}_hole_r{radius_mm}mm.stl"
+        # RFC 5987 形式でUTF-8エンコード（日本語タイトル対応）
+        encoded_filename = quote(filename, safe="._-")
         print(f"✅ ストラップ穴STL生成完了: {filename}", flush=True)
 
         return Response(
             content=stl_bytes,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
         )
     except HTTPException:
         raise
@@ -121,10 +124,12 @@ async def add_base_endpoint(
 
     safe_title = (work.title or "model").replace(" ", "_")
     filename = f"{safe_title}_base_{height_mm}mm.stl"
+    # RFC 5987 形式でUTF-8エンコード（日本語タイトル対応）
+    encoded_filename = quote(filename, safe="._-")
     print(f"✅ 台座付きSTL生成完了（直接返却）: {filename}", flush=True)
 
     return Response(
         content=stl_bytes,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"},
     )
