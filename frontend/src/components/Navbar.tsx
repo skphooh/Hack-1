@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LogIn, LogOut, User, Heart, List, Edit3, Activity } from 'lucide-react'
+import { LogIn, LogOut, User, Heart, List, Edit3 } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'

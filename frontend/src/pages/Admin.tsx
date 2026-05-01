@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Users, Box, Trophy, Activity, AlertCircle, Flag, Lock, ShieldCheck } from 'lucide-react'
+import { Users, Box, Trophy, Activity, Flag, Lock, ShieldCheck } from 'lucide-react'
 import { fetchWorks, type WorkResponse } from '../lib/api'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { useAuthState } from '../components/useAuthState'
+
 
 export default function Admin() {
   const isMobile = useIsMobile()
-  const { user } = useAuthState()
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('admin_auth') === 'true')
   const [password, setPassword] = useState('')
   const [works, setWorks] = useState<WorkResponse[]>([])
