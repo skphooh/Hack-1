@@ -5,6 +5,7 @@ import { Download, Heart, ArrowLeft, Loader2, Flag } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
 import { fetchWork, toggleLike, addStrapHole, addBase, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /** ジャンルラベルの日本語マッピング */
 const GENRE_LABELS: Record<string, string> = {
@@ -20,6 +21,7 @@ export default function WorkDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuthState()
+  const isMobile = useIsMobile()
 
   const [work, setWork] = useState<WorkResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -159,7 +161,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 150,
+          paddingTop: isMobile ? 120 : 150,
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -183,7 +185,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: 150,
+          paddingTop: isMobile ? 120 : 150,
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
@@ -214,7 +216,7 @@ export default function WorkDetail() {
   }
 
   return (
-    <main style={{ paddingTop: 150, minHeight: '100vh', paddingBottom: 60 }}>
+    <main style={{ paddingTop: isMobile ? 120 : 150, minHeight: '100vh', paddingBottom: 60 }}>
       <div className="page-container section">
         {/* 戻るボタン */}
         <button
@@ -323,7 +325,7 @@ export default function WorkDetail() {
                 background: 'white',
                 border: '2px solid var(--color-border)',
                 borderRadius: 'var(--radius-xl)',
-                padding: '24px',
+                padding: isMobile ? '16px' : '24px',
                 boxShadow: 'var(--shadow-card)',
               }}
             >
@@ -348,9 +350,9 @@ export default function WorkDetail() {
 
               <h1
                 style={{
-                  fontSize: '1.6rem',
+                  fontSize: isMobile ? '1.3rem' : '1.6rem',
                   fontWeight: 900,
-                  marginBottom: 20,
+                  marginBottom: isMobile ? 16 : 20,
                   color: 'var(--color-text)',
                   fontFamily: 'var(--font-heading)',
                   lineHeight: 1.3,
@@ -365,14 +367,14 @@ export default function WorkDetail() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '6px 18px',
+                  padding: isMobile ? '4px 12px' : '6px 18px',
                   background: work.price === 0 ? '#E8FFF4' : '#FFEDF4',
                   border: `2px solid ${work.price === 0 ? '#90D4A4' : 'var(--color-pink-light)'}`,
                   borderRadius: 100,
-                  fontSize: '1rem',
+                  fontSize: isMobile ? '0.9rem' : '1rem',
                   fontWeight: 800,
                   color: work.price === 0 ? '#22863a' : 'var(--color-pink)',
-                  marginBottom: 20,
+                  marginBottom: isMobile ? 16 : 20,
                 }}
               >
                 {work.price === 0 ? '🆓 無料！' : `💰 ¥${work.price.toLocaleString()}`}
@@ -389,10 +391,10 @@ export default function WorkDetail() {
                     background: isLiked ? '#FFEDF4' : 'white',
                     border: `2px solid ${isLiked ? 'var(--color-pink)' : 'var(--color-border)'}`,
                     borderRadius: 100,
-                    padding: '10px 20px',
+                    padding: isMobile ? '8px 16px' : '10px 20px',
                     cursor: 'pointer',
                     color: isLiked ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                    fontSize: '0.95rem',
+                    fontSize: isMobile ? '0.85rem' : '0.95rem',
                     fontWeight: 700,
                     transition: 'all 0.2s ease',
                     transform: isLiked ? 'scale(1.05)' : 'scale(1)',
