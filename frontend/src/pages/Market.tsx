@@ -92,7 +92,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
@@ -151,6 +151,7 @@ export default function Market() {
                   transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   transform: isSelected ? 'scale(1.06)' : 'scale(1)',
                   boxShadow: isSelected ? '0 4px 12px rgba(155,89,182,0.2)' : 'none',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {label}

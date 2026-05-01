@@ -267,7 +267,7 @@ export default function Generate() {
   }[step] ?? 0
 
   return (
-    <main style={{ paddingTop: 112, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* ステップインジケーター */}
         <div

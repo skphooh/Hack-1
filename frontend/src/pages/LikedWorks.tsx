@@ -49,7 +49,7 @@ export default function LikedWorks() {
 
   if (loading) {
     return (
-      <main style={{ paddingTop: 112, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+      <main style={{ paddingTop: 150, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
         <Loader2 size={36} color="var(--color-pink)" style={{ animation: 'spin 1s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </main>
@@ -58,7 +58,7 @@ export default function LikedWorks() {
 
   if (!user) {
     return (
-      <main style={{ paddingTop: 112, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <main style={{ paddingTop: 150, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: '3rem', marginBottom: 16 }}>🔐</p>
           <p style={{ fontWeight: 700, color: 'var(--color-text-sub)' }}>ログインが必要だよ！</p>
@@ -68,7 +68,7 @@ export default function LikedWorks() {
   }
 
   return (
-    <main style={{ paddingTop: 112, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 150, minHeight: '100vh' }}>
       <div className="page-container section">
         {/* 見出し */}
         <h2

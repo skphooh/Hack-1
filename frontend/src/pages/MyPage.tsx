@@ -31,7 +31,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 112,
+          paddingTop: 150,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -55,7 +55,7 @@ export default function MyPage() {
     return (
       <main
         style={{
-          paddingTop: 112,
+          paddingTop: 150,
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
@@ -128,7 +128,7 @@ export default function MyPage() {
   }
 
   return (
-    <main style={{ paddingTop: 112, minHeight: '100vh' }}>
+    <main style={{ paddingTop: 150, minHeight: '100vh' }}>
       <div className="page-container section">
         {/* プロフィールヘッダー */}
         <div
