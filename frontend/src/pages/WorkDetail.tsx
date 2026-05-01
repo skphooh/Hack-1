@@ -226,14 +226,7 @@ export default function WorkDetail() {
           マーケットに戻る
         </button>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-            gap: 28,
-            alignItems: 'start',
-          }}
-        >
+        <div className="work-detail-grid">
           {/* 左側: 3Dビューア */}
           <div
             style={{
@@ -587,10 +580,10 @@ export default function WorkDetail() {
                   {showHoleOverlay && (
                     <>
                       {[
-                        { label: `X方向オフセット (左↔右)`, value: holeOffsetX, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetX },
-                        { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetY },
-                        { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 20, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
-                        { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 3.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                        { label: `X方向オフセット (左↔右)`, value: holeOffsetX, min: -100, max: 100, step: 1, unit: '%', setter: setHoleOffsetX },
+                        { label: `Y方向オフセット (前↔奥)`, value: holeOffsetY, min: -100, max: 100, step: 1, unit: '%', setter: setHoleOffsetY },
+                        { label: `穴の深さ（上端から）`, value: holeDepthMm, min: 1, max: 100, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
+                        { label: `穴の半径`, value: holeRadiusMm, min: 0.5, max: 10.0, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
                         { label: `X軸回転（上下の傾き）`, value: holeAngleX, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleX },
                         { label: `Y軸回転（左右の傾き）`, value: holeAngleY, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleY },
                         { label: `Z軸回転（ねじれ）`, value: holeAngleZ, min: -90, max: 90, step: 5, unit: '°', setter: setHoleAngleZ },
@@ -789,7 +782,10 @@ export default function WorkDetail() {
             {/* モックアップ: 通報・ライセンス管理 */}
             <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
               <button
-                onClick={() => alert('著作権侵害の通報機能は準備中です。')}
+                onClick={() => {
+                  const reason = prompt('通報理由を入力してください:');
+                  if (reason) alert('通報を受け付けました。運営チームが確認いたします。');
+                }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'center',
                   padding: '10px', background: 'transparent', color: 'var(--color-text-sub)',

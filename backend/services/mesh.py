@@ -110,7 +110,7 @@ def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh
     vox_result = solid_mesh.copy()
     try:
         c_origin = np.round(
-            (vox_cutter.origin - vox_mesh.origin) / voxel_size
+            (vox_cutter.transform[:3, 3] - vox_mesh.transform[:3, 3]) / voxel_size
         ).astype(int)
         c_shape = solid_cutter.shape
         # numpy スライスで一括処理（ループより高速）
