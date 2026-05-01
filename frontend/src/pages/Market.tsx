@@ -98,7 +98,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: isMobile ? 100 : 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>

@@ -216,7 +216,7 @@ export default function WorkDetail() {
   }
 
   return (
-    <main style={{ paddingTop: isMobile ? 100 : 150, minHeight: '100vh', paddingBottom: 60 }}>
+    <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingBottom: 60 }}>
       <div className="page-container section">
         {/* 戻るボタン */}
         <button
