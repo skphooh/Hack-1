@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Heart, ArrowLeft, Loader2, Flag } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
-import { fetchWork, toggleLike, addStrapHole, addBase, type WorkResponse } from '../lib/api'
+import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -78,6 +78,10 @@ export default function WorkDetail() {
 
   const handleDownload = () => {
     if (!work?.stl_url) return
+    // ダウンロード数をバックエンドに記録（fire-and-forget）
+    recordDownload(work.id).then((res) => {
+      setWork((prev) => (prev ? { ...prev, downloads: res.downloads } : prev))
+    }).catch(() => {})
     const a = document.createElement('a')
     a.href = work.stl_url
     a.download = `${work.title ?? 'model'}.stl`
@@ -87,6 +91,10 @@ export default function WorkDetail() {
   /** GLBファイルのダウンロード処理 */
   const handleDownloadGlb = () => {
     if (!work?.glb_url) return
+    // ダウンロード数をバックエンドに記録（fire-and-forget）
+    recordDownload(work.id).then((res) => {
+      setWork((prev) => (prev ? { ...prev, downloads: res.downloads } : prev))
+    }).catch(() => {})
     const a = document.createElement('a')
     a.href = work.glb_url
     a.download = `${work.title ?? 'model'}.glb`

@@ -94,6 +94,10 @@ export const estimateDepth = (form: FormData) =>
 export const toggleLike = (workId: string) =>
   apiPost<LikeResponse>(`/api/works/${workId}/like`, {})
 
+/** ダウンロード数をインクリメントする（認証不要） */
+export const recordDownload = (workId: string) =>
+  apiPost<{ downloads: number }>(`/api/works/${workId}/download`, {})
+
 /** 自分がいいねした作品一覧 */
 export const fetchLikedWorks = () =>
   apiGet<WorkListResponse>('/api/works/liked')

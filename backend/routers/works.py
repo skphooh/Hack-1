@@ -111,6 +111,28 @@ async def create_work(
     return work
 
 
+@router.post("/works/{work_id}/download")
+async def record_download(
+    work_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    """ダウンロード数を1件インクリメントする（認証不要）"""
+    result = await db.execute(select(Work).where(Work.id == work_id))
+    work = result.scalar_one_or_none()
+    if not work:
+        raise HTTPException(status_code=404, detail="作品が見つかりません")
+
+    await db.execute(
+        update(Work).where(Work.id == work_id).values(downloads=Work.downloads + 1)
+    )
+    await db.commit()
+
+    # 更新後のダウンロード数を返す
+    result = await db.execute(select(Work.downloads).where(Work.id == work_id))
+    count = result.scalar_one()
+    return {"downloads": count}
+
+
 @router.post("/works/{work_id}/like", response_model=LikeResponse)
 async def toggle_like(
     work_id: UUID,
