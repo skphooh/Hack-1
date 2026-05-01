@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Heart, ArrowLeft, Loader2, Flag } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
-import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, type WorkResponse } from '../lib/api'
+import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, wakeBackend, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
 import type { Vector3 } from 'three'
@@ -49,6 +49,8 @@ export default function WorkDetail() {
 
   useEffect(() => {
     if (!id) return
+    // ページ読み込み時にバックエンドを起動しておく（Renderスリープ対策）
+    wakeBackend()
     const load = async () => {
       try {
         const data = await fetchWork(id)
@@ -130,8 +132,11 @@ export default function WorkDetail() {
       a.download = `${work.title ?? 'model'}_hole.stl`
       a.click()
     } catch (e) {
-      alert('ストラップ穴の追加に失敗しました。')
       console.error(e)
+      const msg = (e instanceof Error && e.message.includes('fetch'))
+        ? 'サーバーに接続できませんでした。サーバーが起動中の場合は30秒ほど待ってから再度お試しください。'
+        : 'ストラップ穴の追加に失敗しました。'
+      alert(msg)
     } finally {
       setPostProcessing(null)
     }
