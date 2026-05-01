@@ -786,7 +786,19 @@ export default function WorkDetail() {
               <button
                 onClick={() => {
                   const reason = prompt('通報理由を入力してください:');
-                  if (reason) alert('通報を受け付けました。運営チームが確認いたします。');
+                  if (reason) {
+                    const reports = JSON.parse(localStorage.getItem('mock_reports') || '[]');
+                    reports.push({
+                      id: Date.now().toString(),
+                      workId: id,
+                      workTitle: work.title,
+                      reason: reason,
+                      date: new Date().toISOString().split('T')[0],
+                      status: '未対応'
+                    });
+                    localStorage.setItem('mock_reports', JSON.stringify(reports));
+                    alert('通報を受け付けました。運営チームが確認いたします。');
+                  }
                 }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'center',

@@ -9,7 +9,6 @@ import { useIsMobile } from '../hooks/useIsMobile'
 
 const AUTH_NAV_LINKS = [
   { path: '/generate', label: '✨ 3Dにする！' },
-  { path: '/competition', label: '🏆 コンペ' },
   { path: '/market', label: '' },
 ]
 
@@ -144,7 +143,6 @@ export function Navbar() {
                     { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/mypage' },
                     { icon: <Heart size={15} />, label: 'いいねした作品', path: '/liked' },
                     { icon: <List size={15} />, label: 'うちの子一覧', path: '/mypage' },
-                    { icon: <Activity size={15} />, label: 'ダッシュボード', path: '/admin' },
                   ].map(({ icon, label, path }) => (
                     <button
                       key={label}
@@ -219,7 +217,7 @@ export function Navbar() {
       <nav
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: '1fr 1fr',
           alignItems: 'center',
           padding: '8px 0 0',
         }}
@@ -259,13 +257,13 @@ export function Navbar() {
       </nav>
       )}
 
-      {/* アクティブ下線: 3分割 */}
+      {/* アクティブ下線: 左半分 or 右半分 */}
       {activePath && (
         <div style={{
           position: 'absolute',
           bottom: 0,
-          left: activePath === '/generate' ? 0 : activePath === '/competition' ? '33.33%' : '66.66%',
-          width: '33.33%',
+          left: activePath === '/generate' ? 0 : '50%',
+          width: '50%',
           height: '2.5px',
           background: 'var(--color-pink)',
           transition: 'left 0.3s ease',

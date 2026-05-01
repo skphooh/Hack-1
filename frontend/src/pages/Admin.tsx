@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, Box, Trophy, Activity, AlertCircle } from 'lucide-react'
+import { Users, Box, Trophy, Activity, AlertCircle, Flag, Lock, ShieldCheck } from 'lucide-react'
 import { fetchWorks, type WorkResponse } from '../lib/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useAuthState } from '../components/useAuthState'
@@ -7,9 +7,12 @@ import { useAuthState } from '../components/useAuthState'
 export default function Admin() {
   const isMobile = useIsMobile()
   const { user } = useAuthState()
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem('admin_auth') === 'true')
+  const [password, setPassword] = useState('')
   const [works, setWorks] = useState<WorkResponse[]>([])
+  const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'works' | 'competition'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'works' | 'competition' | 'reports'>('dashboard')
 
   useEffect(() => {
     const loadData = async () => {
@@ -22,16 +25,62 @@ export default function Admin() {
         setLoading(false)
       }
     }
-    loadData()
-  }, [])
+    if (isAdmin) {
+      loadData()
+      // 通報データの読み込み
+      const savedReports = JSON.parse(localStorage.getItem('mock_reports') || '[]')
+      setReports(savedReports)
+    }
+  }, [isAdmin])
 
-  if (!user) {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (password === 'admin') { // デモ用簡易パスワード
+      localStorage.setItem('admin_auth', 'true')
+      setIsAdmin(true)
+    } else {
+      alert('パスワードが違います')
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_auth')
+    setIsAdmin(false)
+  }
+
+  const resolveReport = (id: string) => {
+    const updated = reports.map(r => r.id === id ? { ...r, status: '対応済み' } : r)
+    setReports(updated)
+    localStorage.setItem('mock_reports', JSON.stringify(updated))
+  }
+
+  if (!isAdmin) {
     return (
-      <main style={{ paddingTop: 140, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div className="pop-card" style={{ padding: 40, textAlign: 'center' }}>
-          <AlertCircle size={48} color="#e05" style={{ margin: '0 auto 16px' }} />
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>アクセス権限がありません</h2>
-          <p style={{ color: 'var(--color-text-sub)' }}>管理者としてログインしてください。</p>
+      <main style={{ paddingTop: 140, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+        <div className="pop-card" style={{ padding: '40px', textAlign: 'center', maxWidth: 400, width: '90%', marginTop: '5vh' }}>
+          <ShieldCheck size={48} color="var(--color-purple)" style={{ margin: '0 auto 16px' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 }}>運営ログイン</h2>
+          <p style={{ color: 'var(--color-text-sub)', marginBottom: 24, fontSize: '0.9rem' }}>
+            パスワードを入力してください。<br/>(ヒント: admin)
+          </p>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <input
+              type="password"
+              placeholder="パスワード"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={{
+                padding: '12px 16px',
+                borderRadius: 8,
+                border: '1.5px solid #d0d8e8',
+                fontSize: '1rem',
+                outline: 'none',
+              }}
+            />
+            <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>
+              <Lock size={16} /> ログイン
+            </button>
+          </form>
         </div>
       </main>
     )
@@ -46,27 +95,33 @@ export default function Admin() {
   const stats = [
     { label: '総ユーザー数', value: '1,284', icon: <Users size={24} />, color: 'var(--color-mint)' },
     { label: '総生成作品数', value: works.length || '-', icon: <Box size={24} />, color: 'var(--color-pink)' },
-    { label: 'コンペエントリー', value: '12', icon: <Trophy size={24} />, color: 'var(--color-yellow)' },
+    { label: '通報件数', value: reports.filter(r => r.status === '未対応').length, icon: <Flag size={24} />, color: '#e05' },
     { label: 'アクティブ率', value: '94%', icon: <Activity size={24} />, color: 'var(--color-purple)' },
   ]
 
-  const thStyle = { padding: '16px', textAlign: 'left' as const, background: 'var(--color-bg-soft)', color: 'var(--color-text-sub)', fontWeight: 700, borderBottom: '2px solid #e2e8f0' }
+  const thStyle = { padding: '16px', textAlign: 'left' as const, background: 'var(--color-bg-soft)', color: 'var(--color-text-sub)', fontWeight: 700, borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' as const }
   const tdStyle = { padding: '16px', borderBottom: '1px solid #e2e8f0', color: 'var(--color-text)' }
 
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingBottom: 80, paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container" style={{ maxWidth: 1400 }}>
-        <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', marginBottom: 32, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ padding: 8, background: '#F5EDFF', borderRadius: 12, color: 'var(--color-purple)' }}>⚙️</span>
-          管理者ダッシュボード
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
+          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ padding: 8, background: '#F5EDFF', borderRadius: 12, color: 'var(--color-purple)' }}>⚙️</span>
+            管理者ダッシュボード
+          </h1>
+          <button onClick={handleLogout} className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
+            ログアウト
+          </button>
+        </div>
 
         {/* タブナビゲーション */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
           {[
             { id: 'dashboard', label: '概要', icon: <Activity size={18} /> },
             { id: 'users', label: 'ユーザー管理', icon: <Users size={18} /> },
             { id: 'works', label: '作品管理', icon: <Box size={18} /> },
+            { id: 'reports', label: `通報管理 (${reports.filter(r => r.status === '未対応').length})`, icon: <Flag size={18} /> },
             { id: 'competition', label: 'コンペ管理', icon: <Trophy size={18} /> },
           ].map((tab) => (
             <button
@@ -183,6 +238,54 @@ export default function Admin() {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="pop-card" style={{ overflow: 'hidden' }}>
+            {reports.length === 0 ? (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <ShieldCheck size={48} color="var(--color-mint)" style={{ margin: '0 auto 16px' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: 8 }}>通報はありません</h3>
+                <p style={{ color: 'var(--color-text-sub)' }}>現在、平和な状態です！</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>日時</th>
+                      <th style={thStyle}>対象作品</th>
+                      <th style={thStyle}>通報理由</th>
+                      <th style={thStyle}>ステータス</th>
+                      <th style={thStyle}>アクション</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reports.map(r => (
+                      <tr key={r.id}>
+                        <td style={tdStyle}>{r.date}</td>
+                        <td style={tdStyle}><a href={`/works/${r.workId}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-pink)', fontWeight: 700, textDecoration: 'none' }}>{r.workTitle}</a></td>
+                        <td style={tdStyle}>{r.reason}</td>
+                        <td style={tdStyle}>
+                          <span className="tag-badge" style={{ background: r.status === '未対応' ? '#FFF9E6' : '#F0FFF4', color: r.status === '未対応' ? '#E67E22' : '#28A745' }}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {r.status === '未対応' && (
+                              <button onClick={() => resolveReport(r.id)} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #90D4A4', background: '#F0FFF4', color: '#28A745', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>対応済みにする</button>
+                            )}
+                            <button style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #FFAECB', background: '#FFEDF4', color: '#e05', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700 }}>作品非公開</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

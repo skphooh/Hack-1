@@ -247,7 +247,7 @@ export default function Market() {
           <Building2 size={32} color="var(--color-purple)" style={{ marginBottom: 12 }} />
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-purple)', marginBottom: 8 }}>企業向けコンテスト開催中！</h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--color-text-sub)', marginBottom: 16 }}>あなたの3Dデータが公式グッズに採用されるかも？</p>
-          <button className="btn-primary" onClick={() => { if(confirm('Hack-1 グランプリ コンペティションに参加しますか？')) alert('エントリー完了しました！結果発表をお待ちください！'); }} style={{ margin: '0 auto' }}>🏆 コンペティションに参加する</button>
+          <button className="btn-primary" onClick={() => navigate('/competition')} style={{ margin: '0 auto' }}>🏆 コンペティションに参加する</button>
         </div>
       </div>
 
