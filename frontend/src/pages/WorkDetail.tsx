@@ -588,7 +588,7 @@ export default function WorkDetail() {
                       onClick={() => setIsPickingHole((v) => !v)}
                       style={{
                         width: '100%',
-                        padding: '10px',
+                        padding: '10px 14px',
                         background: isPickingHole ? '#FFEDF4' : 'white',
                         border: `2px dashed ${isPickingHole ? 'var(--color-pink)' : 'var(--color-pink-light)'}`,
                         borderRadius: 'var(--radius-btn)',
@@ -598,11 +598,16 @@ export default function WorkDetail() {
                         cursor: 'pointer',
                         fontFamily: 'var(--font-base)',
                         transition: 'all 0.2s',
+                        lineHeight: 1.5,
+                        textAlign: 'center',
+                        whiteSpace: 'normal',
                       }}
                     >
-                      {isPickingHole
-                        ? '👆 3Dモデルをタップして位置を指定中…'
-                        : '📍 3Dビューアをタップして穴位置を指定'}
+                      {isPickingHole ? (
+                        <>👆 3Dモデルをタップして<br />位置を指定中…</>
+                      ) : (
+                        <>📍 3Dビューアをタップして<br />穴位置を指定</>
+                      )}
                     </button>
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

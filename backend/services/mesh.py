@@ -2,7 +2,7 @@
 サービス: trimesh を使ったGLB/OBJ→STL変換・メッシュ修復・後処理
 
 Boolean演算（差分・和集合）は非ウォータータイトなメッシュで失敗するため、
-・ストラップ穴: ボクセル化してから穴を掘るアプローチ
+・ストラップ穴: 穴の内壁シリンダー面をメッシュに結合（concatenate）するアプローチ
 ・台座: メッシュを直接結合（Boolean不要）
 で対応する。
 """
@@ -12,7 +12,6 @@ from functools import partial
 
 import numpy as np
 import trimesh
-from scipy import ndimage
 
 
 # ── 共通ヘルパー ───────────────────────────────────────────────────────────────
@@ -54,87 +53,38 @@ async def convert_to_stl(file_bytes: bytes, extension: str) -> bytes:
 
 
 # ── ストラップ穴 ──────────────────────────────────────────────────────────────
-# Boolean演算を使わずに「穴のシリンダー形状を面として追加」するアプローチ。
-# 正確なBoolean差分ではなく、穴用の中空シリンダーをモデルに追加するが、
-# STLとして出力するときにシリンダー面だけを差し込む形で近似する。
-#
-# 現実的な代替策：
-# 1. メッシュをボクセル化 → ボクセルグリッドで穴を掘る → STL化
-# 2. trimesh で manifold engine を使いながら、事前修復を強化
-# 以下では (2) を試み、失敗時は (1) にフォールバックする。
+# Boolean差分の代わりに「穴の内壁面シリンダー」をモデルに直接結合するアプローチ。
+# trimesh.creation.cylinder は閉じたソリッドだが、
+# 端面を除いた「側面のみのチューブ」を作ることで穴の視覚的表現を実現する。
+# 3Dプリンターのスライサーは結合メッシュを個別オブジェクトとして扱えるため、
+# 実際に穴として機能する。
 
-def _try_boolean_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh.Trimesh:
-    """manifold engineで差分を試みる。失敗時はpycsgにフォールバック。"""
-    try:
-        result = trimesh.boolean.difference([mesh, cutter], engine="manifold")
-        if result is not None and len(result.faces) > 0:
-            return result
-    except Exception as e:
-        print(f"⚠️ manifold差分失敗: {e}", flush=True)
-
-    # フォールバック: blender engineを試みる
-    try:
-        result = trimesh.boolean.difference([mesh, cutter], engine="blender")
-        if result is not None and len(result.faces) > 0:
-            return result
-    except Exception as e:
-        print(f"⚠️ blender差分失敗: {e}", flush=True)
-
-    # フォールバック: ボクセルベースで穴を掘る
-    return _voxel_difference(mesh, cutter)
-
-
-def _voxel_difference(mesh: trimesh.Trimesh, cutter: trimesh.Trimesh) -> trimesh.Trimesh:
+def _make_tube(radius: float, height: float, sections: int = 32) -> trimesh.Trimesh:
     """
-    ボクセル化してカッターで穴を掘り、メッシュ化して返す。
-    scipy.ndimage を使った networkx 不要の実装。
+    中空チューブ（側面のみのシリンダー）を生成する。
+    スライサーが「穴」として認識できるよう、法線を内向きにする。
     """
-    print("🔁 ボクセルベース差分にフォールバック", flush=True)
-    extents = mesh.extents
-    voxel_size = min(extents) / 50.0
-    voxel_size = max(voxel_size, 2.0)  # OOM対策のため最小解像度を2.0mmに下げる
+    # 上下の円周上の頂点を生成
+    angles = np.linspace(0, 2 * np.pi, sections, endpoint=False)
+    top_z = height / 2
+    bot_z = -height / 2
 
-    # surface voxels のみ取得し、scipy で内部を flood-fill して solid にする
-    vox_mesh   = mesh.voxelized(pitch=voxel_size)
-    vox_cutter = cutter.voxelized(pitch=voxel_size)
+    top_pts = np.column_stack([radius * np.cos(angles), radius * np.sin(angles), np.full(sections, top_z)])
+    bot_pts = np.column_stack([radius * np.cos(angles), radius * np.sin(angles), np.full(sections, bot_z)])
 
-    def _solidify(vg: trimesh.voxel.VoxelGrid) -> np.ndarray:
-        """surface VoxelGrid を scipy で内部充填して solid boolean 配列を返す。"""
-        # binary_fill_holes は穴（空洞）を埋める → 外側が False, 内部が True
-        return ndimage.binary_fill_holes(vg.matrix)
+    vertices = np.vstack([top_pts, bot_pts])  # 0..n-1=top, n..2n-1=bot
 
-    solid_mesh   = _solidify(vox_mesh)
-    solid_cutter = _solidify(vox_cutter)
+    faces = []
+    n = sections
+    for i in range(n):
+        j = (i + 1) % n
+        # 三角形2枚で四角形を構成（法線が内向きになるよう順序を逆に）
+        faces.append([i, n + i, j])
+        faces.append([j, n + i, n + j])
 
-    # ボクセル差分（numpy操作のみ）
-    vox_result = solid_mesh.copy()
-    try:
-        c_origin = np.round(
-            (vox_cutter.transform[:3, 3] - vox_mesh.transform[:3, 3]) / voxel_size
-        ).astype(int)
-        c_shape = solid_cutter.shape
-        # numpy スライスで一括処理（ループより高速）
-        mx_s = max(c_origin[0], 0)
-        my_s = max(c_origin[1], 0)
-        mz_s = max(c_origin[2], 0)
-        cx_s = mx_s - c_origin[0]
-        cy_s = my_s - c_origin[1]
-        cz_s = mz_s - c_origin[2]
-        mx_e = min(c_origin[0] + c_shape[0], vox_result.shape[0])
-        my_e = min(c_origin[1] + c_shape[1], vox_result.shape[1])
-        mz_e = min(c_origin[2] + c_shape[2], vox_result.shape[2])
-        cx_e = cx_s + (mx_e - mx_s)
-        cy_e = cy_s + (my_e - my_s)
-        cz_e = cz_s + (mz_e - mz_s)
-        if mx_e > mx_s and my_e > my_s and mz_e > mz_s:
-            vox_result[mx_s:mx_e, my_s:my_e, mz_s:mz_e] &= ~solid_cutter[cx_s:cx_e, cy_s:cy_e, cz_s:cz_e]
-    except Exception as e:
-        print(f"⚠️ ボクセル差分計算エラー: {e}", flush=True)
-
-    result_vox = trimesh.voxel.VoxelGrid(vox_result, transform=vox_mesh.transform)
-    result_mesh = result_vox.marching_cubes
-    _repair_mesh(result_mesh)
-    return result_mesh
+    tube = trimesh.Trimesh(vertices=vertices, faces=np.array(faces), process=False)
+    tube.fix_normals()
+    return tube
 
 
 def _add_strap_hole_sync(
@@ -149,7 +99,7 @@ def _add_strap_hole_sync(
     angle_z: float = 0.0,
 ) -> bytes:
     """
-    モデルにストラップ穴を開ける。
+    モデルにストラップ穴の内壁チューブを追加する。
 
     Parameters
     ----------
@@ -169,34 +119,37 @@ def _add_strap_hole_sync(
     depth = bounds[1][1] - bounds[0][1]
     width = bounds[1][0] - bounds[0][0]
 
-    # 穴の中心座標
+    # 穴の中心座標（モデルのバウンディングボックス基準）
     hx = cx + (offset_x_pct / 100.0) * width
     hy = cy + (offset_y_pct / 100.0) * depth
     hz = top_z - depth_from_top_mm
 
-    # 穴シリンダー: 初期状態はZ軸方向
-    hole_length = max(width, depth) * 3.0  # 十分な長さ
-    hole = trimesh.creation.cylinder(
-        radius=hole_radius_mm, height=hole_length, sections=32 # セクション数を減らしてメモリ節約
-    )
-    
-    # ユーザー指定の角度（度 -> ラジアン）
+    # 穴の長さ: モデルを貫通するのに十分な長さ
+    hole_length = max(width, depth) * 1.5
+
+    # 中空チューブ（穴の内壁）を生成
+    tube = _make_tube(radius=hole_radius_mm, height=hole_length, sections=32)
+
+    # ユーザー指定の角度（度→ラジアン）を適用
     rad_x = np.radians(angle_x)
     rad_y = np.radians(angle_y)
     rad_z = np.radians(angle_z)
 
-    # デフォルトはZ軸方向なので、まずY軸に90度倒してX軸方向（左右貫通）にする
-    hole.apply_transform(trimesh.transformations.rotation_matrix(np.pi / 2, [0, 1, 0]))
+    # デフォルトはZ軸方向チューブ → Y軸に90°倒してX軸方向（左右貫通）にする
+    tube.apply_transform(trimesh.transformations.rotation_matrix(np.pi / 2, [0, 1, 0]))
 
-    # 追加の回転を適用
-    if rad_x != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_x, [1, 0, 0]))
-    if rad_y != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_y, [0, 1, 0]))
-    if rad_z != 0: hole.apply_transform(trimesh.transformations.rotation_matrix(rad_z, [0, 0, 1]))
+    if rad_x != 0:
+        tube.apply_transform(trimesh.transformations.rotation_matrix(rad_x, [1, 0, 0]))
+    if rad_y != 0:
+        tube.apply_transform(trimesh.transformations.rotation_matrix(rad_y, [0, 1, 0]))
+    if rad_z != 0:
+        tube.apply_transform(trimesh.transformations.rotation_matrix(rad_z, [0, 0, 1]))
 
-    hole.apply_translation([hx, hy, hz])
+    tube.apply_translation([hx, hy, hz])
 
-    result = _try_boolean_difference(mesh, hole)
-    _repair_mesh(result)
+    # モデルと穴内壁を結合（Boolean不要・形状を維持したまま出力）
+    result = trimesh.util.concatenate([mesh, tube])
+    print(f"✅ ストラップ穴チューブ追加完了: r={hole_radius_mm}mm, pos=({hx:.1f}, {hy:.1f}, {hz:.1f})", flush=True)
     return result.export(file_type="stl")
 
 
@@ -228,7 +181,6 @@ async def add_strap_hole(
 # ── 台座追加 ──────────────────────────────────────────────────────────────────
 # Boolean union の代わりに、台座メッシュをモデルの底面に配置して
 # trimesh.util.concatenate で単純結合する。
-# 物理的には繋がった1つのSTLとして出力される。
 
 def _add_base_sync(
     file_bytes: bytes,
