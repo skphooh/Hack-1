@@ -13,6 +13,8 @@ const GENRES = [
   { value: 'anime', label: '🎨 アニメ・イラスト' },
   { value: 'cosplay', label: '✨ コスプレ' },
   { value: 'original', label: '⭐ オリジナル' },
+  { value: 'ai', label: '🤖 AI生成' },
+  { value: 'handmade', label: '✋ 手描き・手作り' },
   { value: 'official', label: '🌟 公式' },
 ]
 
@@ -23,6 +25,8 @@ const GENRE_STYLES: Record<string, { bg: string; color: string; border: string }
   anime:    { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
   cosplay:  { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
   original: { bg: '#FFF9E6', color: '#E67E22', border: '#FFD699' },
+  ai:       { bg: '#F4F1FF', color: '#8B70D4', border: '#DDB3F5' },
+  handmade: { bg: '#FFF1E6', color: '#FF8A66', border: '#FFCBA4' },
   official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
 }
 
@@ -220,7 +224,7 @@ export default function Market() {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
-              gap: 20,
+              gap: 24,
             }}
           >
             {works.map((work, index) => (

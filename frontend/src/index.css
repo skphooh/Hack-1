@@ -224,7 +224,7 @@ main {
 /* ===== モバイル対応 (max-width: 640px) ===== */
 @media (max-width: 640px) {
   :root {
-    --page-px: 16px;
+    --page-px: 24px;
     --card-min-width: 150px;
   }
 
@@ -235,7 +235,7 @@ main {
 
   /* ページコンテナ */
   .page-container {
-    padding: 0 4px;
+    padding: 0 12px;
   }
 
   /* Navbar 上段 */

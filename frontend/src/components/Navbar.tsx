@@ -246,7 +246,7 @@ export function Navbar() {
                 ? <img
                     src={isActive ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
                     alt="うちの子マーケット"
-                    style={{ height: 52, width: 'auto' }}
+                    style={{ height: 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                   />
                 : label}
             </Link>

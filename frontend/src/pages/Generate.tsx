@@ -18,6 +18,16 @@ const STEPS = [
   { label: 'できた！', emoji: '🎉' },
 ]
 
+/** ジャンルフィルター */
+const GENRES = [
+  { value: 'figure', label: '🎭 フィギュア' },
+  { value: 'anime', label: '🎨 アニメ・イラスト' },
+  { value: 'cosplay', label: '✨ コスプレ' },
+  { value: 'original', label: '⭐ オリジナル' },
+  { value: 'ai', label: '🤖 AI生成' },
+  { value: 'handmade', label: '✋ 手描き・手作り' },
+]
+
 /** 紙吹雪エフェクトを生成する関数 */
 function launchConfetti() {
   const colors = ['#FF6B9D', '#9B59B6', '#4ECDC4', '#FFE566', '#FFB347', '#FF85C2']
@@ -47,6 +57,7 @@ export default function Generate() {
   } = useGenerateStore()
 
   const [title, setTitle] = useState('')
+  const [genre, setGenre] = useState('original')
   const [quality, setQuality] = useState<'standard' | 'high'>('standard')
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
@@ -97,6 +108,7 @@ export default function Generate() {
       const form = new FormData()
       form.append('file', blob, 'upload.png')
       form.append('title', title || 'うちの子')
+      form.append('genre', genre)
       form.append('quality', quality)
       form.append('is_public', visibility === 'public' ? 'true' : 'false')
 
@@ -231,6 +243,7 @@ export default function Generate() {
       const form = new FormData()
       form.append('turnaround_url', turnaroundUrl)
       form.append('title', title || 'うちの子')
+      form.append('genre', genre)
       // 元画像をサムネイルとして送信（ターンアラウンドの分割ビューではなく元画像を保存するため）
       if (previewUrl) {
         const originalBlob = await fetch(previewUrl).then(r => r.blob())
@@ -418,6 +431,40 @@ export default function Generate() {
                 onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--color-pink)' }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)' }}
               />
+            </div>
+
+            {/* ジャンル選択 */}
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+              <label
+                style={{
+                  display: 'block', fontWeight: 700, fontSize: '1rem', marginBottom: 12,
+                  color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em'
+                }}
+              >
+                🏷️ ジャンル
+              </label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {GENRES.map(({ value, label }) => {
+                  const selected = genre === value
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setGenre(value)}
+                      style={{
+                        padding: '8px 14px', borderRadius: '100px',
+                        border: `1.5px solid ${selected ? 'var(--color-pink)' : '#d0d8e8'}`,
+                        background: selected ? '#FFEDF4' : 'white',
+                        color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
+                        fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        fontFamily: 'var(--font-base)',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* 品質オプション */}
