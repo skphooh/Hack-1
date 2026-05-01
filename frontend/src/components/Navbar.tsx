@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LogIn, LogOut, User, Heart, List, Edit3 } from 'lucide-react'
+import { LogIn, LogOut, User, Heart, List, Edit3, Activity } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
@@ -9,6 +9,7 @@ import { useIsMobile } from '../hooks/useIsMobile'
 
 const AUTH_NAV_LINKS = [
   { path: '/generate', label: '✨ 3Dにする！' },
+  { path: '/competition', label: '🏆 コンペ' },
   { path: '/market', label: '' },
 ]
 
@@ -143,6 +144,7 @@ export function Navbar() {
                     { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/mypage' },
                     { icon: <Heart size={15} />, label: 'いいねした作品', path: '/liked' },
                     { icon: <List size={15} />, label: 'うちの子一覧', path: '/mypage' },
+                    { icon: <Activity size={15} />, label: 'ダッシュボード', path: '/admin' },
                   ].map(({ icon, label, path }) => (
                     <button
                       key={label}
@@ -217,7 +219,7 @@ export function Navbar() {
       <nav
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: 'repeat(3, 1fr)',
           alignItems: 'center',
           padding: '8px 0 0',
         }}
@@ -257,13 +259,13 @@ export function Navbar() {
       </nav>
       )}
 
-      {/* アクティブ下線: 左半分 or 右半分 */}
+      {/* アクティブ下線: 3分割 */}
       {activePath && (
         <div style={{
           position: 'absolute',
           bottom: 0,
-          left: activePath === '/generate' ? 0 : '50%',
-          width: '50%',
+          left: activePath === '/generate' ? 0 : activePath === '/competition' ? '33.33%' : '66.66%',
+          width: '33.33%',
           height: '2.5px',
           background: 'var(--color-pink)',
           transition: 'left 0.3s ease',
