@@ -5,6 +5,7 @@ import { Loader2, Search, Building2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /** ジャンルフィルター（絵文字付き） */
 const GENRES = [
@@ -33,6 +34,7 @@ const GENRE_STYLES: Record<string, { bg: string; color: string; border: string }
 export default function Market() {
   const { user } = useAuthState()
   const navigate = useNavigate()
+  const isMobile = useIsMobile()
 
   const [works, setWorks] = useState<WorkResponse[]>([])
   const [total, setTotal] = useState(0)
@@ -96,7 +98,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: isMobile ? 120 : 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
@@ -144,12 +146,12 @@ export default function Market() {
                 id={`genre-filter-${value || 'all'}`}
                 onClick={() => setGenre(value)}
                 style={{
-                  padding: '5px 12px',
+                  padding: isMobile ? '6px 12px' : '8px 16px',
                   borderRadius: 100,
                   border: `2px solid ${isSelected ? (style?.border ?? 'transparent') : 'var(--color-border)'}`,
                   background: isSelected ? (style?.bg ?? '#FFEDF4') : 'white',
                   color: isSelected ? (style?.color ?? 'white') : 'var(--color-text-sub)',
-                  fontSize: '0.75rem',
+                  fontSize: isMobile ? '0.75rem' : '0.85rem',
                   fontWeight: isSelected ? 800 : 500,
                   cursor: 'pointer',
                   transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',

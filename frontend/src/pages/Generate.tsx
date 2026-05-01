@@ -10,6 +10,7 @@ import {
   generateTurnaroundPreview, startGenerateTurnaround,
 } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 /** ステップインジケーターのラベルと絵文字 */
 const STEPS = [
@@ -51,6 +52,7 @@ function launchConfetti() {
 
 export default function Generate() {
   const { user } = useAuthState()
+  const isMobile = useIsMobile()
   const {
     step, previewUrl, work, taskStatus,
     setStep, setPreviewUrl, setDepthUrl, setWork, setTaskStatus, setError, reset,
@@ -280,7 +282,7 @@ export default function Generate() {
   }[step] ?? 0
 
   return (
-    <main style={{ paddingTop: 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: isMobile ? 120 : 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* ステップインジケーター */}
         <div
@@ -289,7 +291,7 @@ export default function Generate() {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 0,
-            marginBottom: 48,
+            marginBottom: isMobile ? 32 : 48,
             flexWrap: 'nowrap',
           }}
         >
@@ -393,7 +395,7 @@ export default function Generate() {
             )}
 
             {/* タイトル入力 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
               <label
                 htmlFor="work-title"
                 style={{
@@ -434,7 +436,7 @@ export default function Generate() {
             </div>
 
             {/* ジャンル選択 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
               <label
                 style={{
                   display: 'block', fontWeight: 700, fontSize: '1rem', marginBottom: 12,
@@ -468,7 +470,7 @@ export default function Generate() {
             </div>
 
             {/* 品質オプション */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
               <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 ⚙️ 品質
               </p>
@@ -504,7 +506,7 @@ export default function Generate() {
             </div>
 
             {/* 公開設定 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: '16px 18px', background: '#ffffff' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
               <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 🔒 公開設定
               </p>

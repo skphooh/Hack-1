@@ -5,6 +5,7 @@ import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
 import { useAuthState } from './useAuthState'
 import logoImg from '../assets/logo02.png'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 const AUTH_NAV_LINKS = [
   { path: '/generate', label: '✨ 3Dにする！' },
@@ -17,6 +18,7 @@ export function Navbar() {
   const { user } = useAuthState()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
   const navLinks = user ? AUTH_NAV_LINKS : []
 
@@ -74,7 +76,7 @@ export function Navbar() {
             src={logoImg}
             alt="うちの子製作所 ロゴ"
             className="navbar-logo"
-            style={{ height: 68, width: 'auto', objectFit: 'contain' }}
+            style={{ height: isMobile ? 48 : 68, width: 'auto', objectFit: 'contain' }}
           />
         </Link>
 
@@ -89,12 +91,12 @@ export function Navbar() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '9px 18px',
+                  padding: isMobile ? '7px 14px' : '9px 18px',
                   borderRadius: 100,
                   border: '1.5px solid #DDB3F5',
                   background: '#ffffff',
                   color: 'var(--color-text-sub)',
-                  fontSize: '0.95rem',
+                  fontSize: isMobile ? '0.85rem' : '0.95rem',
                   fontWeight: 600,
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -201,7 +203,7 @@ export function Navbar() {
               id="login-btn"
               onClick={handleLogin}
               className="btn-primary"
-              style={{ padding: '10px 24px', fontSize: '0.95rem' }}
+              style={{ padding: isMobile ? '8px 16px' : '10px 24px', fontSize: isMobile ? '0.85rem' : '0.95rem' }}
             >
               <LogIn size={15} />
               Googleでログイン
@@ -246,7 +248,7 @@ export function Navbar() {
                 ? <img
                     src={isActive ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
                     alt="うちの子マーケット"
-                    style={{ height: 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+                    style={{ height: isMobile ? 40 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                   />
                 : label}
             </Link>
