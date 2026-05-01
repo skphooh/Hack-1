@@ -76,7 +76,7 @@ export function Navbar() {
             src={logoImg}
             alt="うちの子製作所 ロゴ"
             className="navbar-logo"
-            style={{ height: isMobile ? 48 : 68, width: 'auto', objectFit: 'contain' }}
+            style={{ height: isMobile ? 40 : 68, width: 'auto', objectFit: 'contain' }}
           />
         </Link>
 
@@ -240,7 +240,7 @@ export function Navbar() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: 52,
+                height: isMobile ? 44 : 52,
                 boxSizing: 'border-box',
               }}
             >
@@ -248,7 +248,7 @@ export function Navbar() {
                 ? <img
                     src={isActive ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
                     alt="うちの子マーケット"
-                    style={{ height: isMobile ? 40 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+                    style={{ height: isMobile ? 32 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                   />
                 : label}
             </Link>

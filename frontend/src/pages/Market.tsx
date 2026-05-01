@@ -98,7 +98,7 @@ export default function Market() {
   }
 
   return (
-    <main style={{ paddingTop: isMobile ? 120 : 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+    <main style={{ paddingTop: isMobile ? 100 : 150, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
@@ -225,8 +225,8 @@ export default function Market() {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
-              gap: 24,
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
+              gap: isMobile ? 12 : 24,
             }}
           >
             {works.map((work, index) => (

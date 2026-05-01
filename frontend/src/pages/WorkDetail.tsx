@@ -161,7 +161,7 @@ export default function WorkDetail() {
     return (
       <main
         style={{
-          paddingTop: isMobile ? 120 : 150,
+          paddingTop: isMobile ? 100 : 150,
           minHeight: '100vh',
           display: 'flex',
           justifyContent: 'center',
@@ -216,7 +216,7 @@ export default function WorkDetail() {
   }
 
   return (
-    <main style={{ paddingTop: isMobile ? 120 : 150, minHeight: '100vh', paddingBottom: 60 }}>
+    <main style={{ paddingTop: isMobile ? 100 : 150, minHeight: '100vh', paddingBottom: 60 }}>
       <div className="page-container section">
         {/* 戻るボタン */}
         <button
@@ -295,12 +295,12 @@ export default function WorkDetail() {
                 baseOverlay={!showStl && showBaseOverlay ? {
                   heightMm: baseHeightMm, marginPct: baseMarginPct,
                 } : undefined}
-                height={500}
+                height={isMobile ? 350 : 500}
               />
             ) : (
               <div
                 style={{
-                  height: 500,
+                  height: isMobile ? 350 : 500,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -414,9 +414,9 @@ export default function WorkDetail() {
                   onClick={handleDownload}
                   className="btn-primary"
                   style={{
-                    padding: '16px',
+                    padding: isMobile ? '12px' : '16px',
                     justifyContent: 'center',
-                    fontSize: '1rem',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
                     width: '100%',
                   }}
                 >
@@ -433,13 +433,13 @@ export default function WorkDetail() {
                     alignItems: 'center',
                     gap: 8,
                     justifyContent: 'center',
-                    padding: '14px',
+                    padding: isMobile ? '10px' : '14px',
                     background: 'white',
                     color: 'var(--color-purple)',
                     border: '2px solid #DDB3F5',
                     borderRadius: 'var(--radius-btn)',
                     cursor: 'pointer',
-                    fontSize: '0.95rem',
+                    fontSize: isMobile ? '0.85rem' : '0.95rem',
                     fontWeight: 700,
                     fontFamily: 'var(--font-base)',
                     transition: 'all 0.2s',
