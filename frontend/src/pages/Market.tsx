@@ -1,5 +1,5 @@
 // マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Search, Building2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
@@ -31,52 +31,151 @@ const GENRE_STYLES: Record<string, { bg: string; color: string; border: string }
   official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
 }
 
+/** 1ページあたりの取得件数 */
+const PER_PAGE = 24
+
+/** スケルトンカード（ローディング中のプレースホルダー） */
+function SkeletonCard() {
+  return (
+    <div
+      style={{
+        background: 'var(--nm-bg)',
+        borderRadius: 'var(--radius-lg)',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-card)',
+      }}
+    >
+      {/* サムネイル部分 */}
+      <div className="skeleton-shimmer" style={{ height: 200 }} />
+      {/* テキスト部分 */}
+      <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="skeleton-shimmer" style={{ height: 16, width: '40%', borderRadius: 8 }} />
+        <div className="skeleton-shimmer" style={{ height: 18, width: '80%', borderRadius: 8 }} />
+        <div className="skeleton-shimmer" style={{ height: 14, width: '60%', borderRadius: 8 }} />
+      </div>
+    </div>
+  )
+}
+
 export default function Market() {
   const { user } = useAuthState()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
 
+  // 表示中の作品リスト（ページを跨いで蓄積）
   const [works, setWorks] = useState<WorkResponse[]>([])
   const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
+  // 初回ローディング（スケルトン表示用）
+  const [initialLoading, setInitialLoading] = useState(true)
+  // 追加ローディング（下部スピナー表示用）
+  const [loadingMore, setLoadingMore] = useState(false)
+  // Renderスリープ解除中フラグ
   const [retrying, setRetrying] = useState(false)
   const [genre, setGenre] = useState('')
+  // 入力値（表示用）とデバウンス後の検索ワード（API送信用）を分離
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [isOfficial] = useState(false)
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
+  // 現在のページ番号
+  const [page, setPage] = useState(1)
+  // 追加データが存在するか
+  const [hasMore, setHasMore] = useState(true)
+  // フィルター変更かどうかのフラグ（初回リセット判別）
+  const isFirstLoad = useRef(true)
+  // 無限スクロール用のセンチネル要素
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  // 作品一覧を取得（Render スリープ対策のリトライ付き）
+  // --- 検索インプットのデバウンス（300ms） ---
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
+
+  // --- フィルター変更時はリセットして1ページ目から再取得 ---
+  useEffect(() => {
+    setWorks([])
+    setPage(1)
+    setHasMore(true)
+    isFirstLoad.current = true
+  }, [genre, search, isOfficial])
+
+  // --- ページ取得関数（初回 or 追加） ---
+  const loadPage = useCallback(async (targetPage: number, isReset: boolean) => {
     const MAX_RETRIES = 4
     const RETRY_DELAY_MS = 5000
 
-    const load = async () => {
-      setLoading(true)
+    if (isReset) {
+      setInitialLoading(true)
       setRetrying(false)
-      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          const params: Record<string, string | boolean> = { status: 'done', page: '1', per_page: '100' }
-          if (genre) params.genre = genre
-          if (search) params.search = search
-          if (isOfficial) params.is_official = true
-          const res = await fetchWorks(params)
+    } else {
+      setLoadingMore(true)
+    }
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const params: Record<string, string | boolean> = {
+          status: 'done',
+          page: String(targetPage),
+          per_page: String(PER_PAGE),
+        }
+        if (genre) params.genre = genre
+        if (search) params.search = search
+        if (isOfficial) params.is_official = true
+
+        const res = await fetchWorks(params)
+
+        if (isReset) {
           setWorks(res.items)
-          setTotal(res.total)
-          setLoading(false)
-          return
-        } catch (e) {
-          if (attempt < MAX_RETRIES) {
-            setRetrying(true)
-            await new Promise(r => setTimeout(r, RETRY_DELAY_MS))
-          } else {
-            console.error('作品取得エラー:', e)
-            setLoading(false)
-          }
+        } else {
+          setWorks((prev) => [...prev, ...res.items])
+        }
+        setTotal(res.total)
+        // 取得済み合計が全件数に達したらこれ以上ない
+        setHasMore(targetPage * PER_PAGE < res.total)
+        break
+      } catch (e) {
+        if (attempt < MAX_RETRIES) {
+          setRetrying(true)
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+        } else {
+          console.error('作品取得エラー:', e)
+          setHasMore(false)
         }
       }
     }
-    load()
+
+    setInitialLoading(false)
+    setLoadingMore(false)
+    setRetrying(false)
   }, [genre, search, isOfficial])
+
+  // --- page が変わったらロード（初回リセット or 追加） ---
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false
+      loadPage(1, true)
+    } else if (page > 1) {
+      loadPage(page, false)
+    }
+  }, [page, loadPage])
+
+  // --- Intersection Observer で無限スクロール ---
+  useEffect(() => {
+    if (!sentinelRef.current) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !initialLoading) {
+          setPage((prev) => prev + 1)
+        }
+      },
+      { rootMargin: '200px' } // 200px手前で先読み開始
+    )
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, loadingMore, initialLoading])
 
   const handleLike = async (workId: string) => {
     if (!user) return
@@ -97,6 +196,9 @@ export default function Market() {
     }
   }
 
+  // スケルトンカードの枚数（グリッドに合わせて偶数に）
+  const skeletonCount = isMobile ? 6 : 12
+
   return (
     <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container section">
@@ -107,8 +209,8 @@ export default function Market() {
             <input
               type="text"
               placeholder="作品名で検索..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 16px 12px 42px',
@@ -181,19 +283,33 @@ export default function Market() {
         </div>
 
         {/* 作品グリッド */}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 16, animation: 'float 2s ease-in-out infinite' }}>
-              {retrying ? '⏳' : '🔍'}
+        {initialLoading ? (
+          // --- スケルトンローダー ---
+          <div>
+            {/* スリープ解除メッセージ */}
+            {retrying && (
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Loader2
+                  size={32}
+                  color="var(--color-pink)"
+                  style={{ animation: 'spin 1s linear infinite', margin: '0 auto 8px', display: 'block' }}
+                />
+                <p style={{ color: 'var(--color-text-sub)', fontWeight: 600, fontSize: '0.9rem' }}>
+                  サーバー起動中… しばらくお待ちください 🚀
+                </p>
+              </div>
+            )}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
+                gap: isMobile ? 12 : 24,
+              }}
+            >
+              {Array.from({ length: skeletonCount }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
             </div>
-            <Loader2
-              size={40}
-              color="var(--color-pink)"
-              style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px', display: 'block' }}
-            />
-            <p style={{ color: 'var(--color-text-sub)', fontWeight: 600 }}>
-              {retrying ? 'サーバー起動中… しばらくお待ちください 🚀' : '読み込み中...'}
-            </p>
           </div>
         ) : works.length === 0 ? (
           <div
@@ -222,24 +338,47 @@ export default function Market() {
             </p>
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
-              gap: isMobile ? 12 : 24,
-            }}
-          >
-            {works.map((work, index) => (
-              <WorkCard
-                key={work.id}
-                work={work}
-                index={index}
-                isLiked={likedIds.has(work.id)}
-                onLike={() => handleLike(work.id)}
-                onClick={() => navigate(`/works/${work.id}`)}
-              />
-            ))}
-          </div>
+          <>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
+                gap: isMobile ? 12 : 24,
+              }}
+            >
+              {works.map((work, index) => (
+                <WorkCard
+                  key={work.id}
+                  work={work}
+                  index={index}
+                  isLiked={likedIds.has(work.id)}
+                  onLike={() => handleLike(work.id)}
+                  onClick={() => navigate(`/works/${work.id}`)}
+                />
+              ))}
+            </div>
+
+            {/* 無限スクロール用センチネル要素 */}
+            <div ref={sentinelRef} style={{ height: 1 }} />
+
+            {/* 追加ロード中スピナー */}
+            {loadingMore && (
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <Loader2
+                  size={32}
+                  color="var(--color-pink)"
+                  style={{ animation: 'spin 1s linear infinite', margin: '0 auto', display: 'block' }}
+                />
+              </div>
+            )}
+
+            {/* すべて読み込み完了メッセージ */}
+            {!hasMore && works.length > 0 && (
+              <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.85rem', padding: '24px 0' }}>
+                ✨ 全{total}件を表示中
+              </p>
+            )}
+          </>
         )}
 
         {/* 企業向けコンペモックアップ */}
@@ -254,6 +393,17 @@ export default function Market() {
       <style>{`
         @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* スケルトンシマーアニメーション */
+        @keyframes shimmer {
+          0%   { background-position: -400px 0; }
+          100% { background-position:  400px 0; }
+        }
+        .skeleton-shimmer {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 800px 100%;
+          animation: shimmer 1.4s ease-in-out infinite;
+        }
       `}</style>
     </main>
   )

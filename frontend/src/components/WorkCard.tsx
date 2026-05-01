@@ -92,6 +92,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           <img
             src={work.thumbnail_url}
             alt={work.title}
+            loading="lazy"
+            decoding="async"
             style={{
               position: 'absolute',
               inset: 0,
