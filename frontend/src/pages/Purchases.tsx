@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ShoppingBag, Download, LogIn, Loader2 } from 'lucide-react'
 import { useAuthState } from '../components/useAuthState'
-import { fetchMyPurchases, type PurchaseItem } from '../lib/api'
+import { fetchMyPurchases, wakeBackend, type PurchaseItem } from '../lib/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 export default function Purchases() {
@@ -11,6 +11,8 @@ export default function Purchases() {
   const isMobile = useIsMobile()
   const [purchases, setPurchases] = useState<PurchaseItem[]>([])
   const [fetching, setFetching] = useState(false)
+
+  useEffect(() => { wakeBackend() }, [])
 
   useEffect(() => {
     if (!user) return

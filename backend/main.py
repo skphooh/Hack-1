@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from db.database import engine, Base
 from routers import depth, generate, convert, works, postprocess, purchases
@@ -13,13 +14,22 @@ from routers import depth, generate, convert, works, postprocess, purchases
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """アプリ起動時にDBテーブルを自動作成"""
+    """アプリ起動時にDBテーブルを自動作成・マイグレーション"""
     try:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        print("✅ DB テーブルの初期化が完了しました", flush=True)
+            # purchases テーブルに後から追加したカラムをマイグレーション
+            # IF NOT EXISTS で冪等（何度実行しても安全）
+            await conn.execute(text(
+                "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS "
+                "stripe_session_id TEXT"
+            ))
+            await conn.execute(text(
+                "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS "
+                "status VARCHAR(20) DEFAULT 'completed'"
+            ))
+        print("✅ DB テーブルの初期化・マイグレーションが完了しました", flush=True)
     except Exception as e:
-        # DB接続失敗でもサーバーは起動させる（CORS ミドルウェアを有効にするため）
         print(f"⚠️ DB 初期化エラー（DATABASE_URL を確認してください）: {e}", flush=True)
     yield
 

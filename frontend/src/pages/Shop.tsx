@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShoppingBag, Tag, Loader2, Download, Check, ChevronRight } from 'lucide-react'
 import { useAuthState } from '../components/useAuthState'
 import { WorkCard } from '../components/WorkCard'
-import { fetchWorks, fetchMyPurchases, updateWork, type WorkResponse, type PurchaseItem } from '../lib/api'
+import { fetchWorks, fetchMyPurchases, updateWork, wakeBackend, type WorkResponse, type PurchaseItem } from '../lib/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 type Tab = 'buy' | 'sell'
@@ -30,6 +30,9 @@ export default function Shop() {
 
   // ── 購入履歴 ──
   const [purchases, setPurchases] = useState<PurchaseItem[]>([])
+
+  // ページ表示時にバックエンドを起こす
+  useEffect(() => { wakeBackend() }, [])
 
   // 有料作品一覧を取得
   useEffect(() => {
