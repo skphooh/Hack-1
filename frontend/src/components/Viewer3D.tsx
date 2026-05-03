@@ -241,11 +241,11 @@ export function Viewer3D({
             ) : isPickMode ? (
               // ピックモード: クリック可能モデル（自動回転なし）
               <PickableModel url={glbUrl} onPick={onHolePick!} />
-            ) : holeMarkerPos ? (
-              // マーカー表示中は静止モデル（回転停止）
+            ) : holeMarkerPos || isMarket ? (
+              // マーカー表示中 or マーケットカードは静止
               <StaticModel url={glbUrl} />
             ) : (
-              // 通常モード: 自動回転モデル
+              // 通常モード（詳細ページ等）: 自動回転
               <RotatingModel url={glbUrl} />
             )}
             {!isMarket && <Environment preset="city" />}
