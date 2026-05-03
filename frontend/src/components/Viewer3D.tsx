@@ -245,8 +245,8 @@ export function Viewer3D({
               // マーカー表示中は静止（回転なし）
               <StaticModel url={glbUrl} />
             ) : isMarket ? (
-              // マーケットカード: 正面向きで静止（Math.PI = 180度でTripo3D正面を向く）
-              <StaticModel url={glbUrl} initialRotationY={Math.PI} />
+              // マーケットカード: 正面向きで静止（90度でTripo3D正面を向く）
+              <StaticModel url={glbUrl} initialRotationY={Math.PI / 2} />
             ) : (
               // 通常モード（詳細ページ等）: 自動回転
               <RotatingModel url={glbUrl} />
