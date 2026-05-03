@@ -97,7 +97,12 @@ class Purchase(Base):
     work_id = Column(UUID(as_uuid=True), ForeignKey("works.id"), nullable=False)
     # 購入時点の価格を記録（後から価格変更されても履歴として残す）
     amount = Column(Integer, nullable=False)
+    stripe_session_id = Column(Text, nullable=True)
+    status = Column(String(20), default="completed")
     created_at = Column(TIMESTAMP(timezone=True), default=utcnow)
+
+    # 同一ユーザーが同一作品を複数購入できないようにユニーク制約
+    __table_args__ = (UniqueConstraint("user_id", "work_id", name="uq_purchase_user_work"),)
 
     user = relationship("User", back_populates="purchases")
     work = relationship("Work", back_populates="purchases")

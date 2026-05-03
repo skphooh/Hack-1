@@ -232,3 +232,32 @@ export async function wakeBackend(): Promise<void> {
 export interface TurnaroundPreviewResponse {
   turnaround_url: string
 }
+
+// ===== 購入系 API =====
+
+export const checkPurchase = (workId: string) =>
+  apiGet<{ purchased: boolean }>(`/api/purchases/check/${workId}`)
+
+export const createCheckout = (workId: string) =>
+  apiPost<{ mode: string; url: string | null; purchased?: boolean }>(
+    '/api/purchases/checkout', { work_id: workId }
+  )
+
+export const fetchMyPurchases = () =>
+  apiGet<{ items: PurchaseItem[] }>('/api/purchases/my')
+
+export interface PurchaseItem {
+  id: string
+  work_id: string
+  amount: number
+  created_at: string
+  work: {
+    id: string
+    title: string
+    thumbnail_url: string | null
+    price: number
+    genre: string | null
+    glb_url: string | null
+    stl_url: string | null
+  }
+}

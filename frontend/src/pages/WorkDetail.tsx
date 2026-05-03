@@ -1,7 +1,7 @@
 // 作品詳細ページ - ポップ・かわいいデザイン
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Download, Heart, ArrowLeft, Loader2, Flag } from 'lucide-react'
+import { Download, Heart, ArrowLeft, Loader2, Flag, ShoppingCart } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
 import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, wakeBackend, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -38,6 +38,10 @@ export default function WorkDetail() {
   // オーバーレイ表示フラグ
   const [showBaseOverlay, setShowBaseOverlay] = useState(false)
 
+  // 購入状態
+  const [isPurchased, setIsPurchased] = useState(false)
+  const [purchaseLoading, setPurchaseLoading] = useState(false)
+
   // ストラップ穴ピックモードの状態
   const [isPickingHole, setIsPickingHole] = useState(false)
   const [holePickPoint, setHolePickPoint] = useState<{ x: number; y: number; z: number } | null>(null)
@@ -55,6 +59,12 @@ export default function WorkDetail() {
       try {
         const data = await fetchWork(id)
         setWork(data)
+        // 購入状態確認（有料作品のみ）
+        if (data.price > 0) {
+          import('../lib/api').then(({ checkPurchase }) =>
+            checkPurchase(id).then(r => setIsPurchased(r.purchased)).catch(() => {})
+          )
+        }
       } catch (e) {
         console.error('Work fetch error:', e)
       } finally {
@@ -63,6 +73,14 @@ export default function WorkDetail() {
     }
     load()
   }, [id])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('purchase') === 'success') {
+      setIsPurchased(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const handleLike = async () => {
     if (!user || !work) return
@@ -139,6 +157,26 @@ export default function WorkDetail() {
       alert(msg)
     } finally {
       setPostProcessing(null)
+    }
+  }
+
+  const handlePurchase = async () => {
+    if (!user) { alert('購入にはログインが必要です。'); return }
+    if (!work) return
+    setPurchaseLoading(true)
+    try {
+      const { createCheckout } = await import('../lib/api')
+      const res = await createCheckout(work.id)
+      if (res.purchased) {
+        setIsPurchased(true)
+      } else if (res.url) {
+        window.location.href = res.url
+      }
+    } catch (e) {
+      alert('購入処理に失敗しました。もう一度お試しください。')
+      console.error(e)
+    } finally {
+      setPurchaseLoading(false)
     }
   }
 
@@ -430,70 +468,49 @@ export default function WorkDetail() {
 
             {/* STL/GLBダウンロードボタン */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* STLがあればSTL優先、なければGLBを「ダウンロードして印刷する」に */}
-              {work.stl_url ? (
-                <button
-                  onClick={handleDownload}
-                  className="btn-primary"
-                  style={{
-                    padding: isMobile ? '12px' : '16px',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '0.9rem' : '1rem',
-                    width: '100%',
-                  }}
-                >
-                  <Download size={20} />
-                  ダウンロードして印刷する
-                </button>
-              ) : work.glb_url ? (
-                <button
-                  onClick={handleDownloadGlb}
-                  className="btn-primary"
-                  style={{
-                    padding: isMobile ? '12px' : '16px',
-                    justifyContent: 'center',
-                    fontSize: isMobile ? '0.9rem' : '1rem',
-                    width: '100%',
-                  }}
-                >
-                  <Download size={20} />
-                  ダウンロードして印刷する
-                </button>
-              ) : null}
-              {/* STLもGLBもある場合はGLBを別枠で追加表示 */}
-              {work.stl_url && work.glb_url && (
-                <button
-                  onClick={handleDownloadGlb}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    justifyContent: 'center',
-                    padding: isMobile ? '10px' : '14px',
-                    background: 'white',
-                    color: 'var(--color-purple)',
-                    border: '2px solid #DDB3F5',
-                    borderRadius: 'var(--radius-btn)',
-                    cursor: 'pointer',
-                    fontSize: isMobile ? '0.85rem' : '0.95rem',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-base)',
-                    transition: 'all 0.2s',
-                    width: '100%',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#F5EDFF'
-                    e.currentTarget.style.borderColor = 'var(--color-purple)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white'
-                    e.currentTarget.style.borderColor = '#DDB3F5'
-                  }}
-                >
-                  <Download size={18} />
-                  💾 GLBをダウンロード（3Dデータ）
-                </button>
-              )}
+              {(() => {
+                const canDownload = work.price === 0 || isPurchased || (user?.uid === work.author_firebase_uid)
+                return canDownload ? (
+                  <>
+                    {work.stl_url ? (
+                      <button onClick={handleDownload} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
+                        <Download size={20} />
+                        ダウンロードして印刷する
+                      </button>
+                    ) : work.glb_url ? (
+                      <button onClick={handleDownloadGlb} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
+                        <Download size={20} />
+                        ダウンロードして印刷する
+                      </button>
+                    ) : null}
+                    {work.stl_url && work.glb_url && (
+                      <button onClick={handleDownloadGlb} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', padding: isMobile ? '10px' : '14px', background: 'white', color: 'var(--color-purple)', border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontSize: isMobile ? '0.85rem' : '0.95rem', fontWeight: 700, fontFamily: 'var(--font-base)', transition: 'all 0.2s', width: '100%' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#F5EDFF'; e.currentTarget.style.borderColor = 'var(--color-purple)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#DDB3F5' }}>
+                        <Download size={18} />💾 GLBをダウンロード（3Dデータ）
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  /* 未購入の有料作品 */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <button
+                      onClick={handlePurchase}
+                      disabled={purchaseLoading}
+                      className="btn-primary"
+                      style={{ padding: isMobile ? '14px' : '18px', justifyContent: 'center', fontSize: isMobile ? '1rem' : '1.1rem', width: '100%', opacity: purchaseLoading ? 0.7 : 1 }}
+                    >
+                      {purchaseLoading
+                        ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…</>
+                        : <><ShoppingCart size={20} /> ¥{work.price.toLocaleString()} で購入する</>
+                      }
+                    </button>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                      購入後すぐにダウンロードできます
+                    </p>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* 元画像 */}
