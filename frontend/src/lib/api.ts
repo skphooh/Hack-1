@@ -78,6 +78,18 @@ export const fetchWork = (id: string) =>
 export const deleteWork = (id: string) =>
   apiDelete<{ message: string }>(`/api/works/${id}`)
 
+/** 作品情報更新（価格・タイトル等、PATCH） */
+export async function updateWork(id: string, body: { price?: number; title?: string; genre?: string }): Promise<WorkResponse> {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/api/works/${id}`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
 /** 3D生成ジョブ開始 */
 export const startGenerate = (form: FormData) =>
   apiPostForm<WorkResponse>('/api/generate', form)

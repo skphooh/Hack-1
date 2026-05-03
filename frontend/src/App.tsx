@@ -10,6 +10,7 @@ import MyPage from './pages/MyPage'
 import WorkDetail from './pages/WorkDetail'
 import LikedWorks from './pages/LikedWorks'
 import Purchases from './pages/Purchases'
+import Shop from './pages/Shop'
 import Competition from './pages/Competition'
 import Admin from './pages/Admin'
 import Profile from './pages/Profile'
@@ -29,6 +30,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/liked" element={<LikedWorks />} />
         <Route path="/purchases" element={<Purchases />} />
+        <Route path="/shop" element={<Shop />} />
         <Route path="/competition" element={<Competition />} />
         <Route path="/admin" element={<Admin />} />
         {/* 404 フォールバック */}

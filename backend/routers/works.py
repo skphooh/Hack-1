@@ -24,6 +24,7 @@ async def list_works(
     user_id: Optional[str] = Query(None, description="Firebase UIDでフィルタ"),
     search: Optional[str] = Query(None, description="タイトル検索"),
     is_official: Optional[bool] = Query(None, description="公式作品フィルタ"),
+    min_price: Optional[int] = Query(None, description="最低価格フィルタ（1以上で有料作品のみ）"),
     status: str = Query("done", description="ステータスでフィルタ"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -39,6 +40,8 @@ async def list_works(
         query = query.where(Work.title.ilike(f"%{search}%"))
     if is_official is not None:
         query = query.where(Work.is_official == is_official)
+    if min_price is not None:
+        query = query.where(Work.price >= min_price)
 
     # 全件数カウント
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))

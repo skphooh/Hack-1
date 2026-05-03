@@ -1,7 +1,7 @@
 // マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Search, Building2 } from 'lucide-react'
+import { Loader2, Search, Building2, ShoppingBag, ChevronRight } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -202,6 +202,23 @@ export default function Market() {
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container" style={{ paddingTop: isMobile ? 14 : 24, paddingBottom: 40 }}>
+        {/* ショップ導線バナー */}
+        <div
+          onClick={() => navigate('/shop')}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '10px 14px' : '12px 18px', background: 'linear-gradient(135deg,#F5EDFF,#FFEDF4)', border: '1.5px solid #DDB3F5', borderRadius: 'var(--radius-md)', marginBottom: 14, cursor: 'pointer', transition: 'opacity 0.15s' }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShoppingBag size={16} color="var(--color-purple)" />
+            <span style={{ fontSize: isMobile ? '0.8rem' : '0.88rem', fontWeight: 700, color: 'var(--color-purple)' }}>
+              3Dデータを売りたい・買いたい？
+            </span>
+            <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--color-text-muted)' }}>出品・購入はこちら</span>
+          </div>
+          <ChevronRight size={16} color="var(--color-purple)" />
+        </div>
+
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: isMobile ? 12 : 20, alignItems: 'center' }}>
           <div style={{ flex: '1 1 200px', position: 'relative' }}>
