@@ -1,6 +1,6 @@
 // マイページ（ユーザーの投稿した作品一覧）- ポップ・かわいいデザイン
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { User, Loader2, LogIn, Pencil } from 'lucide-react'
 import { useAuthState } from '../components/useAuthState'
 import { WorkCard } from '../components/WorkCard'
@@ -8,6 +8,7 @@ import { fetchWorks, type WorkResponse } from '../lib/api'
 
 export default function MyPage() {
   const { user, loading } = useAuthState()
+  const navigate = useNavigate()
   const [works, setWorks] = useState<WorkResponse[]>([])
   const [fetching, setFetching] = useState(false)
 
@@ -251,7 +252,7 @@ export default function MyPage() {
             gap: 8,
           }}
         >
-          🎨 作成した作品
+          🎨 うちの子一覧
           {!fetching && (
             <span
               style={{
@@ -326,7 +327,12 @@ export default function MyPage() {
             }}
           >
             {works.map((work, index) => (
-              <WorkCard key={work.id} work={work} index={index} />
+              <WorkCard
+                key={work.id}
+                work={work}
+                index={index}
+                onClick={() => navigate(`/works/${work.id}`)}
+              />
             ))}
           </div>
         )}

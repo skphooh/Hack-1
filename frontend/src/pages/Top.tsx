@@ -151,7 +151,7 @@ export default function Top() {
         </div>
 
         {/* キャッチコピー */}
-        <h1 style={{ fontSize: 'clamp(1.8rem, 6vw, 4.5rem)', fontWeight: 900, lineHeight: 1.2, marginBottom: 24, fontFamily: 'var(--font-display)', color: 'var(--color-text)', wordBreak: 'keep-all', overflowWrap: 'break-word' }} className="animate-fade-in">
+        <h1 style={{ fontSize: 'clamp(1.4rem, 4.5vw, 3rem)', fontWeight: 900, lineHeight: 1.2, marginBottom: 24, fontFamily: 'var(--font-display)', color: 'var(--color-text)', wordBreak: 'keep-all', overflowWrap: 'break-word' }} className="animate-fade-in">
           <span className="gradient-text">うちの子</span>を、
           <br />
           自分の手で立体にする。🎉

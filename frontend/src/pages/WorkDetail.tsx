@@ -430,8 +430,8 @@ export default function WorkDetail() {
 
             {/* STL/GLBダウンロードボタン */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {/* STLダウンロード（3Dプリント用） */}
-              {work.stl_url && (
+              {/* STLがあればSTL優先、なければGLBを「ダウンロードして印刷する」に */}
+              {work.stl_url ? (
                 <button
                   onClick={handleDownload}
                   className="btn-primary"
@@ -445,9 +445,23 @@ export default function WorkDetail() {
                   <Download size={20} />
                   ダウンロードして印刷する
                 </button>
-              )}
-              {/* GLBダウンロード（3Dデータ保存用） */}
-              {work.glb_url && (
+              ) : work.glb_url ? (
+                <button
+                  onClick={handleDownloadGlb}
+                  className="btn-primary"
+                  style={{
+                    padding: isMobile ? '12px' : '16px',
+                    justifyContent: 'center',
+                    fontSize: isMobile ? '0.9rem' : '1rem',
+                    width: '100%',
+                  }}
+                >
+                  <Download size={20} />
+                  ダウンロードして印刷する
+                </button>
+              ) : null}
+              {/* STLもGLBもある場合はGLBを別枠で追加表示 */}
+              {work.stl_url && work.glb_url && (
                 <button
                   onClick={handleDownloadGlb}
                   style={{
