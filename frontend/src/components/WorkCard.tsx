@@ -181,18 +181,18 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         <div
           style={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            padding: '4px 12px',
+            top: 6,
+            right: 6,
+            padding: '2px 8px',
             background: work.price === 0 ? '#E8FFF4' : '#FFF0F6',
             border: `1.5px solid ${work.price === 0 ? '#90D4A4' : '#FFAECB'}`,
             borderRadius: 100,
-            fontSize: '0.75rem',
-            fontWeight: 800,
+            fontSize: '0.65rem',
+            fontWeight: 700,
             color: work.price === 0 ? '#22863a' : 'var(--color-pink)',
           }}
         >
-          {work.price === 0 ? '🆓 無料' : `¥${work.price.toLocaleString()}`}
+          {work.price === 0 ? '無料' : `¥${work.price.toLocaleString()}`}
         </div>
       </div>
 

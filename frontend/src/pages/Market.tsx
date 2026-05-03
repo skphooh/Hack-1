@@ -248,12 +248,12 @@ export default function Market() {
                 id={`genre-filter-${value || 'all'}`}
                 onClick={() => setGenre(value)}
                 style={{
-                  padding: isMobile ? '6px 12px' : '8px 16px',
+                  padding: isMobile ? '4px 9px' : '6px 12px',
                   borderRadius: 100,
-                  border: `2px solid ${isSelected ? (style?.border ?? 'transparent') : 'var(--color-border)'}`,
+                  border: `1.5px solid ${isSelected ? (style?.border ?? 'transparent') : 'var(--color-border)'}`,
                   background: isSelected ? (style?.bg ?? '#FFEDF4') : 'white',
                   color: isSelected ? (style?.color ?? 'white') : 'var(--color-text-sub)',
-                  fontSize: isMobile ? '0.75rem' : '0.85rem',
+                  fontSize: isMobile ? '0.68rem' : '0.78rem',
                   fontWeight: isSelected ? 800 : 500,
                   cursor: 'pointer',
                   transition: 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',

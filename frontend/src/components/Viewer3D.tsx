@@ -255,8 +255,7 @@ export function Viewer3D({
           <OrbitControls
             enablePan={false}
             enableZoom={!isMarket}
-            // ピックモード中は自動回転OFF、通常は市場カードのみON
-            autoRotate={!isPickMode && isMarket}
+            autoRotate={false}
             autoRotateSpeed={2}
           />
         </Canvas>

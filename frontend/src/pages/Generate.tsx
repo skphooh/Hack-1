@@ -58,7 +58,9 @@ export default function Generate() {
   } = useGenerateStore()
 
   const [title, setTitle] = useState('')
-  const [genre, setGenre] = useState('original')
+  const [genres, setGenres] = useState<string[]>(['original'])
+  const toggleGenre = (value: string) =>
+    setGenres(prev => prev.includes(value) ? prev.filter(g => g !== value) : [...prev, value])
   const quality = 'high'
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
@@ -106,7 +108,7 @@ export default function Generate() {
       const form = new FormData()
       form.append('file', blob, 'upload.png')
       form.append('title', title || 'うちの子')
-      form.append('genre', genre)
+      form.append('genre', genres.join(','))
       form.append('quality', quality)
       form.append('is_public', visibility === 'public' ? 'true' : 'false')
 
@@ -137,7 +139,7 @@ export default function Generate() {
       setError(e instanceof Error ? e.message : '生成に失敗しました')
       setStep('error')
     }
-  }, [user, previewUrl, title, quality, setStep, setWork, setTaskStatus, setError])
+  }, [user, previewUrl, title, genres, quality, setStep, setWork, setTaskStatus, setError])
 
   /** STLダウンロード */
   const handleDownload = useCallback(() => {
@@ -232,7 +234,7 @@ export default function Generate() {
             flexWrap: 'nowrap',
           }}
         >
-          {STEPS.map(({ label, emoji }, i) => {
+          {STEPS.map(({ label }, i) => {
             const isDone = i < currentStepIndex
             const isCurrent = i === currentStepIndex
             return (
@@ -270,7 +272,7 @@ export default function Generate() {
                         : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
                     }}
                   >
-                    {emoji} {label}
+                    {label}
                   </div>
                 </div>
                 {/* 接続線（バッジに揃える） */}
@@ -362,20 +364,20 @@ export default function Generate() {
             )}
 
             {/* タイトル入力 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '10px 12px' : '12px 16px', background: '#ffffff' }}>
               <label
                 htmlFor="work-title"
                 style={{
                   display: 'block',
                   fontWeight: 700,
-                  fontSize: '1rem',
-                  marginBottom: 10,
+                  fontSize: '0.72rem',
+                  marginBottom: 8,
                   color: 'var(--color-text-sub)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                 }}
               >
-                ⭐ 作品タイトル（任意）
+                作品タイトル（任意）
               </label>
               <input
                 id="work-title"
@@ -402,29 +404,29 @@ export default function Generate() {
               />
             </div>
 
-            {/* ジャンル選択 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
+            {/* ジャンル選択（複数可） */}
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '10px 12px' : '12px 16px', background: '#ffffff' }}>
               <label
                 style={{
-                  display: 'block', fontWeight: 700, fontSize: '1rem', marginBottom: 12,
+                  display: 'block', fontWeight: 700, fontSize: '0.72rem', marginBottom: 8,
                   color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em'
                 }}
               >
-                🏷️ ジャンル
+                ジャンル（複数可）
               </label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {GENRES.map(({ value, label }) => {
-                  const selected = genre === value
+                  const selected = genres.includes(value)
                   return (
                     <button
                       key={value}
-                      onClick={() => setGenre(value)}
+                      onClick={() => toggleGenre(value)}
                       style={{
-                        padding: '8px 14px', borderRadius: '100px',
+                        padding: '5px 10px', borderRadius: '100px',
                         border: `1.5px solid ${selected ? 'var(--color-pink)' : '#d0d8e8'}`,
                         background: selected ? '#FFEDF4' : 'white',
                         color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                        fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                        fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer',
                         transition: 'all 0.2s',
                         fontFamily: 'var(--font-base)',
                       }}
@@ -438,9 +440,9 @@ export default function Generate() {
 
 
             {/* 公開設定 */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
-              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                🔒 公開設定
+            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '10px 12px' : '12px 16px', background: '#ffffff' }}>
+              <p style={{ fontWeight: 700, fontSize: '0.72rem', marginBottom: 8, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                公開設定
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 {([
