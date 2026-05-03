@@ -140,7 +140,7 @@ export function Navbar() {
                   }}
                 >
                   {[
-                    { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/mypage' },
+                    { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/profile' },
                     { icon: <Heart size={15} />, label: 'いいねした作品', path: '/liked' },
                     { icon: <List size={15} />, label: 'うちの子一覧', path: '/mypage' },
                   ].map(({ icon, label, path }) => (

@@ -347,7 +347,7 @@ export default function WorkDetail() {
                 background: 'white',
                 border: '2px solid var(--color-border)',
                 borderRadius: 'var(--radius-xl)',
-                padding: isMobile ? '16px' : '24px',
+                padding: isMobile ? '12px' : '24px',
                 boxShadow: 'var(--shadow-card)',
               }}
             >
@@ -356,14 +356,14 @@ export default function WorkDetail() {
                 <span
                   style={{
                     display: 'inline-block',
-                    padding: '4px 14px',
+                    padding: isMobile ? '3px 10px' : '4px 14px',
                     background: '#FFEDF4',
                     color: 'var(--color-pink)',
                     border: '1.5px solid var(--color-pink-light)',
                     borderRadius: 100,
-                    fontSize: '0.78rem',
+                    fontSize: isMobile ? '0.72rem' : '0.78rem',
                     fontWeight: 700,
-                    marginBottom: 12,
+                    marginBottom: isMobile ? 6 : 12,
                   }}
                 >
                   {GENRE_LABELS[work.genre] ?? work.genre}
@@ -372,9 +372,9 @@ export default function WorkDetail() {
 
               <h1
                 style={{
-                  fontSize: isMobile ? '1.3rem' : '1.6rem',
+                  fontSize: isMobile ? '1.1rem' : '1.6rem',
                   fontWeight: 900,
-                  marginBottom: isMobile ? 16 : 20,
+                  marginBottom: isMobile ? 8 : 20,
                   color: 'var(--color-text)',
                   fontFamily: 'var(--font-heading)',
                   lineHeight: 1.3,
@@ -388,41 +388,41 @@ export default function WorkDetail() {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: isMobile ? '4px 12px' : '6px 18px',
+                  gap: 5,
+                  padding: isMobile ? '3px 10px' : '6px 18px',
                   background: work.price === 0 ? '#E8FFF4' : '#FFEDF4',
                   border: `2px solid ${work.price === 0 ? '#90D4A4' : 'var(--color-pink-light)'}`,
                   borderRadius: 100,
-                  fontSize: isMobile ? '0.9rem' : '1rem',
+                  fontSize: isMobile ? '0.82rem' : '1rem',
                   fontWeight: 800,
                   color: work.price === 0 ? '#22863a' : 'var(--color-pink)',
-                  marginBottom: isMobile ? 16 : 20,
+                  marginBottom: isMobile ? 8 : 20,
                 }}
               >
                 {work.price === 0 ? '🆓 無料！' : `💰 ¥${work.price.toLocaleString()}`}
               </div>
 
               {/* いいねボタン */}
-              <div style={{ marginTop: 8 }}>
+              <div style={{ marginTop: isMobile ? 4 : 8 }}>
                 <button
                   onClick={handleLike}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: 6,
                     background: isLiked ? '#FFEDF4' : 'white',
                     border: `2px solid ${isLiked ? 'var(--color-pink)' : 'var(--color-border)'}`,
                     borderRadius: 100,
-                    padding: isMobile ? '8px 16px' : '10px 20px',
+                    padding: isMobile ? '6px 12px' : '10px 20px',
                     cursor: 'pointer',
                     color: isLiked ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                    fontSize: isMobile ? '0.85rem' : '0.95rem',
+                    fontSize: isMobile ? '0.78rem' : '0.95rem',
                     fontWeight: 700,
                     transition: 'all 0.2s ease',
                     transform: isLiked ? 'scale(1.05)' : 'scale(1)',
                   }}
                 >
-                  <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+                  <Heart size={isMobile ? 14 : 18} fill={isLiked ? 'currentColor' : 'none'} />
                   {work.likes_count} いいね！
                 </button>
               </div>

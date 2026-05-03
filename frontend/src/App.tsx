@@ -11,6 +11,7 @@ import WorkDetail from './pages/WorkDetail'
 import LikedWorks from './pages/LikedWorks'
 import Competition from './pages/Competition'
 import Admin from './pages/Admin'
+import Profile from './pages/Profile'
 
 function App() {
   useEffect(() => { wakeBackend() }, [])
@@ -24,6 +25,7 @@ function App() {
         <Route path="/market" element={<Market />} />
         <Route path="/works/:id" element={<WorkDetail />} />
         <Route path="/mypage" element={<MyPage />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/liked" element={<LikedWorks />} />
         <Route path="/competition" element={<Competition />} />
         <Route path="/admin" element={<Admin />} />
