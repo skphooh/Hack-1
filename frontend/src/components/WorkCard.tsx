@@ -37,27 +37,28 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
   other: { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
 }
 
-export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardProps) {
+export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const isMobile = useIsMobile()
   const [has3DError, setHas3DError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  // IntersectionObserver でビューポートに入ったカードだけ 3D を起動
-  // （一度 true になったら false に戻さない → コンテキスト破棄を防ぐ）
+  // index < 9 は自動ロード（IntersectionObserver）、それ以降は手動タップで起動
+  const autoLoad = index < 9
   const [inView, setInView] = useState(false)
+  const [manualLoad, setManualLoad] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const el = cardRef.current
-    if (!el || !work.glb_url) return
+    if (!el || !work.glb_url || !autoLoad) return
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setInView(true) },
-      { rootMargin: '180px' } // ビューポートの 180px 手前で起動
+      { rootMargin: '180px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [work.glb_url])
+  }, [work.glb_url, autoLoad])
 
-  const show3D = (inView || isHovered) && work.glb_url && !has3DError
+  const show3D = (inView || isHovered || manualLoad) && work.glb_url && !has3DError
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
@@ -124,6 +125,33 @@ export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardPro
             <span style={{ fontSize: '2.5rem' }}>🎭</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>No Image</span>
           </div>
+        )}
+
+        {/* 手動ロードカード: 3Dタップボタン */}
+        {!show3D && !autoLoad && work.glb_url && !has3DError && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setManualLoad(true) }}
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: 8,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '3px 10px',
+              background: 'rgba(107,159,255,0.88)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 100,
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              zIndex: 15,
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            ▶ 3D
+          </button>
         )}
 
         {/* 公式バッジ */}
