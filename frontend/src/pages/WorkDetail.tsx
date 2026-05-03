@@ -467,51 +467,85 @@ export default function WorkDetail() {
             </div>
 
             {/* STL/GLBダウンロードボタン */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {(() => {
-                const canDownload = work.price === 0 || isPurchased || (user?.uid === work.author_firebase_uid)
-                return canDownload ? (
-                  <>
-                    {work.stl_url ? (
-                      <button onClick={handleDownload} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
-                        <Download size={20} />
-                        ダウンロードして印刷する
-                      </button>
-                    ) : work.glb_url ? (
-                      <button onClick={handleDownloadGlb} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
-                        <Download size={20} />
-                        ダウンロードして印刷する
-                      </button>
-                    ) : null}
-                    {work.stl_url && work.glb_url && (
-                      <button onClick={handleDownloadGlb} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', padding: isMobile ? '10px' : '14px', background: 'white', color: 'var(--color-purple)', border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontSize: isMobile ? '0.85rem' : '0.95rem', fontWeight: 700, fontFamily: 'var(--font-base)', transition: 'all 0.2s', width: '100%' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#F5EDFF'; e.currentTarget.style.borderColor = 'var(--color-purple)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#DDB3F5' }}>
-                        <Download size={18} />💾 GLBをダウンロード（3Dデータ）
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  /* 未購入の有料作品 */
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <button
-                      onClick={handlePurchase}
-                      disabled={purchaseLoading}
-                      className="btn-primary"
-                      style={{ padding: isMobile ? '14px' : '18px', justifyContent: 'center', fontSize: isMobile ? '1rem' : '1.1rem', width: '100%', opacity: purchaseLoading ? 0.7 : 1 }}
-                    >
-                      {purchaseLoading
-                        ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…</>
-                        : <><ShoppingCart size={20} /> ¥{work.price.toLocaleString()} で購入する</>
-                      }
+            {(() => {
+              const isAuthor = user?.uid === work.author_firebase_uid
+
+              const downloadButtons = (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {work.stl_url ? (
+                    <button onClick={handleDownload} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
+                      <Download size={20} /> ダウンロードして印刷する
                     </button>
-                    <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-                      購入後すぐにダウンロードできます
-                    </p>
+                  ) : work.glb_url ? (
+                    <button onClick={handleDownloadGlb} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
+                      <Download size={20} /> ダウンロードして印刷する
+                    </button>
+                  ) : null}
+                  {work.stl_url && work.glb_url && (
+                    <button onClick={handleDownloadGlb} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', padding: isMobile ? '10px' : '14px', background: 'white', color: 'var(--color-purple)', border: '2px solid #DDB3F5', borderRadius: 'var(--radius-btn)', cursor: 'pointer', fontSize: isMobile ? '0.85rem' : '0.95rem', fontWeight: 700, fontFamily: 'var(--font-base)', transition: 'all 0.2s', width: '100%' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#F5EDFF'; e.currentTarget.style.borderColor = 'var(--color-purple)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#DDB3F5' }}>
+                      <Download size={18} /> 💾 GLBをダウンロード（3Dデータ）
+                    </button>
+                  )}
+                </div>
+              )
+
+              if (work.price === 0) {
+                // 無料作品: そのままDL
+                return downloadButtons
+              }
+
+              if (isAuthor) {
+                // 出品者: DLできるが注釈を表示
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ padding: '8px 12px', background: '#F5EDFF', border: '1.5px solid #DDB3F5', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: 'var(--color-purple)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      🏷️ あなたの出品作品です（¥{work.price.toLocaleString()}）。他のユーザーには購入画面が表示されます。
+                    </div>
+                    {downloadButtons}
                   </div>
                 )
-              })()}
-            </div>
+              }
+
+              if (isPurchased) {
+                // 購入済み: DLできる
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ padding: '8px 12px', background: '#E8FFF4', border: '1.5px solid #90D4A4', borderRadius: 'var(--radius-md)', fontSize: '0.75rem', color: '#22863a', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      ✅ 購入済みです
+                    </div>
+                    {downloadButtons}
+                  </div>
+                )
+              }
+
+              // 未購入の有料作品: 購入ボタンのみ
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button
+                    onClick={handlePurchase}
+                    disabled={purchaseLoading}
+                    className="btn-primary"
+                    style={{ padding: isMobile ? '14px' : '18px', justifyContent: 'center', fontSize: isMobile ? '1rem' : '1.1rem', width: '100%', opacity: purchaseLoading ? 0.7 : 1 }}
+                  >
+                    {purchaseLoading
+                      ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> 処理中…</>
+                      : <><ShoppingCart size={20} /> ¥{work.price.toLocaleString()} で購入する</>
+                    }
+                  </button>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                    購入後すぐにダウンロードできます
+                  </p>
+                  {/* DLボタンをロック表示 */}
+                  <div style={{ position: 'relative', borderRadius: 'var(--radius-btn)', overflow: 'hidden' }}>
+                    <button disabled style={{ width: '100%', padding: isMobile ? '12px' : '14px', background: '#e5e7eb', color: '#9ca3af', border: 'none', borderRadius: 'var(--radius-btn)', fontSize: isMobile ? '0.9rem' : '0.95rem', fontWeight: 700, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'var(--font-base)' }}>
+                      🔒 購入するとダウンロードできます
+                    </button>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* 元画像 */}
             {work.thumbnail_url && (
