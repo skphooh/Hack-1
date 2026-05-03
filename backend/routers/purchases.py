@@ -65,11 +65,7 @@ async def get_my_purchases(
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
-    from db.models import User
-    result = await db.execute(select(User).where(User.firebase_uid == uid))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+    user = await get_or_create_user(uid, db)
 
     result = await db.execute(
         select(Purchase)

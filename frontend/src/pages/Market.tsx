@@ -1,7 +1,7 @@
 // マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Search, Building2, ShoppingBag, ChevronRight } from 'lucide-react'
+import { Loader2, Search, Building2, ShoppingBag } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -21,12 +21,12 @@ const GENRES = [
 
 /** フィルターボタンのカラー定義 */
 const GENRE_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  '':       { bg: 'linear-gradient(135deg, #FF6B9D, #9B59B6)', color: 'white', border: 'transparent' },
-  figure:   { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
-  anime:    { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
-  cosplay:  { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
+  '': { bg: 'linear-gradient(135deg, #FF6B9D, #9B59B6)', color: 'white', border: 'transparent' },
+  figure: { bg: '#FFEDF4', color: '#FF6B9D', border: '#FFAECB' },
+  anime: { bg: '#EDF4FF', color: '#5B8CFF', border: '#A3C4FF' },
+  cosplay: { bg: '#F0FFF4', color: '#28A745', border: '#90D4A4' },
   original: { bg: '#FFF9E6', color: '#E67E22', border: '#FFD699' },
-  ai:       { bg: '#F4F1FF', color: '#8B70D4', border: '#DDB3F5' },
+  ai: { bg: '#F4F1FF', color: '#8B70D4', border: '#DDB3F5' },
   handmade: { bg: '#FFF1E6', color: '#FF8A66', border: '#FFCBA4' },
   official: { bg: '#F5EDFF', color: '#9B59B6', border: '#DDB3F5' },
 }
@@ -202,21 +202,25 @@ export default function Market() {
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container" style={{ paddingTop: isMobile ? 14 : 24, paddingBottom: 40 }}>
-        {/* ショップ導線バナー */}
-        <div
-          onClick={() => navigate('/shop')}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '10px 14px' : '12px 18px', background: 'linear-gradient(135deg,#F5EDFF,#FFEDF4)', border: '1.5px solid #DDB3F5', borderRadius: 'var(--radius-md)', marginBottom: 14, cursor: 'pointer', transition: 'opacity 0.15s' }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ShoppingBag size={16} color="var(--color-purple)" />
-            <span style={{ fontSize: isMobile ? '0.8rem' : '0.88rem', fontWeight: 700, color: 'var(--color-purple)' }}>
-              3Dデータを売りたい・買いたい？
-            </span>
-            <span style={{ fontSize: isMobile ? '0.72rem' : '0.78rem', color: 'var(--color-text-muted)' }}>出品・購入はこちら</span>
-          </div>
-          <ChevronRight size={16} color="var(--color-purple)" />
+        {/* 出品・購入 / コンペ 遷移ボタン */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 12 : 16 }}>
+          <button
+            onClick={() => navigate('/shop')}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: isMobile ? '9px 12px' : '10px 16px', background: 'linear-gradient(135deg,#F5EDFF,#EDF4FF)', border: '1.5px solid #DDB3F5', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: isMobile ? '0.78rem' : '0.85rem', fontWeight: 700, color: 'var(--color-purple)', transition: 'opacity 0.15s', fontFamily: 'var(--font-base)' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            <ShoppingBag size={isMobile ? 13 : 15} />
+            出品・購入
+          </button>
+          <button
+            onClick={() => navigate('/competition')}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: isMobile ? '9px 12px' : '10px 16px', background: 'linear-gradient(135deg,#FFFBF0,#FFF5E6)', border: '1.5px solid #FFD699', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: isMobile ? '0.78rem' : '0.85rem', fontWeight: 700, color: '#B86A00', transition: 'opacity 0.15s', fontFamily: 'var(--font-base)' }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            コンペ
+          </button>
         </div>
 
         {/* 検索バーとフィルタ */}

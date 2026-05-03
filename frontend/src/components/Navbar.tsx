@@ -8,8 +8,8 @@ import logoImg from '../assets/logo02.png'
 import { useIsMobile } from '../hooks/useIsMobile'
 
 const AUTH_NAV_LINKS = [
-  { path: '/generate', label: '✨ 3Dにする！' },
-  { path: '/market', label: '' },
+  { path: '/generate', label: '3Dにする！' },
+  { path: '/market',   label: '' },
 ]
 
 export function Navbar() {
@@ -50,7 +50,10 @@ export function Navbar() {
     navigate(path)
   }
 
-  const activePath = navLinks.find(({ path }) => location.pathname === path || (path === '/market' && location.pathname.startsWith('/works')))?.path
+  const activePath = navLinks.find(({ path }) =>
+    location.pathname === path ||
+    (path === '/market' && location.pathname.startsWith('/works'))
+  )?.path
 
   return (
     <header
@@ -213,49 +216,43 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* 2段目: 主要ナビゲーション導線（ログイン時のみ表示） */}
+      {/* 2段目: 主要ナビゲーション（ログイン時のみ表示） */}
       {navLinks.length > 0 && (
-      <nav
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          alignItems: 'center',
-          padding: '8px 0 0',
-        }}
-      >
-        {navLinks.map(({ path, label }) => {
-          const isActive = location.pathname === path
-          return (
-            <Link
-              key={path}
-              to={path}
-              style={{
-                padding: '12px 28px',
-                textDecoration: 'none',
-                fontSize: '1rem',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? 'var(--color-pink)' : '#aaa',
-                background: 'transparent',
-                border: 'none',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: isMobile ? 44 : 52,
-                boxSizing: 'border-box',
-              }}
-            >
-              {path === '/market'
-                ? <img
-                    src={(isActive || location.pathname.startsWith('/works')) ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
-                    alt="うちの子マーケット"
-                    style={{ height: isMobile ? 28 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
-                  />
-                : <span style={{ fontSize: isMobile ? '0.82rem' : '1rem' }}>{label}</span>}
-            </Link>
-          )
-        })}
-      </nav>
+        <nav style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center', padding: '8px 0 0' }}>
+          {navLinks.map(({ path, label }) => {
+            const isActive = location.pathname === path ||
+              (path === '/market' && (location.pathname.startsWith('/works') || location.pathname === '/shop' || location.pathname === '/competition'))
+            return (
+              <Link
+                key={path}
+                to={path}
+                style={{
+                  padding: '12px 28px',
+                  textDecoration: 'none',
+                  fontSize: '1rem',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? 'var(--color-pink)' : '#aaa',
+                  background: 'transparent',
+                  border: 'none',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: isMobile ? 44 : 52,
+                  boxSizing: 'border-box',
+                }}
+              >
+                {path === '/market'
+                  ? <img
+                      src={isActive ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
+                      alt="うちの子マーケット"
+                      style={{ height: isMobile ? 28 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+                    />
+                  : <span style={{ fontSize: isMobile ? '0.82rem' : '1rem' }}>{label}</span>}
+              </Link>
+            )
+          })}
+        </nav>
       )}
 
       {/* アクティブ下線: 左半分 or 右半分 */}
