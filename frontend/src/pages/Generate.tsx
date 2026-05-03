@@ -658,12 +658,12 @@ export default function Generate() {
                   height={350}
                 />
 
-                {taskStatus.stl_url && (
+                {(taskStatus.stl_url || taskStatus.glb_url) && (
                   <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {/* STLダウンロードボタン */}
+                    {/* メインダウンロード: STL優先、なければGLB */}
                     <button
                       id="download-stl-btn"
-                      onClick={handleDownload}
+                      onClick={taskStatus.stl_url ? handleDownload : handleDownloadGlb}
                       className="btn-primary"
                       style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '0.95rem' }}
                     >
@@ -671,8 +671,8 @@ export default function Generate() {
                       ダウンロードして印刷する
                     </button>
 
-                    {/* GLBダウンロード */}
-                    {taskStatus.glb_url && (
+                    {/* STL・GLB両方ある場合のみGLBを別枠で追加表示 */}
+                    {taskStatus.stl_url && taskStatus.glb_url && (
                       <button
                         id="download-glb-btn"
                         onClick={handleDownloadGlb}
