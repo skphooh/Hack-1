@@ -104,9 +104,9 @@ export default function Admin() {
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingBottom: 80, paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container" style={{ maxWidth: 1400 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
-          <h1 style={{ fontSize: '2rem', fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ padding: 8, background: '#F5EDFF', borderRadius: 12, color: 'var(--color-purple)' }}>⚙️</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 16 : 32, flexWrap: 'wrap', gap: 12 }}>
+          <h1 style={{ fontSize: isMobile ? '1.3rem' : '2rem', fontFamily: 'var(--font-heading)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ padding: 6, background: '#F5EDFF', borderRadius: 10, color: 'var(--color-purple)' }}>⚙️</span>
             管理者ダッシュボード
           </h1>
           <button onClick={handleLogout} className="btn-outline" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
@@ -115,13 +115,13 @@ export default function Admin() {
         </div>
 
         {/* タブナビゲーション */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 6 : 12, marginBottom: isMobile ? 20 : 32, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
           {[
-            { id: 'dashboard', label: '概要', icon: <Activity size={18} /> },
-            { id: 'users', label: 'ユーザー管理', icon: <Users size={18} /> },
-            { id: 'works', label: '作品管理', icon: <Box size={18} /> },
-            { id: 'reports', label: `通報管理 (${reports.filter(r => r.status === '未対応').length})`, icon: <Flag size={18} /> },
-            { id: 'competition', label: 'コンペ管理', icon: <Trophy size={18} /> },
+            { id: 'dashboard', label: '概要', icon: <Activity size={16} /> },
+            { id: 'users', label: 'ユーザー', icon: <Users size={16} /> },
+            { id: 'works', label: '作品', icon: <Box size={16} /> },
+            { id: 'reports', label: `通報(${reports.filter(r => r.status === '未対応').length})`, icon: <Flag size={16} /> },
+            { id: 'competition', label: 'コンペ', icon: <Trophy size={16} /> },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -129,13 +129,14 @@ export default function Admin() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                padding: '12px 24px',
+                gap: 6,
+                padding: isMobile ? '9px 14px' : '12px 24px',
                 borderRadius: 100,
                 border: 'none',
                 background: activeTab === tab.id ? 'var(--gradient-button)' : 'white',
                 color: activeTab === tab.id ? 'white' : 'var(--color-text-sub)',
                 fontWeight: 700,
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
                 cursor: 'pointer',
                 boxShadow: activeTab === tab.id ? '4px 4px 12px #b0bad0' : 'var(--nm-raised-sm)',
                 transition: 'all 0.2s',

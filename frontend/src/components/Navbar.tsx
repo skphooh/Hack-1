@@ -50,7 +50,7 @@ export function Navbar() {
     navigate(path)
   }
 
-  const activePath = navLinks.find(({ path }) => location.pathname === path)?.path
+  const activePath = navLinks.find(({ path }) => location.pathname === path || (path === '/market' && location.pathname.startsWith('/works')))?.path
 
   return (
     <header
@@ -246,11 +246,11 @@ export function Navbar() {
             >
               {path === '/market'
                 ? <img
-                    src={isActive ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
+                    src={(isActive || location.pathname.startsWith('/works')) ? '/uchinokomarket.png' : '/uchinokomarket_gray.png'}
                     alt="うちの子マーケット"
-                    style={{ height: isMobile ? 32 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
+                    style={{ height: isMobile ? 28 : 52, width: 'auto', maxWidth: '100%', objectFit: 'contain' }}
                   />
-                : label}
+                : <span style={{ fontSize: isMobile ? '0.82rem' : '1rem' }}>{label}</span>}
             </Link>
           )
         })}

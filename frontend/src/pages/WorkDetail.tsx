@@ -231,8 +231,8 @@ export default function WorkDetail() {
   }
 
   return (
-    <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingBottom: 60 }}>
-      <div className="page-container section">
+    <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingBottom: 40 }}>
+      <div className="page-container" style={{ paddingTop: isMobile ? 16 : 28, paddingBottom: 20 }}>
         {/* 戻るボタン */}
         <button
           onClick={() => navigate('/market')}
@@ -443,7 +443,7 @@ export default function WorkDetail() {
                   }}
                 >
                   <Download size={20} />
-                  🖨️ STLをダウンロード（3Dプリント用）
+                  ダウンロードして印刷する
                 </button>
               )}
               {/* GLBダウンロード（3Dデータ保存用） */}

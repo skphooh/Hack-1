@@ -61,22 +61,22 @@ export default function Competition() {
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingBottom: 80 }}>
       {/* ヒーローセクション */}
-      <section style={{ textAlign: 'center', padding: isMobile ? '20px 24px 60px' : '40px 40px 80px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24, animation: 'float 3s ease-in-out infinite' }}>
-          <Trophy size={48} color="var(--color-pink)" />
-          <Sparkles size={48} color="var(--color-yellow)" />
+      <section style={{ textAlign: 'center', padding: isMobile ? '16px 20px 40px' : '40px 40px 60px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: isMobile ? 16 : 24, animation: 'float 3s ease-in-out infinite' }}>
+          <Trophy size={isMobile ? 36 : 48} color="var(--color-pink)" />
+          <Sparkles size={isMobile ? 36 : 48} color="var(--color-yellow)" />
         </div>
-        <h1 className="gradient-text" style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '2.5rem' : '4rem', lineHeight: 1.2, marginBottom: 16 }}>
-          Hack-1<br />Grand Prix
+        <h1 className="gradient-text" style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '2rem' : '4rem', lineHeight: 1.2, marginBottom: 12 }}>
+          Hack-1 Grand Prix
         </h1>
-        <p style={{ color: 'var(--color-text-sub)', fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 700, marginBottom: 40 }}>
+        <p style={{ color: 'var(--color-text-sub)', fontSize: isMobile ? '0.9rem' : '1.2rem', fontWeight: 700, marginBottom: isMobile ? 24 : 40 }}>
           あなたの「うちの子」が公式グッズになるかも！？<br />
           第1回 3Dキャラクターコンペティション開催！
         </p>
         <button
           className="btn-primary animate-bounce-in"
           onClick={handleEntry}
-          style={{ padding: '16px 40px', fontSize: '1.2rem', borderRadius: 100 }}
+          style={{ padding: isMobile ? '12px 28px' : '16px 40px', fontSize: isMobile ? '1rem' : '1.2rem', borderRadius: 100 }}
         >
           🏆 今すぐエントリーする！
         </button>

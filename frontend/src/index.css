@@ -55,11 +55,11 @@
   --font-base:      'Nunito', 'Noto Sans JP', sans-serif;
 
   /* ボーダーラジウス */
-  --radius-sm:  10px;
-  --radius-md:  16px;
-  --radius-lg:  20px;
-  --radius-xl:  28px;
-  --radius-btn: 24px;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
+  --radius-btn: 12px;
 
   /* レスポンシブ余白・サイズ */
   --page-px: 40px;
@@ -230,12 +230,12 @@ main {
 
   /* セクション余白 */
   .section {
-    padding: 28px 0;
+    padding: 20px 0;
   }
 
   /* ページコンテナ */
   .page-container {
-    padding: 0 12px;
+    padding: 0 10px;
   }
 
   /* Navbar 上段 */

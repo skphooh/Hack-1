@@ -200,25 +200,25 @@ export default function Market() {
   const skeletonCount = isMobile ? 6 : 12
 
   return (
-    <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
-      <div className="page-container section">
+    <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+      <div className="page-container" style={{ paddingTop: isMobile ? 14 : 24, paddingBottom: 40 }}>
         {/* 検索バーとフィルタ */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 24, alignItems: 'center' }}>
-          <div style={{ flex: '1 1 300px', position: 'relative' }}>
-            <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }} />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: isMobile ? 12 : 20, alignItems: 'center' }}>
+          <div style={{ flex: '1 1 200px', position: 'relative' }}>
+            <Search size={isMobile ? 14 : 18} color="var(--color-text-muted)" style={{ position: 'absolute', left: isMobile ? 10 : 14, top: '50%', transform: 'translateY(-50%)' }} />
             <input
               type="text"
-              placeholder="作品名で検索..."
+              placeholder="検索..."
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               style={{
                 width: '100%',
-                padding: '12px 16px 12px 42px',
+                padding: isMobile ? '8px 10px 8px 30px' : '10px 14px 10px 38px',
                 borderRadius: 100,
                 border: '1.5px solid #d0d8e8',
                 outline: 'none',
                 fontFamily: 'var(--font-base)',
-                fontSize: '0.95rem',
+                fontSize: isMobile ? '0.82rem' : '0.9rem',
                 background: '#ffffff',
                 boxShadow: 'none',
               }}

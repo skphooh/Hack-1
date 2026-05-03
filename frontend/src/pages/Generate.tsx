@@ -1,13 +1,12 @@
 // 生成ページ（フロー①: 写真・イラスト→3D変換）- ポップ・かわいいデザイン
 import { useCallback, useRef, useState } from 'react'
-import { Download, RefreshCw, CheckCircle, AlertCircle, Loader2, Printer } from 'lucide-react'
+import { Download, RefreshCw, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { Dropzone } from '../components/Dropzone'
 import { Viewer3D } from '../components/Viewer3D'
 import { useGenerateStore } from '../stores/generateStore'
 import {
   estimateDepth, startGenerate, fetchTaskStatus,
   addStrapHole, addBase,
-  generateTurnaroundPreview, startGenerateTurnaround,
 } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
@@ -60,7 +59,7 @@ export default function Generate() {
 
   const [title, setTitle] = useState('')
   const [genre, setGenre] = useState('original')
-  const [quality, setQuality] = useState<'standard' | 'high'>('standard')
+  const quality = 'high'
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [postProcessing, setPostProcessing] = useState<'strap' | 'base' | null>(null)
   const [strapBlobUrl, setStrapBlobUrl] = useState<string | null>(null)
@@ -76,9 +75,6 @@ export default function Generate() {
   // 台座パラメータ
   const [baseHeightMm,  setBaseHeightMm]  = useState(3)
   const [baseMarginPct, setBaseMarginPct] = useState(15)
-  const [turnaroundUrl, setTurnaroundUrl] = useState<string | null>(null)
-  const [turnaroundLoading, setTurnaroundLoading] = useState(false)
-  const [turnaroundConfirming, setTurnaroundConfirming] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   /** 画像選択時: プレビュー表示 + Depth推定 */
@@ -217,73 +213,14 @@ export default function Generate() {
     }
   }, [work, baseBlobUrl, baseHeightMm, baseMarginPct, title])
 
-  /** ターンアラウンドプレビュー生成 */
-  const handleTurnaroundPreview = useCallback(async () => {
-    if (!previewUrl) return
-    setTurnaroundLoading(true)
-    try {
-      const blob = await fetch(previewUrl).then(r => r.blob())
-      const form = new FormData()
-      form.append('file', blob, 'upload.png')
-      const res = await generateTurnaroundPreview(form)
-      setTurnaroundUrl(res.turnaround_url)
-      setTurnaroundConfirming(true)
-    } catch (e) {
-      alert('ターンアラウンド生成に失敗しました。しばらく待ってから再試行してください。')
-      console.error(e)
-    } finally {
-      setTurnaroundLoading(false)
-    }
-  }, [previewUrl])
-
-  /** ターンアラウンドから3D生成 */
-  const handleTurnaroundGenerate = useCallback(async () => {
-    if (!user || !turnaroundUrl) return
-    setTurnaroundConfirming(false)
-    setStep('uploading')
-    try {
-      const form = new FormData()
-      form.append('turnaround_url', turnaroundUrl)
-      form.append('title', title || 'うちの子')
-      form.append('genre', genre)
-      // 元画像をサムネイルとして送信（ターンアラウンドの分割ビューではなく元画像を保存するため）
-      if (previewUrl) {
-        const originalBlob = await fetch(previewUrl).then(r => r.blob())
-        form.append('original_image', originalBlob, 'original.png')
-      }
-      const newWork = await startGenerateTurnaround(form)
-      setWork(newWork)
-      setStep('generating')
-
-      pollingRef.current = setInterval(async () => {
-        if (!newWork.task_id) return
-        try {
-          const status = await fetchTaskStatus(newWork.task_id)
-          setTaskStatus(status)
-          if (status.status === 'done') {
-            clearInterval(pollingRef.current!)
-            setStep('done')
-            launchConfetti()
-          } else if (status.status === 'failed') {
-            clearInterval(pollingRef.current!)
-            setError('3D生成に失敗しました。別の画像で試してみてください。')
-            setStep('error')
-          }
-        } catch { /* 一時的なエラーは継続 */ }
-      }, 3000)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '生成に失敗しました')
-      setStep('error')
-    }
-  }, [user, turnaroundUrl, title, setStep, setWork, setTaskStatus, setError])
 
   const currentStepIndex = {
     idle: 0, depth_preview: 0, uploading: 1, generating: 1, done: 2, error: 0,
   }[step] ?? 0
 
   return (
-    <main style={{ paddingTop: isMobile ? 140 : 160, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
-      <div className="page-container section">
+    <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
+      <div className="page-container" style={{ paddingTop: isMobile ? 16 : 28, paddingBottom: 40 }}>
         {/* ステップインジケーター */}
         <div
           style={{
@@ -389,9 +326,39 @@ export default function Generate() {
               </div>
             )}
 
-            {/* ドロップゾーン */}
-            {(step === 'idle' || step === 'depth_preview') && (
+            {/* ドロップゾーン or アップロード済み画像 */}
+            {step === 'idle' && (
               <Dropzone onFile={handleFile} disabled={!user} />
+            )}
+            {step === 'depth_preview' && previewUrl && (
+              <div
+                style={{
+                  border: '2.5px dashed var(--color-pink-light)',
+                  borderRadius: 'var(--radius-xl)',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*'
+                  input.onchange = (e) => {
+                    const f = (e.target as HTMLInputElement).files?.[0]
+                    if (f) handleFile(f)
+                  }
+                  input.click()
+                }}
+              >
+                <img
+                  src={previewUrl}
+                  alt="アップロード画像"
+                  style={{ width: '100%', maxHeight: 280, objectFit: 'contain', display: 'block', background: 'linear-gradient(135deg,rgba(255,237,244,0.6),rgba(245,237,255,0.6))' }}
+                />
+                <div style={{ position: 'absolute', bottom: 8, right: 10, background: 'rgba(0,0,0,0.45)', color: 'white', fontSize: '0.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: 100 }}>
+                  📸 タップで変更
+                </div>
+              </div>
             )}
 
             {/* タイトル入力 */}
@@ -469,41 +436,6 @@ export default function Generate() {
               </div>
             </div>
 
-            {/* 品質オプション */}
-            <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
-              <p style={{ fontWeight: 700, fontSize: '1rem', marginBottom: 12, color: 'var(--color-text-sub)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                ⚙️ 品質
-              </p>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {(['standard', 'high'] as const).map((q) => {
-                  const selected = quality === q
-                  return (
-                    <button
-                      key={q}
-                      onClick={() => setQuality(q)}
-                      style={{
-                        flex: 1, padding: '10px 12px',
-                        borderRadius: 'var(--radius-btn)',
-                        border: `1.5px solid ${selected ? 'var(--color-pink-light)' : '#d0d8e8'}`,
-                        background: 'var(--nm-bg)',
-                        boxShadow: selected ? 'var(--nm-inset)' : 'var(--nm-raised-sm)',
-                        color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                        fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        fontFamily: 'var(--font-base)',
-                      }}
-                    >
-                      {q === 'standard' ? '🎯 標準 (30cr)' : '✨ 高品質 (~50cr)'}
-                    </button>
-                  )
-                })}
-              </div>
-              {quality === 'high' && (
-                <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 8 }}>
-                  ⚠️ テクスチャ・PBR有効。生成に時間がかかります
-                </p>
-              )}
-            </div>
 
             {/* 公開設定 */}
             <div style={{ border: '1.5px solid #d0d8e8', borderRadius: 'var(--radius-md)', padding: isMobile ? '12px 14px' : '16px 18px', background: '#ffffff' }}>
@@ -512,8 +444,8 @@ export default function Generate() {
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 {([
-                  { value: 'private', label: '🔒 自分のみ',         desc: '非公開' },
-                  { value: 'public',  label: '🌐 マーケットに投稿', desc: 'みんなに公開' },
+                  { value: 'private', label: '自分のみ' },
+                  { value: 'public',  label: 'マーケットに投稿' },
                 ] as const).map(({ value, label }) => {
                   const selected = visibility === value
                   return (
@@ -521,19 +453,19 @@ export default function Generate() {
                       key={value}
                       onClick={() => setVisibility(value)}
                       style={{
-                        flex: 1, padding: '10px 12px',
+                        flex: 1, padding: '10px 8px',
                         borderRadius: 'var(--radius-btn)',
                         border: `1.5px solid ${selected ? 'var(--color-pink-light)' : '#d0d8e8'}`,
                         background: 'var(--nm-bg)',
                         boxShadow: selected ? 'var(--nm-inset)' : 'var(--nm-raised-sm)',
                         color: selected ? 'var(--color-pink)' : 'var(--color-text-sub)',
-                        fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                        fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         fontFamily: 'var(--font-base)',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <span>{label}</span>
+                      {label}
                     </button>
                   )
                 })}
@@ -542,91 +474,30 @@ export default function Generate() {
 
             {/* ダミーボタン（画像未選択時） */}
             {step === 'idle' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: '100%', padding: '16px',
-                    background: '#D1D5DB', color: '#888',
-                    border: 'none', borderRadius: 'var(--radius-btn)',
-                    fontSize: '1.05rem', fontWeight: 700,
-                    cursor: 'not-allowed', userSelect: 'none',
-                  }}
-                >
-                  ✨ 3Dにする！
-                </div>
-                <div
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: '100%', padding: '14px',
-                    background: '#E5E7EB', color: '#888',
-                    border: '2px solid #D1D5DB', borderRadius: 'var(--radius-btn)',
-                    fontSize: '0.9rem', fontWeight: 700,
-                    cursor: 'not-allowed', userSelect: 'none',
-                  }}
-                >
-                  🌟 土台を付けて生成
-                </div>
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: '100%', padding: '16px',
+                  background: '#D1D5DB', color: '#888',
+                  border: 'none', borderRadius: 'var(--radius-btn)',
+                  fontSize: '1.05rem', fontWeight: 700,
+                  cursor: 'not-allowed', userSelect: 'none',
+                }}
+              >
+                ✨ 3Dにする！
               </div>
             )}
 
-            {/* 生成スタートボタン群 */}
-            {step === 'depth_preview' && !turnaroundConfirming && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <button
-                  id="start-generate-btn"
-                  onClick={handleGenerate}
-                  className="btn-primary"
-                  style={{ justifyContent: 'center', width: '100%', padding: '16px', fontSize: '1.05rem' }}
-                >
-                  ✨ 3Dにする！
-                </button>
-                <button
-                  onClick={handleTurnaroundPreview}
-                  disabled={turnaroundLoading}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
-                    padding: '14px', background: 'var(--nm-bg)', color: 'var(--color-purple)',
-                    border: 'none', borderRadius: 'var(--radius-btn)',
-                    cursor: turnaroundLoading ? 'not-allowed' : 'pointer',
-                    fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-base)',
-                    opacity: turnaroundLoading ? 0.6 : 1, width: '100%',
-                  }}
-                >
-                  {turnaroundLoading
-                    ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> ターンアラウンド生成中…</>
-                    : '🌟 土台を付けて生成'}
-                </button>
-                <p style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
-                  ターンアラウンド: Geminiでフィギュア4方向（正面・左右・後ろ）を生成してからTripo3Dに送ります
-                </p>
-              </div>
-            )}
-
-            {/* ターンアラウンド確認UI */}
-            {turnaroundConfirming && turnaroundUrl && (
-              <div style={{ background: 'var(--nm-bg)', border: 'none', borderRadius: 'var(--radius-md)', padding: 16, boxShadow: 'var(--shadow-card)' }}>
-                <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 10, color: 'var(--color-purple)' }}>
-                  🌟 ターンアラウンドプレビュー（確認してください）
-                </p>
-                <img src={turnaroundUrl} alt="ターンアラウンドプレビュー" style={{ width: '100%', borderRadius: 'var(--radius-md)', marginBottom: 12 }} />
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={handleTurnaroundGenerate}
-                    className="btn-primary"
-                    style={{ flex: 1, justifyContent: 'center', padding: '12px' }}
-                  >
-                    ✅ これで3D生成！
-                  </button>
-                  <button
-                    onClick={() => { setTurnaroundConfirming(false); setTurnaroundUrl(null) }}
-                    className="btn-outline"
-                    style={{ flex: 1, justifyContent: 'center', padding: '12px' }}
-                  >
-                    🔄 再生成
-                  </button>
-                </div>
-              </div>
+            {/* 生成スタートボタン */}
+            {step === 'depth_preview' && (
+              <button
+                id="start-generate-btn"
+                onClick={handleGenerate}
+                className="btn-primary"
+                style={{ justifyContent: 'center', width: '100%', padding: '16px', fontSize: '1.05rem' }}
+              >
+                ✨ 3Dにする！
+              </button>
             )}
 
             {/* リセットボタン */}
@@ -639,9 +510,6 @@ export default function Generate() {
                   setBaseBlobUrl(null)
                   setStlViewUrl(null)
                   setShowStl(false)
-                  setTurnaroundUrl(null)
-                  setTurnaroundConfirming(false)
-                  setTurnaroundLoading(false)
                 }}
                 className="btn-outline"
                 style={{ justifyContent: 'center', width: '100%' }}
@@ -655,27 +523,6 @@ export default function Generate() {
           {/* 右カラム: プレビューエリア */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* アップロード画像プレビュー（Depth API の代わりに元画像を即時表示） */}
-            {previewUrl && step !== 'done' && (
-              <div
-                style={{
-                  background: 'var(--nm-bg)',
-                  border: 'none',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: 16,
-                  boxShadow: 'var(--shadow-card)',
-                }}
-              >
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-sub)', marginBottom: 10, fontWeight: 700 }}>
-                  📷 アップロード画像
-                </p>
-                <img
-                  src={previewUrl}
-                  alt="アップロード画像"
-                  style={{ width: '100%', borderRadius: 'var(--radius-md)', maxHeight: 300, objectFit: 'contain' }}
-                />
-              </div>
-            )}
 
             {/* 生成中インジケーター */}
             {(step === 'uploading' || step === 'generating') && (
@@ -813,30 +660,16 @@ export default function Generate() {
 
                 {taskStatus.stl_url && (
                   <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {/* STL + 印刷ボタン */}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        id="download-stl-btn"
-                        onClick={handleDownload}
-                        className="btn-primary"
-                        style={{ flex: 1, justifyContent: 'center', padding: '14px', fontSize: '0.95rem' }}
-                      >
-                        <Download size={18} />
-                        STLをダウンロード
-                      </button>
-                      <button
-                        onClick={() => alert('印刷機能は近日公開予定です！')}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 6, padding: '14px 16px',
-                          background: 'var(--nm-bg)', color: 'var(--color-text-sub)',
-                          border: 'none', boxShadow: 'var(--shadow-card)', borderRadius: 'var(--radius-btn)',
-                          cursor: 'pointer', fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-base)',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        <Printer size={16} /> 印刷する
-                      </button>
-                    </div>
+                    {/* STLダウンロードボタン */}
+                    <button
+                      id="download-stl-btn"
+                      onClick={handleDownload}
+                      className="btn-primary"
+                      style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '0.95rem' }}
+                    >
+                      <Download size={18} />
+                      ダウンロードして印刷する
+                    </button>
 
                     {/* GLBダウンロード */}
                     {taskStatus.glb_url && (

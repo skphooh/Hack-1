@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
+import { useIsMobile } from '../hooks/useIsMobile'
 
 interface WorkCardProps {
   work: WorkResponse
@@ -37,6 +38,7 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
 }
 
 export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
+  const isMobile = useIsMobile()
   const [has3DError, setHas3DError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   // WebGLコンテキストの限界（多くのブラウザで8〜16）を確実に回避するため、
@@ -72,7 +74,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       <div
         style={{
           position: 'relative',
-          height: '200px',
+          height: isMobile ? '155px' : '200px',
           background: 'var(--nm-bg)',
           overflow: 'hidden',
           display: 'flex',
@@ -83,7 +85,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
         {show3D && (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
-            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={200} onError={() => setHas3DError(true)} />
+            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={isMobile ? 155 : 200} onError={() => setHas3DError(true)} />
           </div>
         )}
 
@@ -152,19 +154,19 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       </div>
 
       {/* カード情報 */}
-      <div style={{ padding: '12px 14px 14px' }}>
+      <div style={{ padding: isMobile ? '8px 10px 10px' : '12px 14px 14px' }}>
         {work.genre && (
           <span
             style={{
               display: 'inline-block',
-              padding: '2px 10px',
+              padding: isMobile ? '1px 7px' : '2px 10px',
               background: genreColor.bg,
               color: genreColor.color,
               border: `1.5px solid ${genreColor.border}`,
               borderRadius: 100,
-              fontSize: '0.7rem',
+              fontSize: isMobile ? '0.62rem' : '0.7rem',
               fontWeight: 700,
-              marginBottom: 7,
+              marginBottom: isMobile ? 4 : 7,
               whiteSpace: 'nowrap',
             }}
           >
@@ -174,7 +176,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
 
         <h3
           style={{
-            fontSize: '0.95rem',
+            fontSize: isMobile ? '0.8rem' : '0.95rem',
             fontWeight: 700,
             color: 'var(--color-text)',
             fontFamily: 'var(--font-base)',
@@ -192,7 +194,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginTop: 10,
+            marginTop: isMobile ? 6 : 10,
           }}
         >
           <button
@@ -204,19 +206,19 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
+              gap: 4,
               background: isLiked ? '#FFEDF4' : 'transparent',
               border: isLiked ? '1.5px solid var(--color-pink-light)' : '1.5px solid transparent',
               borderRadius: 100,
-              padding: '4px 10px',
+              padding: isMobile ? '3px 7px' : '4px 10px',
               cursor: 'pointer',
               color: isLiked ? 'var(--color-pink)' : 'var(--color-text-muted)',
-              fontSize: '0.85rem',
+              fontSize: isMobile ? '0.72rem' : '0.85rem',
               fontWeight: 600,
               transition: 'all 0.2s',
             }}
           >
-            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart size={isMobile ? 11 : 14} fill={isLiked ? 'currentColor' : 'none'} />
             {work.likes_count}
           </button>
 
@@ -224,12 +226,12 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 3,
               color: 'var(--color-text-muted)',
-              fontSize: '0.82rem',
+              fontSize: isMobile ? '0.7rem' : '0.82rem',
             }}
           >
-            <Download size={13} />
+            <Download size={isMobile ? 11 : 13} />
             {work.downloads}
           </span>
         </div>
