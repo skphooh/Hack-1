@@ -56,6 +56,7 @@ async def start_generate(
     title: str = Form("新しい作品"),
     genre: str = Form(None),
     quality: str = Form("standard", description="standard / high"),
+    is_public: bool = Form(True, description="True=マーケットに公開, False=自分のみ"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
 ):
@@ -87,6 +88,7 @@ async def start_generate(
         thumbnail_url=thumbnail_url,
         task_id=task_id,
         status="processing",
+        is_public=is_public,
     )
     db.add(work)
     await db.flush()
@@ -127,6 +129,7 @@ async def start_generate_turnaround(
     turnaround_url: str = Form(..., description="ターンアラウンドシート画像URL"),
     title: str = Form("新しい作品"),
     genre: str = Form(None),
+    is_public: bool = Form(True, description="True=マーケットに公開, False=自分のみ"),
     original_image: UploadFile = File(None, description="元画像（サムネイル用）"),
     uid: str = Depends(get_current_uid),
     db: AsyncSession = Depends(get_db),
@@ -180,6 +183,7 @@ async def start_generate_turnaround(
         turnaround_url=turnaround_url,
         task_id=task_id,
         status="processing",
+        is_public=is_public,
     )
     db.add(work)
     await db.flush()

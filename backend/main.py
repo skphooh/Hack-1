@@ -28,6 +28,10 @@ async def lifespan(app: FastAPI):
                 "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS "
                 "status VARCHAR(20) DEFAULT 'completed'"
             ))
+            await conn.execute(text(
+                "ALTER TABLE works ADD COLUMN IF NOT EXISTS "
+                "is_public BOOLEAN DEFAULT TRUE"
+            ))
         print("✅ DB テーブルの初期化・マイグレーションが完了しました", flush=True)
     except Exception as e:
         print(f"⚠️ DB 初期化エラー（DATABASE_URL を確認してください）: {e}", flush=True)

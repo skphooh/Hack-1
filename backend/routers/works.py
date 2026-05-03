@@ -36,7 +36,11 @@ async def list_works(
     if genre:
         query = query.where(Work.genre == genre)
     if user_id:
+        # 自分の作品一覧（マイページ）: 非公開も含めて表示
         query = query.join(Work.user).where(User.firebase_uid == user_id)
+    else:
+        # マーケット閲覧: 公開作品のみ（is_public=True, または is_public が NULL の旧データは公開扱い）
+        query = query.where((Work.is_public == True) | (Work.is_public == None))  # noqa: E711
     if search:
         query = query.where(Work.title.ilike(f"%{search}%"))
     if is_official is not None:

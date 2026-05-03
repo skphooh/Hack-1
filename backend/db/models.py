@@ -50,6 +50,8 @@ class Work(Base):
     is_official = Column(Boolean, default=False)
     # 価格（円単位。0=無料）
     price = Column(Integer, default=0)
+    # 公開設定（True=マーケットに表示, False=自分のみ）
+    is_public = Column(Boolean, default=True)
     thumbnail_url = Column(Text)
     turnaround_url = Column(Text)
     stl_url = Column(Text)

@@ -38,6 +38,7 @@ class WorkUpdate(BaseModel):
     title: Optional[str] = None
     genre: Optional[str] = None
     is_official: Optional[bool] = None
+    is_public: Optional[bool] = None
     price: Optional[int] = None
     status: Optional[str] = None
     glb_url: Optional[str] = None
