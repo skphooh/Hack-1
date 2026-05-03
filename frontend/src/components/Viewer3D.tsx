@@ -21,10 +21,10 @@ function RotatingModel({ url }: { url: string }) {
 
 // ─── GLBモデル（非回転） ───────────────────────────────────────────────────
 
-function StaticModel({ url }: { url: string }) {
+function StaticModel({ url, initialRotationY = 0 }: { url: string; initialRotationY?: number }) {
   const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
-  return <primitive object={cloned} scale={2.2} />
+  return <primitive object={cloned} scale={2.2} rotation={[0, initialRotationY, 0]} />
 }
 
 // ─── GLBモデル（クリックで穴位置指定モード） ─────────────────────────────────
@@ -241,9 +241,12 @@ export function Viewer3D({
             ) : isPickMode ? (
               // ピックモード: クリック可能モデル（自動回転なし）
               <PickableModel url={glbUrl} onPick={onHolePick!} />
-            ) : holeMarkerPos || isMarket ? (
-              // マーカー表示中 or マーケットカードは静止
+            ) : holeMarkerPos ? (
+              // マーカー表示中は静止（回転なし）
               <StaticModel url={glbUrl} />
+            ) : isMarket ? (
+              // マーケットカード: 正面向きで静止（Math.PI = 180度でTripo3D正面を向く）
+              <StaticModel url={glbUrl} initialRotationY={Math.PI} />
             ) : (
               // 通常モード（詳細ページ等）: 自動回転
               <RotatingModel url={glbUrl} />
