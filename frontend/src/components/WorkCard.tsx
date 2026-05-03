@@ -1,5 +1,5 @@
 // WorkCardコンポーネント（ポップ・かわいいデザイン）
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
@@ -37,17 +37,32 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
   other: { bg: '#F5F5F5', color: '#6B5380', border: '#D0BDE0' },
 }
 
-export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
+export function WorkCard({ work, onClick, onLike, isLiked = false }: WorkCardProps) {
   const isMobile = useIsMobile()
   const [has3DError, setHas3DError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  // WebGLコンテキストの限界（多くのブラウザで8〜16）を確実に回避するため、
-  // デフォルトで3D表示するのは最新の12件のみに制限します。
-  const show3D = (index < 12 || isHovered) && work.glb_url && !has3DError
+  // IntersectionObserver でビューポートに入ったカードだけ 3D を起動
+  // （一度 true になったら false に戻さない → コンテキスト破棄を防ぐ）
+  const [inView, setInView] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || !work.glb_url) return
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true) },
+      { rootMargin: '180px' } // ビューポートの 180px 手前で起動
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [work.glb_url])
+
+  const show3D = (inView || isHovered) && work.glb_url && !has3DError
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
     <article
+      ref={cardRef}
       id={`work-card-${work.id}`}
       onClick={onClick}
       style={{

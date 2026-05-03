@@ -111,7 +111,7 @@ export default function WorkDetail() {
     const pt = holePickPoint ?? { x: 0, y: 1.0, z: 0 }
     const offset_x = (pt.x / 1.1) * 100
     const offset_y = (pt.z / 1.1) * 100   // Three.jsのz軸が前後方向
-    const depth_mm  = Math.max(0.5, Math.min(50, (1.1 - pt.y) / 0.022))
+    const depth_mm  = Math.max(0.5, Math.min(30, (1.1 - pt.y) / 0.022))
 
     setPostProcessing('strap')
     setStlViewUrl(null)
@@ -661,7 +661,7 @@ export default function WorkDetail() {
                     </div>
                     <input
                       type="range"
-                      min={0.5} max={5.0} step={0.25}
+                      min={0.5} max={3.0} step={0.25}
                       value={holeRadiusMm}
                       onChange={(e) => setHoleRadiusMm(Number(e.target.value))}
                       style={{ width: '100%', accentColor: 'var(--color-pink)' }}

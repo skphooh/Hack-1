@@ -55,6 +55,13 @@ async def add_strap_hole_endpoint(
     """
     既存作品のGLB/STLにストラップ穴を開け、STLファイルとして直接返す。
     """
+    # パラメータの上限チェック（OOMクラッシュ防止）
+    # depth_mm が大きすぎるとメッシュ処理でメモリ不足になりサーバーが落ちる
+    if depth_mm > 30:
+        raise HTTPException(status_code=400, detail="depth_mm は 30mm 以下にしてください")
+    if radius_mm > 3.0:
+        raise HTTPException(status_code=400, detail="radius_mm は 3.0mm 以下にしてください")
+
     try:
         work = await _get_work_or_404(work_id, db)
 

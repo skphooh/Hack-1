@@ -217,10 +217,12 @@ export function Viewer3D({
       >
         <Canvas
           camera={{ position: [0, 0, 3.5], fov: 45 }}
-          gl={{ antialias: !isMarket, powerPreference: 'high-performance' }}
+          gl={{ antialias: !isMarket, powerPreference: 'high-performance', precision: isMarket ? 'lowp' : 'highp' }}
+          dpr={isMarket ? [1, 1.5] : [1, 2]}
+          flat={isMarket}
         >
-          <ambientLight intensity={0.8} />
-          <directionalLight position={[5, 5, 5]} intensity={1.5} />
+          <ambientLight intensity={isMarket ? 1.2 : 0.8} />
+          <directionalLight position={[5, 5, 5]} intensity={isMarket ? 1.0 : 1.5} />
 
           {/* 正面ライト（詳細ビュー時） */}
           {!isMarket && (
