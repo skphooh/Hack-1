@@ -25,6 +25,7 @@ async def list_works(
     search: Optional[str] = Query(None, description="タイトル検索"),
     is_official: Optional[bool] = Query(None, description="公式作品フィルタ"),
     min_price: Optional[int] = Query(None, description="最低価格フィルタ（1以上で有料作品のみ）"),
+    max_price: Optional[int] = Query(None, description="最高価格フィルタ（0で無料のみ）"),
     status: str = Query("done", description="ステータスでフィルタ"),
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -42,6 +43,8 @@ async def list_works(
         query = query.where(Work.is_official == is_official)
     if min_price is not None:
         query = query.where(Work.price >= min_price)
+    if max_price is not None:
+        query = query.where(Work.price <= max_price)
 
     # 全件数カウント
     count_result = await db.execute(select(func.count()).select_from(query.subquery()))

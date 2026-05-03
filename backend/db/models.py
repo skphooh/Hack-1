@@ -88,6 +88,21 @@ class Like(Base):
     work = relationship("Work", back_populates="likes")
 
 
+class Competition(Base):
+    """コンペティションテーブル"""
+    __tablename__ = "competitions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(Text, nullable=False)
+    description = Column(Text)
+    company_name = Column(Text, nullable=False)
+    company_logo_url = Column(Text)
+    prize = Column(Text)
+    deadline = Column(TIMESTAMP(timezone=True))
+    status = Column(String(20), default="active")  # active / ended
+    created_at = Column(TIMESTAMP(timezone=True), default=utcnow)
+
+
 class Purchase(Base):
     """購入履歴テーブル（フロー③: 公式データ販売）"""
     __tablename__ = "purchases"

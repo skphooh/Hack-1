@@ -1,189 +1,182 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trophy, Gift, AlertCircle, ChevronRight, Loader2, Sparkles } from 'lucide-react'
+import { Gift, ChevronRight, Loader2, Calendar, Building2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
-import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
+import { fetchWorks, fetchCompetitions, toggleLike, type WorkResponse, type CompetitionResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
+
+const MOCK_COMPETITIONS: CompetitionResponse[] = [
+  {
+    id: 'mock-1', title: 'キャラクターフィギュアデザインコンペ', company_name: '株式会社グッドスマイル', company_logo_url: null,
+    prize: 'グランプリ: 公式フィギュア化 & 賞金30万円', deadline: '2026-07-31T23:59:59+09:00',
+    description: 'あなたのオリジナルキャラクターを3Dフィギュアに！最優秀作品は実際に商品化されます。', status: 'active', created_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-2', title: 'アニメキャラ公式グッズコンペ', company_name: 'コトブキヤ', company_logo_url: null,
+    prize: '優秀賞: Amazonギフト券3万円分 × 3名', deadline: '2026-06-30T23:59:59+09:00',
+    description: '人気アニメシリーズの公式グッズデザインを募集！採用作品は全国のショップで販売されます。', status: 'active', created_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-3', title: 'うちの子3D 春コンペ', company_name: 'うちの子製作所', company_logo_url: null,
+    prize: '全員: 限定デジタルバッジ · グランプリ: 3Dプリント品プレゼント', deadline: '2026-05-31T23:59:59+09:00',
+    description: '春の特別コンペ！どんなジャンルでもOK。あなたの「うちの子」を世界に見せよう！', status: 'active', created_at: new Date().toISOString(),
+  },
+]
 
 export default function Competition() {
   const { user } = useAuthState()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
-
+  const [competitions, setCompetitions] = useState<CompetitionResponse[]>([])
+  const [loadingComps, setLoadingComps] = useState(true)
   const [works, setWorks] = useState<WorkResponse[]>([])
-  const [loading, setLoading] = useState(true)
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
 
-  // エントリー作品（デモとして全作品から新着を取得）
   useEffect(() => {
-    const loadWorks = async () => {
-      try {
-        const res = await fetchWorks({ status: 'done', page: '1', per_page: '8' })
-        setWorks(res.items)
-      } catch (e) {
-        console.error('作品取得エラー:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
-    loadWorks()
+    fetchCompetitions()
+      .then(r => setCompetitions(r.items.length > 0 ? r.items : MOCK_COMPETITIONS))
+      .catch(() => setCompetitions(MOCK_COMPETITIONS))
+      .finally(() => setLoadingComps(false))
+
+    fetchWorks({ status: 'done', per_page: 8 })
+      .then(r => setWorks(r.items))
+      .catch(console.error)
   }, [])
 
   const handleLike = async (workId: string) => {
     if (!user) return
     try {
       const res = await toggleLike(workId)
-      setLikedIds((prev) => {
-        const next = new Set(prev)
-        if (res.liked) next.add(workId)
-        else next.delete(workId)
-        return next
-      })
-      setWorks((prev) =>
-        prev.map((w) => (w.id === workId ? { ...w, likes_count: res.likes_count } : w))
-      )
-    } catch (e) {
-      console.error('いいねエラー:', e)
+      setLikedIds(prev => { const n = new Set(prev); res.liked ? n.add(workId) : n.delete(workId); return n })
+      setWorks(prev => prev.map(w => w.id === workId ? { ...w, likes_count: res.likes_count } : w))
+    } catch {}
+  }
+
+  const handleEntry = (comp: CompetitionResponse) => {
+    if (comp.status === 'ended') return
+    if (!user) { alert('エントリーするにはログインが必要です！'); return }
+    if (confirm(`「${comp.title}」にエントリーしますか？\n（※現在はデモ用です）`)) {
+      alert('🎉 エントリーが完了しました！結果発表をお待ちください。')
     }
   }
 
-  const handleEntry = () => {
-    if (!user) {
-      alert('エントリーするにはログインが必要です！')
-      return
-    }
-    if (confirm('Hack-1 グランプリにエントリーしますか？\n（※現在はデモ用です）')) {
-      alert('🎉 エントリーが完了しました！結果発表をお待ちください！')
-    }
-  }
+  const activeComps = competitions.filter(c => c.status === 'active')
+  const endedComps  = competitions.filter(c => c.status === 'ended')
 
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingBottom: 80 }}>
-      {/* ヒーローセクション */}
-      <section style={{ textAlign: 'center', padding: isMobile ? '16px 20px 40px' : '40px 40px 60px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: isMobile ? 16 : 24, animation: 'float 3s ease-in-out infinite' }}>
-          <Trophy size={isMobile ? 36 : 48} color="var(--color-pink)" />
-          <Sparkles size={isMobile ? 36 : 48} color="var(--color-yellow)" />
+
+      {/* ヒーロー */}
+      <section style={{ textAlign: 'center', padding: isMobile ? '20px 20px 32px' : '32px 40px 48px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 16px', background: 'white', border: '1.5px solid var(--color-pink-light)', borderRadius: 100, fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-pink)', marginBottom: 14 }}>
+          🏆 コンペティション
         </div>
-        <h1 className="gradient-text" style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '2rem' : '4rem', lineHeight: 1.2, marginBottom: 12 }}>
+        <h1 className="gradient-text" style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? '1.7rem' : '2.8rem', lineHeight: 1.2, marginBottom: 10 }}>
           Hack-1 Grand Prix
         </h1>
-        <p style={{ color: 'var(--color-text-sub)', fontSize: isMobile ? '0.9rem' : '1.2rem', fontWeight: 700, marginBottom: isMobile ? 24 : 40 }}>
-          あなたの「うちの子」が公式グッズになるかも！？<br />
-          第1回 3Dキャラクターコンペティション開催！
+        <p style={{ color: 'var(--color-text-sub)', fontSize: isMobile ? '0.85rem' : '0.95rem', fontWeight: 600, maxWidth: 500, margin: '0 auto 20px' }}>
+          企業が主催するコンペに参加して、あなたの作品を世に出そう！
         </p>
-        <button
-          className="btn-primary animate-bounce-in"
-          onClick={handleEntry}
-          style={{ padding: isMobile ? '12px 28px' : '16px 40px', fontSize: isMobile ? '1rem' : '1.2rem', borderRadius: 100 }}
-        >
-          🏆 今すぐエントリーする！
+        <button className="btn-primary" onClick={() => navigate('/generate')} style={{ padding: isMobile ? '10px 22px' : '12px 28px', fontSize: isMobile ? '0.9rem' : '1rem' }}>
+          ✨ 作品を作ってエントリー
         </button>
       </section>
 
-      {/* 概要・賞品セクション */}
-      <section className="page-container" style={{ marginBottom: 80 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 32 }}>
-          {/* 賞品 */}
-          <div className="pop-card" style={{ padding: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ padding: 12, background: '#FFF9E6', borderRadius: '50%', color: '#E67E22' }}>
-                <Gift size={28} />
-              </div>
-              <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)' }}>豪華賞品</h2>
-            </div>
-            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <li style={{ background: '#FFF9FB', padding: 20, borderRadius: 16, border: '2px solid #FFAECB' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--color-pink)', fontWeight: 800, marginBottom: 4 }}>グランプリ (1名様)</div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>公式アクリルスタンド化 & 記念トロフィー 🏆</div>
-              </li>
-              <li style={{ background: '#F5EDFF', padding: 20, borderRadius: 16, border: '2px solid #DDB3F5' }}>
-                <div style={{ fontSize: '0.9rem', color: 'var(--color-purple)', fontWeight: 800, marginBottom: 4 }}>優秀賞 (3名様)</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>Amazonギフト券 10,000円分 🎁</div>
-              </li>
-              <li style={{ background: '#F0FFF4', padding: 20, borderRadius: 16, border: '2px solid #90D4A4' }}>
-                <div style={{ fontSize: '0.9rem', color: '#28A745', fontWeight: 800, marginBottom: 4 }}>参加賞 (全員)</div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>限定デジタルバッジ ✨</div>
-              </li>
-            </ul>
-          </div>
-
-          {/* 応募要項 */}
-          <div className="pop-card" style={{ padding: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div style={{ padding: 12, background: '#EDF4FF', borderRadius: '50%', color: '#5B8CFF' }}>
-                <AlertCircle size={28} />
-              </div>
-              <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-heading)' }}>応募要項</h2>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, color: 'var(--color-text-sub)' }}>
-              <div>
-                <h3 style={{ fontWeight: 800, color: 'var(--color-text)', marginBottom: 4 }}>📅 応募期間</h3>
-                <p>2026年5月1日 〜 2026年6月30日 23:59まで</p>
-              </div>
-              <div>
-                <h3 style={{ fontWeight: 800, color: 'var(--color-text)', marginBottom: 4 }}>🎨 応募条件</h3>
-                <p>「うちの子製作所」で生成したオリジナルの3Dキャラクターであること。ジャンルは問いません。</p>
-              </div>
-              <div>
-                <h3 style={{ fontWeight: 800, color: 'var(--color-text)', marginBottom: 4 }}>⚖️ 審査基準</h3>
-                <p>デザインの独自性、可愛さ、そして「いいね数」を総合的に評価します。</p>
-              </div>
-              <button
-                className="btn-outline"
-                style={{ marginTop: 16, justifyContent: 'center' }}
-                onClick={() => navigate('/generate')}
-              >
-                さっそく3Dを作る！ <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
+      {/* 開催中コンペ */}
+      <section className="page-container" style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: isMobile ? 14 : 20 }}>
+          <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 800 }}>🟢 開催中のコンペ</h2>
+          <span style={{ padding: '2px 10px', background: '#E8FFF4', color: '#22863a', border: '1px solid #90D4A4', borderRadius: 100, fontSize: '0.72rem', fontWeight: 700 }}>{activeComps.length}件</span>
         </div>
-      </section>
-
-      {/* エントリー作品ギャラリー（新着順モック） */}
-      <section className="page-container">
-        <h2 className="section-title">🌟 最新のエントリー</h2>
-        <p className="section-sub">みんなの力作を見てみよう！お気に入りの作品には「いいね」を押して応援してね</p>
-
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <Loader2 size={40} color="var(--color-pink)" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-            <p style={{ color: 'var(--color-text-sub)', fontWeight: 600 }}>作品を読み込み中...</p>
-          </div>
-        ) : works.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', background: 'white', borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-card)' }}>
-            <p style={{ fontSize: '3rem', marginBottom: 16 }}>🥺</p>
-            <p style={{ fontWeight: 800, color: 'var(--color-text)' }}>まだエントリーがありません</p>
-            <p style={{ color: 'var(--color-text-sub)', fontSize: '0.9rem' }}>記念すべき1人目になろう！</p>
+        {loadingComps ? (
+          <div style={{ textAlign: 'center', padding: '32px 0' }}>
+            <Loader2 size={26} color="var(--color-pink)" style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto' }} />
           </div>
         ) : (
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(var(--card-min-width, 240px), 1fr))',
-              gap: isMobile ? 12 : 24,
-            }}
-          >
-            {works.map((work, index) => (
-              <WorkCard
-                key={work.id}
-                work={work}
-                index={index}
-                isLiked={likedIds.has(work.id)}
-                onLike={() => handleLike(work.id)}
-                onClick={() => navigate(`/works/${work.id}`)}
-              />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? 10 : 18 }}>
+            {activeComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} />)}
           </div>
         )}
-        <div style={{ textAlign: 'center', marginTop: 40 }}>
-          <button className="btn-outline" onClick={() => navigate('/market')}>
-            もっと作品を見る <ChevronRight size={16} />
-          </button>
+      </section>
+
+      {/* 終了コンペ */}
+      {endedComps.length > 0 && (
+        <section className="page-container" style={{ marginBottom: 40 }}>
+          <h2 style={{ fontSize: isMobile ? '0.92rem' : '1rem', fontWeight: 800, marginBottom: isMobile ? 10 : 14, color: 'var(--color-text-muted)' }}>終了したコンペ</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: isMobile ? 8 : 14, opacity: 0.7 }}>
+            {endedComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} />)}
+          </div>
+        </section>
+      )}
+
+      {/* 最新エントリー作品 */}
+      <section className="page-container">
+        <h2 style={{ fontSize: isMobile ? '1rem' : '1.2rem', fontWeight: 800, marginBottom: isMobile ? 14 : 20 }}>🌟 最新エントリー作品</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(210px, 1fr))', gap: isMobile ? 10 : 16 }}>
+          {works.map((w, i) => (
+            <WorkCard key={w.id} work={w} index={i} isLiked={likedIds.has(w.id)} onLike={() => handleLike(w.id)} onClick={() => navigate(`/works/${w.id}`)} />
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <button className="btn-outline" onClick={() => navigate('/market')}>もっと見る <ChevronRight size={14} /></button>
         </div>
       </section>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </main>
+  )
+}
+
+function CompCard({ comp, onEntry, isMobile }: { comp: CompetitionResponse; onEntry: (c: CompetitionResponse) => void; isMobile: boolean }) {
+  const isEnded = comp.status === 'ended'
+  const daysLeft = comp.deadline ? Math.ceil((new Date(comp.deadline).getTime() - Date.now()) / 86400000) : null
+
+  return (
+    <div className="pop-card" style={{ padding: isMobile ? 14 : 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* ヘッダー */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+            <Building2 size={12} color="var(--color-text-muted)" />
+            <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>{comp.company_name}</span>
+          </div>
+          <h3 style={{ fontSize: isMobile ? '0.9rem' : '1rem', fontWeight: 800, lineHeight: 1.35 }}>{comp.title}</h3>
+        </div>
+        <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: '0.65rem', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, background: isEnded ? '#f0f3fa' : '#E8FFF4', color: isEnded ? 'var(--color-text-muted)' : '#22863a', border: `1px solid ${isEnded ? '#d0d8e8' : '#90D4A4'}` }}>
+          {isEnded ? '終了' : '開催中'}
+        </span>
+      </div>
+
+      {comp.description && (
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-sub)', lineHeight: 1.6 }}>{comp.description}</p>
+      )}
+
+      {comp.prize && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '8px 10px', background: '#FFFBF0', border: '1px solid #FFD699', borderRadius: 'var(--radius-md)' }}>
+          <Gift size={13} color="#B86A00" style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ fontSize: '0.76rem', color: '#8B5E00', fontWeight: 600 }}>{comp.prize}</span>
+        </div>
+      )}
+
+      {/* フッター */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+        {daysLeft !== null && !isEnded ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: daysLeft <= 7 ? '#e05' : 'var(--color-text-muted)', fontWeight: 600 }}>
+            <Calendar size={11} /> {daysLeft > 0 ? `残り${daysLeft}日` : '本日締め切り'}
+          </div>
+        ) : isEnded ? (
+          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>締め切り終了</span>
+        ) : <div />}
+
+        <button onClick={() => onEntry(comp)} disabled={isEnded}
+          className={isEnded ? '' : 'btn-primary'}
+          style={isEnded
+            ? { padding: '6px 12px', borderRadius: 'var(--radius-btn)', border: '1px solid #d0d8e8', background: '#f0f3fa', color: 'var(--color-text-muted)', fontSize: '0.78rem', fontWeight: 700, cursor: 'not-allowed', fontFamily: 'var(--font-base)' }
+            : { padding: '6px 12px', fontSize: '0.8rem' }}>
+          {isEnded ? '終了' : '🏆 エントリー'}
+        </button>
+      </div>
+    </div>
   )
 }

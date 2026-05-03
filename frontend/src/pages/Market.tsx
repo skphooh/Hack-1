@@ -72,6 +72,7 @@ export default function Market() {
   // Renderスリープ解除中フラグ
   const [retrying, setRetrying] = useState(false)
   const [genre, setGenre] = useState('')
+  const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'paid'>('all')
   // 入力値（表示用）とデバウンス後の検索ワード（API送信用）を分離
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -100,7 +101,7 @@ export default function Market() {
     setPage(1)
     setHasMore(true)
     isFirstLoad.current = true
-  }, [genre, search, isOfficial])
+  }, [genre, search, isOfficial, priceFilter])
 
   // --- ページ取得関数（初回 or 追加） ---
   const loadPage = useCallback(async (targetPage: number, isReset: boolean) => {
@@ -124,6 +125,8 @@ export default function Market() {
         if (genre) params.genre = genre
         if (search) params.search = search
         if (isOfficial) params.is_official = true
+        if (priceFilter === 'free') params.max_price = '0'
+        if (priceFilter === 'paid') params.min_price = '1'
 
         const res = await fetchWorks(params)
 
@@ -150,7 +153,7 @@ export default function Market() {
     setInitialLoading(false)
     setLoadingMore(false)
     setRetrying(false)
-  }, [genre, search, isOfficial])
+  }, [genre, search, isOfficial, priceFilter])
 
   // --- page が変わったらロード（初回リセット or 追加） ---
   useEffect(() => {
@@ -247,6 +250,34 @@ export default function Market() {
               onBlur={e => e.target.style.borderColor = 'var(--color-border)'}
             />
           </div>
+        </div>
+
+        {/* 無料/有料フィルター */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          {([
+            { value: 'all',  label: 'すべて' },
+            { value: 'free', label: '🆓 無料' },
+            { value: 'paid', label: '💰 有料' },
+          ] as const).map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setPriceFilter(value)}
+              style={{
+                padding: isMobile ? '4px 10px' : '5px 12px',
+                borderRadius: 100,
+                border: `1.5px solid ${priceFilter === value ? 'var(--color-purple)' : '#d0d8e8'}`,
+                background: priceFilter === value ? '#F5EDFF' : 'white',
+                color: priceFilter === value ? 'var(--color-purple)' : 'var(--color-text-sub)',
+                fontSize: isMobile ? '0.68rem' : '0.75rem',
+                fontWeight: priceFilter === value ? 800 : 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                fontFamily: 'var(--font-base)',
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         {/* ジャンルフィルターバー */}

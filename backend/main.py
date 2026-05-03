@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from db.database import engine, Base
-from routers import depth, generate, convert, works, postprocess, purchases
+from routers import depth, generate, convert, works, postprocess, purchases, competitions, admin
 
 
 @asynccontextmanager
@@ -60,6 +60,8 @@ app.include_router(convert.router, prefix="/api", tags=["convert"])
 app.include_router(works.router, prefix="/api", tags=["works"])
 app.include_router(postprocess.router, prefix="/api", tags=["postprocess"])
 app.include_router(purchases.router, prefix="/api", tags=["purchases"])
+app.include_router(competitions.router, prefix="/api", tags=["competitions"])
+app.include_router(admin.router, prefix="/api", tags=["admin"])
 
 
 @app.get("/health", tags=["health"])

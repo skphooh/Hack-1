@@ -273,3 +273,82 @@ export interface PurchaseItem {
     stl_url: string | null
   }
 }
+
+// ===== コンペティション API =====
+
+export interface CompetitionResponse {
+  id: string
+  title: string
+  description: string | null
+  company_name: string
+  company_logo_url: string | null
+  prize: string | null
+  deadline: string | null
+  status: string
+  created_at: string
+}
+
+export const fetchCompetitions = (status?: string): Promise<{ items: CompetitionResponse[] }> =>
+  fetch(`${API_BASE}/api/competitions${status ? `?status=${status}` : ''}`).then(r => r.json())
+
+export const createCompetition = (body: object) =>
+  fetch(`${API_BASE}/api/competitions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': 'admin' },
+    body: JSON.stringify(body),
+  }).then(r => r.json())
+
+export const updateCompetition = (id: string, body: object) =>
+  fetch(`${API_BASE}/api/competitions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': 'admin' },
+    body: JSON.stringify(body),
+  }).then(r => r.json())
+
+export const deleteCompetition = (id: string) =>
+  fetch(`${API_BASE}/api/competitions/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-password': 'admin' },
+  }).then(r => r.json())
+
+// ===== 管理者 API =====
+
+export const fetchAdminStats = (): Promise<{ user_count: number; work_count: number; purchase_count: number }> =>
+  fetch(`${API_BASE}/api/admin/stats`, { headers: { 'x-admin-password': 'admin' } }).then(r => r.json())
+
+export const fetchAdminUsers = (): Promise<{ items: AdminUser[] }> =>
+  fetch(`${API_BASE}/api/admin/users`, { headers: { 'x-admin-password': 'admin' } }).then(r => r.json())
+
+export const updateAdminUser = (id: string, body: object) =>
+  fetch(`${API_BASE}/api/admin/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': 'admin' },
+    body: JSON.stringify(body),
+  }).then(r => r.json())
+
+export const fetchAdminWorks = (): Promise<{ items: AdminWork[] }> =>
+  fetch(`${API_BASE}/api/admin/works`, { headers: { 'x-admin-password': 'admin' } }).then(r => r.json())
+
+export const updateAdminWork = (id: string, body: object) =>
+  fetch(`${API_BASE}/api/admin/works/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': 'admin' },
+    body: JSON.stringify(body),
+  }).then(r => r.json())
+
+export const deleteAdminWork = (id: string) =>
+  fetch(`${API_BASE}/api/admin/works/${id}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-password': 'admin' },
+  }).then(r => r.json())
+
+export interface AdminUser {
+  id: string; firebase_uid: string; display_name: string | null
+  is_creator: boolean; has_printer: boolean; work_count: number; created_at: string
+}
+
+export interface AdminWork {
+  id: string; title: string; genre: string | null; is_official: boolean
+  price: number; likes_count: number; downloads: number
+  thumbnail_url: string | null; author: string | null; created_at: string
+}
