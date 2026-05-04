@@ -30,7 +30,7 @@ export default function Sell() {
 
   // ── アップロードタブの状態 ──
   const [title, setTitle]           = useState('')
-  const [genre, setGenre]           = useState('')
+  const [genres, setGenres]         = useState<string[]>([])
   const [price, setPrice]           = useState('0')
   const [isPublic, setIsPublic]     = useState(true)
   const [glbFile, setGlbFile]       = useState<File | null>(null)
@@ -122,7 +122,7 @@ export default function Sell() {
     try {
       const form = new FormData()
       form.append('title', title.trim())
-      if (genre) form.append('genre', genre)
+      if (genres.length > 0) form.append('genre', genres.join(','))
       form.append('price', String(priceNum))
       form.append('is_public', String(isPublic))
       form.append('glb_file', glbFile)
@@ -274,15 +274,20 @@ export default function Sell() {
             </section>
 
             <section style={cardStyle}>
-              <label style={labelStyle}>ジャンル</label>
+              <label style={labelStyle}>ジャンル<span style={{ fontSize: '0.75rem', color: 'var(--color-text-sub)', fontWeight: 500, marginLeft: 6 }}>複数選択OK</span></label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {GENRES.map(g => (
-                  <button key={g.value} onClick={() => setGenre(genre === g.value ? '' : g.value)}
-                    style={{ padding: '8px 18px', borderRadius: 100, border: `1.5px solid ${genre === g.value ? 'var(--color-pink)' : 'var(--color-border)'}`, background: genre === g.value ? 'var(--color-pink)' : 'white', color: genre === g.value ? 'white' : 'var(--color-text-sub)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'var(--font-base)' }}
-                  >
-                    {g.label}
-                  </button>
-                ))}
+                {GENRES.map(g => {
+                  const selected = genres.includes(g.value)
+                  return (
+                    <button
+                      key={g.value}
+                      onClick={() => setGenres(prev => selected ? prev.filter(v => v !== g.value) : [...prev, g.value])}
+                      style={{ padding: '8px 18px', borderRadius: 100, border: `1.5px solid ${selected ? 'var(--color-pink)' : 'var(--color-border)'}`, background: selected ? 'var(--color-pink)' : 'white', color: selected ? 'white' : 'var(--color-text-sub)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'var(--font-base)' }}
+                    >
+                      {selected && <span style={{ marginRight: 4 }}>✓</span>}{g.label}
+                    </button>
+                  )
+                })}
               </div>
             </section>
 
