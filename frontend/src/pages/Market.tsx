@@ -1,7 +1,7 @@
 // マーケットページ（フロー②③: 作品一覧・検索・詳細）- ポップ・かわいいデザイン
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Search, Building2, ShoppingBag } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
@@ -202,27 +202,6 @@ export default function Market() {
   return (
     <main style={{ paddingTop: isMobile ? 120 : 140, minHeight: '100vh', paddingLeft: 'var(--page-px)', paddingRight: 'var(--page-px)' }}>
       <div className="page-container" style={{ paddingTop: isMobile ? 14 : 24, paddingBottom: 40 }}>
-        {/* 出品・購入 / コンペ 遷移ボタン */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: isMobile ? 12 : 16 }}>
-          <button
-            onClick={() => navigate('/shop')}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: isMobile ? '9px 12px' : '10px 16px', background: 'linear-gradient(135deg,#F5EDFF,#EDF4FF)', border: '1.5px solid #DDB3F5', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: isMobile ? '0.78rem' : '0.85rem', fontWeight: 700, color: 'var(--color-purple)', transition: 'opacity 0.15s', fontFamily: 'var(--font-base)' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            <ShoppingBag size={isMobile ? 13 : 15} />
-            出品・購入
-          </button>
-          <button
-            onClick={() => navigate('/competition')}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: isMobile ? '9px 12px' : '10px 16px', background: 'linear-gradient(135deg,#FFFBF0,#FFF5E6)', border: '1.5px solid #FFD699', borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: isMobile ? '0.78rem' : '0.85rem', fontWeight: 700, color: '#B86A00', transition: 'opacity 0.15s', fontFamily: 'var(--font-base)' }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            コンペ
-          </button>
-        </div>
-
         {/* 検索バーとフィルタ */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: isMobile ? 12 : 20, alignItems: 'center' }}>
           <div style={{ flex: '1 1 200px', position: 'relative' }}>
@@ -403,13 +382,6 @@ export default function Market() {
           </>
         )}
 
-        {/* 企業向けコンペモックアップ */}
-        <div style={{ marginTop: 60, padding: '30px', background: 'linear-gradient(135deg, #FFF9FB 0%, #F5EDFF 100%)', borderRadius: 'var(--radius-xl)', border: '2px solid #DDB3F5', textAlign: 'center' }}>
-          <Building2 size={32} color="var(--color-purple)" style={{ marginBottom: 12 }} />
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-purple)', marginBottom: 8 }}>企業向けコンテスト開催中！</h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--color-text-sub)', marginBottom: 16 }}>あなたの3Dデータが公式グッズに採用されるかも？</p>
-          <button className="btn-primary" onClick={() => navigate('/competition')} style={{ margin: '0 auto' }}>🏆 コンペティションに参加する</button>
-        </div>
       </div>
 
       <style>{`
