@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LogIn, LogOut, User, Heart, List, Edit3, ShoppingBag, Tag } from 'lucide-react'
+import { LogIn, LogOut, User, Heart, List, Edit3, Tag, Trophy, ShoppingBag } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
@@ -143,11 +143,43 @@ export function Navbar() {
                   }}
                 >
                   {[
-                    { icon: <Tag size={15} />, label: '作品を出品する', path: '/sell' },
                     { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/profile' },
                     { icon: <Heart size={15} />, label: 'いいねした作品', path: '/liked' },
                     { icon: <ShoppingBag size={15} />, label: '購入した作品', path: '/purchases' },
                     { icon: <List size={15} />, label: 'うちの子一覧', path: '/mypage' },
+                  ].map(({ icon, label, path }) => (
+                    <button
+                      key={label}
+                      onClick={() => handleMenuNav(path)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        width: '100%',
+                        padding: '13px 20px',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: '1px solid #F5EDFF',
+                        color: 'var(--color-text)',
+                        fontSize: '0.92rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        fontFamily: 'var(--font-base)',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#d5dcea' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <span style={{ color: 'var(--color-purple)' }}>{icon}</span>
+                      {label}
+                    </button>
+                  ))}
+                  {/* 区切り線 */}
+                  <div style={{ height: 1, background: '#e8eaf0', margin: '4px 0' }} />
+                  {[
+                    { icon: <Tag size={15} />, label: '作品を出品する', path: '/sell' },
+                    { icon: <Trophy size={15} />, label: 'コンペ', path: '/competition' },
                   ].map(({ icon, label, path }) => (
                     <button
                       key={label}

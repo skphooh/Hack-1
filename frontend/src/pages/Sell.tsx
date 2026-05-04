@@ -1,5 +1,5 @@
 // 出品ページ: 既存3DデータをアップロードしてマーケットにListingする
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { Loader2, LogIn, Upload, Image as ImageIcon, X } from 'lucide-react'
