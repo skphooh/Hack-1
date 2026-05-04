@@ -94,6 +94,10 @@ export async function updateWork(id: string, body: { price?: number; title?: str
 export const startGenerate = (form: FormData) =>
   apiPostForm<WorkResponse>('/api/generate', form)
 
+/** 既存GLBをアップロードして出品 */
+export const uploadWork = (form: FormData) =>
+  apiPostForm<WorkResponse>('/api/works/upload', form)
+
 /** ジョブステータスポーリング */
 export const fetchTaskStatus = (taskId: string) =>
   apiGet<TaskStatusResponse>(`/api/task/${taskId}`)

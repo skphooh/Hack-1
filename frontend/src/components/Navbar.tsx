@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LogIn, LogOut, User, Heart, List, Edit3, ShoppingBag } from 'lucide-react'
+import { LogIn, LogOut, User, Heart, List, Edit3, ShoppingBag, Tag } from 'lucide-react'
 import { useRef, useState, useEffect } from 'react'
 import { auth, googleProvider } from '../lib/firebase'
 import { signInWithPopup, signOut } from 'firebase/auth'
@@ -143,6 +143,7 @@ export function Navbar() {
                   }}
                 >
                   {[
+                    { icon: <Tag size={15} />, label: '作品を出品する', path: '/sell' },
                     { icon: <Edit3 size={15} />, label: 'プロフィールを編集', path: '/profile' },
                     { icon: <Heart size={15} />, label: 'いいねした作品', path: '/liked' },
                     { icon: <ShoppingBag size={15} />, label: '購入した作品', path: '/purchases' },

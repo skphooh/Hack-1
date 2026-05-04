@@ -4,7 +4,7 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +13,7 @@ from db.database import get_db
 from db.models import Like, User, Work
 from db.schemas import LikeResponse, WorkCreate, WorkUpdate, WorkListResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
-from services.storage import upload_url_to_storage
+from services.storage import upload_to_storage, upload_url_to_storage
 
 router = APIRouter()
 
@@ -117,6 +117,55 @@ async def create_work(
     )
     db.add(work)
     await db.flush()
+    work.user = user
+    return work
+
+
+@router.post("/works/upload", response_model=WorkResponse)
+async def upload_work(
+    title: str = Form(...),
+    genre: Optional[str] = Form(None),
+    price: int = Form(0),
+    is_public: bool = Form(True),
+    glb_file: UploadFile = File(...),
+    thumbnail_file: Optional[UploadFile] = File(None),
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """既存3DデータをアップロードしてWork登録（AI生成不要）"""
+    user = await get_or_create_user(uid, db)
+
+    # GLBファイルのみ受け付ける
+    if glb_file.content_type not in ("model/gltf-binary", "application/octet-stream") and \
+       not (glb_file.filename or "").lower().endswith(".glb"):
+        raise HTTPException(status_code=400, detail="GLBファイルのみアップロード可能です")
+
+    # Workレコードを先に作成してIDを確定
+    work = Work(
+        user_id=user.id,
+        title=title,
+        genre=genre,
+        price=price,
+        is_public=is_public,
+        status="done",
+    )
+    db.add(work)
+    await db.flush()
+
+    # GLBをFirebase Storageにアップロード
+    glb_bytes = await glb_file.read()
+    glb_url = await upload_to_storage(glb_bytes, f"models/{user.id}/{work.id}.glb")
+    work.glb_url = glb_url
+
+    # サムネイルがあればアップロード
+    if thumbnail_file and thumbnail_file.filename:
+        thumb_bytes = await thumbnail_file.read()
+        ext = (thumbnail_file.filename or "jpg").rsplit(".", 1)[-1].lower()
+        thumb_url = await upload_to_storage(thumb_bytes, f"thumbnails/{user.id}/{work.id}.{ext}")
+        work.thumbnail_url = thumb_url
+
+    await db.commit()
+    await db.refresh(work)
     work.user = user
     return work
 
