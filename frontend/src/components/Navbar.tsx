@@ -175,8 +175,6 @@ export function Navbar() {
                       {label}
                     </button>
                   ))}
-                  {/* 区切り線 */}
-                  <div style={{ height: 1, background: '#e8eaf0', margin: '4px 0' }} />
                   {[
                     { icon: <Tag size={15} />, label: '作品を出品する', path: '/sell' },
                     { icon: <Trophy size={15} />, label: 'コンペ', path: '/competition' },
