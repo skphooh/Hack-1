@@ -56,6 +56,7 @@ export default function Demo() {
   const [title, setTitle] = useState('')
   const [progress, setProgress] = useState(0)
   const [demoModel, setDemoModel] = useState(DEMO_MODELS[0])
+  const [modelError, setModelError] = useState(false)
 
   const startTimeRef = useRef<number>(0)
   const rafRef = useRef<number>(0)
@@ -110,6 +111,7 @@ export default function Demo() {
     if (!previewUrl) return
     // デモごとにランダムでモデルを選択
     setDemoModel(DEMO_MODELS[Math.floor(Math.random() * DEMO_MODELS.length)])
+    setModelError(false)
     setProgress(0)
     setStep('generating')
   }, [previewUrl])
@@ -269,7 +271,19 @@ export default function Demo() {
                   <span style={{ fontWeight: 800, color: '#22863a', fontSize: '1rem' }}>できた！🎉 3D生成完了！</span>
                 </div>
 
-                <Viewer3D glbUrl={demoModel.glbUrl} height={350} />
+                {modelError ? (
+                  <div style={{ height: 350, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: '#F9F9F9' }}>
+                    <span style={{ fontSize: '3rem' }}>📂</span>
+                    <p style={{ fontWeight: 700, color: 'var(--color-text-sub)', fontSize: '0.9rem' }}>
+                      GLBファイルを配置してください
+                    </p>
+                    <code style={{ fontSize: '0.75rem', color: '#aaa', background: '#F3F4F6', padding: '4px 10px', borderRadius: 6 }}>
+                      public/demo/model1.glb
+                    </code>
+                  </div>
+                ) : (
+                  <Viewer3D glbUrl={demoModel.glbUrl} height={350} onError={() => setModelError(true)} />
+                )}
 
                 <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {/* STLダウンロード */}
