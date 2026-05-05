@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from db.database import get_db
-from db.models import User, Work, Purchase
+from db.models import Report, User, Work, Purchase
 
 router = APIRouter()
 
@@ -143,3 +143,41 @@ async def delete_admin_work(
     await db.delete(work)
     await db.commit()
     return {"message": "deleted"}
+
+
+# ─── 通報管理 ────────────────────────────────────────────────────────────────
+
+@router.get("/admin/reports")
+async def list_reports(
+    x_admin_password: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_admin(x_admin_password)
+    result = await db.execute(select(Report).order_by(Report.created_at.desc()).limit(200))
+    reports = result.scalars().all()
+    return {"items": [{
+        "id": str(r.id),
+        "workId": str(r.work_id),
+        "workTitle": r.work_title or "不明",
+        "reason": r.reason,
+        "status": r.status,
+        "date": r.created_at.strftime("%Y-%m-%d") if r.created_at else "",
+    } for r in reports]}
+
+
+@router.patch("/admin/reports/{report_id}")
+async def update_report(
+    report_id: str,
+    body: dict,
+    x_admin_password: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_admin(x_admin_password)
+    result = await db.execute(select(Report).where(Report.id == UUID(report_id)))
+    report = result.scalar_one_or_none()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if "status" in body:
+        report.status = body["status"]
+    await db.commit()
+    return {"id": str(report.id), "status": report.status}

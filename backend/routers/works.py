@@ -10,7 +10,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
-from db.models import Like, User, Work
+from db.models import Like, Report, User, Work
 from db.schemas import LikeResponse, WorkCreate, WorkUpdate, WorkListResponse, WorkResponse
 from services.auth import get_current_uid, get_or_create_user
 from services.storage import upload_to_storage, upload_url_to_storage
@@ -251,6 +251,28 @@ async def delete_work(
     await db.delete(work)
     await db.commit()
     return {"message": "deleted"}
+
+
+@router.post("/works/{work_id}/report")
+async def report_work(
+    work_id: UUID,
+    body: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """作品を通報する（認証不要）"""
+    reason = (body.get("reason") or "").strip()
+    if not reason:
+        raise HTTPException(status_code=400, detail="通報理由を入力してください")
+
+    result = await db.execute(select(Work).where(Work.id == work_id))
+    work = result.scalar_one_or_none()
+    if not work:
+        raise HTTPException(status_code=404, detail="作品が見つかりません")
+
+    report = Report(work_id=work_id, work_title=work.title, reason=reason)
+    db.add(report)
+    await db.commit()
+    return {"message": "reported"}
 
 
 @router.patch("/works/{work_id}", response_model=WorkResponse)

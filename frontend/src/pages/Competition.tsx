@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gift, ChevronRight, Loader2, Calendar, Building2 } from 'lucide-react'
 import { WorkCard } from '../components/WorkCard'
-import { fetchWorks, fetchCompetitions, toggleLike, type WorkResponse, type CompetitionResponse } from '../lib/api'
+import { fetchWorks, fetchCompetitions, toggleLike, enterCompetition, type WorkResponse, type CompetitionResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -32,6 +32,8 @@ export default function Competition() {
   const [loadingComps, setLoadingComps] = useState(true)
   const [works, setWorks] = useState<WorkResponse[]>([])
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
+  const [enteredIds, setEnteredIds] = useState<Set<string>>(new Set())
+  const [enteringId, setEnteringId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchCompetitions()
@@ -53,11 +55,22 @@ export default function Competition() {
     } catch {}
   }
 
-  const handleEntry = (comp: CompetitionResponse) => {
+  const handleEntry = async (comp: CompetitionResponse) => {
     if (comp.status === 'ended') return
     if (!user) { alert('エントリーするにはログインが必要です！'); return }
-    if (confirm(`「${comp.title}」にエントリーしますか？\n（※現在はデモ用です）`)) {
-      alert('🎉 エントリーが完了しました！結果発表をお待ちください。')
+    if (enteredIds.has(comp.id)) { alert('すでにエントリー済みです！'); return }
+    if (!confirm(`「${comp.title}」にエントリーしますか？`)) return
+    setEnteringId(comp.id)
+    try {
+      const res = await enterCompetition(comp.id)
+      if (res.entered) {
+        setEnteredIds(prev => new Set(prev).add(comp.id))
+        alert('🎉 エントリーが完了しました！結果発表をお待ちください。')
+      }
+    } catch {
+      alert('エントリーに失敗しました。もう一度お試しください。')
+    } finally {
+      setEnteringId(null)
     }
   }
 
@@ -95,7 +108,7 @@ export default function Competition() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: isMobile ? 10 : 18 }}>
-            {activeComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} />)}
+            {activeComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} entered={enteredIds.has(c.id)} entering={enteringId === c.id} />)}
           </div>
         )}
       </section>
@@ -105,7 +118,7 @@ export default function Competition() {
         <section className="page-container" style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: isMobile ? '0.92rem' : '1rem', fontWeight: 800, marginBottom: isMobile ? 10 : 14, color: 'var(--color-text-muted)' }}>終了したコンペ</h2>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))', gap: isMobile ? 8 : 14, opacity: 0.7 }}>
-            {endedComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} />)}
+            {endedComps.map(c => <CompCard key={c.id} comp={c} onEntry={handleEntry} isMobile={isMobile} entered={false} entering={false} />)}
           </div>
         </section>
       )}
@@ -128,7 +141,7 @@ export default function Competition() {
   )
 }
 
-function CompCard({ comp, onEntry, isMobile }: { comp: CompetitionResponse; onEntry: (c: CompetitionResponse) => void; isMobile: boolean }) {
+function CompCard({ comp, onEntry, isMobile, entered, entering }: { comp: CompetitionResponse; onEntry: (c: CompetitionResponse) => void; isMobile: boolean; entered: boolean; entering: boolean }) {
   const isEnded = comp.status === 'ended'
   const daysLeft = comp.deadline ? Math.ceil((new Date(comp.deadline).getTime() - Date.now()) / 86400000) : null
 
@@ -169,12 +182,14 @@ function CompCard({ comp, onEntry, isMobile }: { comp: CompetitionResponse; onEn
           <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>締め切り終了</span>
         ) : <div />}
 
-        <button onClick={() => onEntry(comp)} disabled={isEnded}
-          className={isEnded ? '' : 'btn-primary'}
+        <button onClick={() => onEntry(comp)} disabled={isEnded || entered || entering}
+          className={isEnded || entered ? '' : 'btn-primary'}
           style={isEnded
             ? { padding: '6px 12px', borderRadius: 'var(--radius-btn)', border: '1px solid #d0d8e8', background: '#f0f3fa', color: 'var(--color-text-muted)', fontSize: '0.78rem', fontWeight: 700, cursor: 'not-allowed', fontFamily: 'var(--font-base)' }
+            : entered
+            ? { padding: '6px 12px', borderRadius: 'var(--radius-btn)', border: '1px solid #90D4A4', background: '#E8FFF4', color: '#22863a', fontSize: '0.78rem', fontWeight: 700, cursor: 'default', fontFamily: 'var(--font-base)' }
             : { padding: '6px 12px', fontSize: '0.8rem' }}>
-          {isEnded ? '終了' : '🏆 エントリー'}
+          {isEnded ? '終了' : entered ? '✅ エントリー済み' : entering ? '⏳ 処理中…' : '🏆 エントリー'}
         </button>
       </div>
     </div>

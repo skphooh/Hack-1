@@ -278,6 +278,27 @@ export interface PurchaseItem {
   }
 }
 
+// ===== 通報 API =====
+
+export const reportWork = (workId: string, reason: string) =>
+  apiPost<{ message: string }>(`/api/works/${workId}/report`, { reason })
+
+// ===== ユーザー API =====
+
+export const fetchMe = () =>
+  apiGet<{ id: string; firebase_uid: string; display_name: string | null; is_creator: boolean; has_printer: boolean }>('/api/users/me')
+
+export async function updateMe(body: { display_name?: string }): Promise<{ display_name: string | null }> {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${API_BASE}/api/users/me`, {
+    method: 'PATCH',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API Error ${res.status}: ${await res.text()}`)
+  return res.json()
+}
+
 // ===== コンペティション API =====
 
 export interface CompetitionResponse {
@@ -315,7 +336,30 @@ export const deleteCompetition = (id: string) =>
     headers: { 'x-admin-password': 'admin' },
   }).then(r => r.json())
 
+export const enterCompetition = (compId: string, workId?: string) =>
+  apiPost<{ message: string; entered: boolean }>(`/api/competitions/${compId}/entry`, { work_id: workId ?? null })
+
+export const fetchMyEntry = (compId: string) =>
+  apiGet<{ entered: boolean }>(`/api/competitions/${compId}/my-entry`)
+
 // ===== 管理者 API =====
+
+export const fetchAdminReports = (): Promise<{ items: AdminReport[] }> =>
+  fetch(`${API_BASE}/api/admin/reports`, { headers: { 'x-admin-password': 'admin' } }).then(r => r.json())
+
+export const resolveAdminReport = (id: string) =>
+  fetch(`${API_BASE}/api/admin/reports/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': 'admin' },
+    body: JSON.stringify({ status: '対応済み' }),
+  }).then(r => r.json())
+
+export interface AdminReport {
+  id: string; workId: string; workTitle: string
+  reason: string; status: string; date: string
+}
+
+
 
 export const fetchAdminStats = (): Promise<{ user_count: number; work_count: number; purchase_count: number }> =>
   fetch(`${API_BASE}/api/admin/stats`, { headers: { 'x-admin-password': 'admin' } }).then(r => r.json())

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Heart, ArrowLeft, Loader2, Flag, ShoppingCart } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
-import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, wakeBackend, type WorkResponse } from '../lib/api'
+import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, reportWork, wakeBackend, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
 import type { Vector3 } from 'three'
@@ -893,20 +893,14 @@ export default function WorkDetail() {
             {/* モックアップ: 通報・ライセンス管理 */}
             <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
               <button
-                onClick={() => {
-                  const reason = prompt('通報理由を入力してください:');
-                  if (reason) {
-                    const reports = JSON.parse(localStorage.getItem('mock_reports') || '[]');
-                    reports.push({
-                      id: Date.now().toString(),
-                      workId: id,
-                      workTitle: work.title,
-                      reason: reason,
-                      date: new Date().toISOString().split('T')[0],
-                      status: '未対応'
-                    });
-                    localStorage.setItem('mock_reports', JSON.stringify(reports));
-                    alert('通報を受け付けました。運営チームが確認いたします。');
+                onClick={async () => {
+                  const reason = prompt('通報理由を入力してください:')
+                  if (!reason?.trim()) return
+                  try {
+                    await reportWork(work.id, reason.trim())
+                    alert('通報を受け付けました。運営チームが確認いたします。')
+                  } catch {
+                    alert('通報に失敗しました。もう一度お試しください。')
                   }
                 }}
                 style={{

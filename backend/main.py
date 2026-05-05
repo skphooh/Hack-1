@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from db.database import engine, Base
-from routers import depth, generate, convert, works, postprocess, purchases, competitions, admin
+from routers import depth, generate, convert, works, postprocess, purchases, competitions, admin, users
 
 
 @asynccontextmanager
@@ -32,6 +32,8 @@ async def lifespan(app: FastAPI):
                 "ALTER TABLE works ADD COLUMN IF NOT EXISTS "
                 "is_public BOOLEAN DEFAULT TRUE"
             ))
+            # reports / competition_entries テーブルは create_all で自動作成される
+            # SQLite 互換のため IF NOT EXISTS は create_all に任せる
         print("✅ DB テーブルの初期化・マイグレーションが完了しました", flush=True)
     except Exception as e:
         print(f"⚠️ DB 初期化エラー（DATABASE_URL を確認してください）: {e}", flush=True)
@@ -66,6 +68,7 @@ app.include_router(postprocess.router, prefix="/api", tags=["postprocess"])
 app.include_router(purchases.router, prefix="/api", tags=["purchases"])
 app.include_router(competitions.router, prefix="/api", tags=["competitions"])
 app.include_router(admin.router, prefix="/api", tags=["admin"])
+app.include_router(users.router, prefix="/api", tags=["users"])
 
 
 @app.get("/health", tags=["health"])

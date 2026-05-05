@@ -11,7 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
-from db.models import Competition
+from db.models import Competition, CompetitionEntry, Work
+from services.auth import get_current_uid, get_or_create_user
 
 router = APIRouter()
 
@@ -107,3 +108,59 @@ async def delete_competition(
     await db.delete(comp)
     await db.commit()
     return {"message": "deleted"}
+
+
+@router.post("/competitions/{comp_id}/entry")
+async def entry_competition(
+    comp_id: str,
+    body: dict,
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """コンペにエントリー（重複は無視）"""
+    result = await db.execute(select(Competition).where(Competition.id == uuid.UUID(comp_id)))
+    comp = result.scalar_one_or_none()
+    if not comp:
+        raise HTTPException(status_code=404, detail="コンペが見つかりません")
+    if comp.status == "ended":
+        raise HTTPException(status_code=400, detail="このコンペは終了しています")
+
+    user = await get_or_create_user(uid, db)
+
+    # 既存エントリーの確認
+    existing = await db.execute(
+        select(CompetitionEntry).where(
+            CompetitionEntry.competition_id == uuid.UUID(comp_id),
+            CompetitionEntry.user_id == user.id,
+        )
+    )
+    if existing.scalar_one_or_none():
+        return {"message": "already_entered", "entered": True}
+
+    work_id = body.get("work_id")
+    entry = CompetitionEntry(
+        competition_id=uuid.UUID(comp_id),
+        user_id=user.id,
+        work_id=uuid.UUID(work_id) if work_id else None,
+    )
+    db.add(entry)
+    await db.commit()
+    return {"message": "entered", "entered": True}
+
+
+@router.get("/competitions/{comp_id}/my-entry")
+async def get_my_entry(
+    comp_id: str,
+    uid: str = Depends(get_current_uid),
+    db: AsyncSession = Depends(get_db),
+):
+    """自分がエントリー済みかチェック"""
+    user = await get_or_create_user(uid, db)
+    result = await db.execute(
+        select(CompetitionEntry).where(
+            CompetitionEntry.competition_id == uuid.UUID(comp_id),
+            CompetitionEntry.user_id == user.id,
+        )
+    )
+    entry = result.scalar_one_or_none()
+    return {"entered": entry is not None}

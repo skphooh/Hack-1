@@ -20,7 +20,7 @@ export default function MyPage() {
       setFetching(true)
       try {
         // 自分の作品を取得（ステータス問わず全件）
-        const res = await fetchWorks({ status: 'done', user_id: user.uid, per_page: '50' })
+        const res = await fetchWorks({ status: 'done', user_id: user.uid, per_page: 50 })
         setWorks(res.items)
       } finally {
         setFetching(false)

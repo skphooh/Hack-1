@@ -105,6 +105,37 @@ class Competition(Base):
     created_at = Column(TIMESTAMP(timezone=True), default=utcnow)
 
 
+class Report(Base):
+    """通報テーブル"""
+    __tablename__ = "reports"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    work_id = Column(UUID(as_uuid=True), ForeignKey("works.id", ondelete="CASCADE"), nullable=False)
+    work_title = Column(Text)
+    reason = Column(Text, nullable=False)
+    status = Column(String(20), default="未対応")  # 未対応 / 対応済み
+    created_at = Column(TIMESTAMP(timezone=True), default=utcnow)
+
+    work = relationship("Work")
+
+
+class CompetitionEntry(Base):
+    """コンペエントリーテーブル"""
+    __tablename__ = "competition_entries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    competition_id = Column(UUID(as_uuid=True), ForeignKey("competitions.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    work_id = Column(UUID(as_uuid=True), ForeignKey("works.id", ondelete="CASCADE"), nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), default=utcnow)
+
+    __table_args__ = (UniqueConstraint("competition_id", "user_id", name="uq_entry_comp_user"),)
+
+    competition = relationship("Competition")
+    user = relationship("User")
+    work = relationship("Work")
+
+
 class Purchase(Base):
     """購入履歴テーブル（フロー③: 公式データ販売）"""
     __tablename__ = "purchases"

@@ -4,7 +4,8 @@ import {
   fetchAdminStats, fetchAdminUsers, updateAdminUser,
   fetchAdminWorks, updateAdminWork, deleteAdminWork,
   fetchCompetitions, createCompetition, updateCompetition, deleteCompetition,
-  type CompetitionResponse, type AdminUser, type AdminWork,
+  fetchAdminReports, resolveAdminReport,
+  type CompetitionResponse, type AdminUser, type AdminWork, type AdminReport,
 } from '../lib/api'
 import { useIsMobile } from '../hooks/useIsMobile'
 
@@ -22,7 +23,7 @@ export default function Admin() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [works, setWorks] = useState<AdminWork[]>([])
   const [competitions, setCompetitions] = useState<CompetitionResponse[]>([])
-  const [reports, setReports] = useState<any[]>([])
+  const [reports, setReports] = useState<AdminReport[]>([])
 
   const [savingUser, setSavingUser] = useState<Record<string, boolean>>({})
   const [savingWork, setSavingWork] = useState<Record<string, boolean>>({})
@@ -35,20 +36,20 @@ export default function Admin() {
 
   useEffect(() => {
     if (!isAdmin) return
-    setReports(JSON.parse(localStorage.getItem('mock_reports') || '[]'))
     loadAll()
   }, [isAdmin])
 
   const loadAll = async () => {
     setLoading(true)
     try {
-      const [s, u, w, c] = await Promise.all([
-        fetchAdminStats(), fetchAdminUsers(), fetchAdminWorks(), fetchCompetitions(),
+      const [s, u, w, c, r] = await Promise.all([
+        fetchAdminStats(), fetchAdminUsers(), fetchAdminWorks(), fetchCompetitions(), fetchAdminReports(),
       ])
       setStats(s)
       setUsers(u.items ?? [])
       setWorks(w.items ?? [])
       setCompetitions(c.items ?? [])
+      setReports(r.items ?? [])
     } catch (e) { console.error(e) }
     setLoading(false)
   }
@@ -117,10 +118,13 @@ export default function Admin() {
     } catch { alert('削除に失敗しました') }
   }
 
-  const resolveReport = (id: string) => {
-    const updated = reports.map((r: any) => r.id === id ? { ...r, status: '対応済み' } : r)
-    setReports(updated)
-    localStorage.setItem('mock_reports', JSON.stringify(updated))
+  const resolveReport = async (id: string) => {
+    try {
+      await resolveAdminReport(id)
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status: '対応済み' } : r))
+    } catch {
+      alert('更新に失敗しました')
+    }
   }
 
   if (!isAdmin) {
@@ -151,7 +155,7 @@ export default function Admin() {
     { id: 'users',       label: 'ユーザー', icon: <Users size={15} /> },
     { id: 'works',       label: '作品',   icon: <Box size={15} /> },
     { id: 'competition', label: 'コンペ', icon: <Trophy size={15} /> },
-    { id: 'reports',     label: `通報(${reports.filter((r: any) => r.status === '未対応').length})`, icon: <Flag size={15} /> },
+    { id: 'reports',     label: `通報(${reports.filter(r => r.status === '未対応').length})`, icon: <Flag size={15} /> },
   ]
 
   return (
@@ -191,7 +195,7 @@ export default function Admin() {
               { label: '総ユーザー数', value: stats?.user_count ?? '…', icon: <Users size={20} />, color: 'var(--color-mint)' },
               { label: '公開作品数',   value: stats?.work_count ?? '…', icon: <Box size={20} />,   color: 'var(--color-pink)' },
               { label: '購入総数',     value: stats?.purchase_count ?? '…', icon: <Trophy size={20} />, color: 'var(--color-yellow)' },
-              { label: '未対応通報',   value: reports.filter((r: any) => r.status === '未対応').length, icon: <Flag size={20} />, color: '#e05' },
+              { label: '未対応通報',   value: reports.filter(r => r.status === '未対応').length, icon: <Flag size={20} />, color: '#e05' },
             ].map((s, i) => (
               <div key={i} className="pop-card" style={{ padding: isMobile ? 16 : 20, display: 'flex', alignItems: 'center', gap: 14 }}>
                 <div style={{ padding: 10, background: '#fff', borderRadius: 10, color: s.color, boxShadow: 'inset 2px 2px 6px #e2e8f0' }}>{s.icon}</div>
@@ -400,7 +404,7 @@ export default function Admin() {
                     <th style={th}>日時</th><th style={th}>対象</th><th style={th}>理由</th><th style={th}>状態</th><th style={th}>操作</th>
                   </tr></thead>
                   <tbody>
-                    {reports.map((r: any) => (
+                    {reports.map(r => (
                       <tr key={r.id}>
                         <td style={td}>{r.date}</td>
                         <td style={td}><a href={`/works/${r.workId}`} target="_blank" rel="noreferrer" style={{ color: 'var(--color-pink)', fontWeight: 700, textDecoration: 'none' }}>{r.workTitle}</a></td>
