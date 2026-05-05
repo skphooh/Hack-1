@@ -57,6 +57,7 @@ export default function Demo() {
   const [progress, setProgress] = useState(0)
   const [demoModel, setDemoModel] = useState(DEMO_MODELS[0])
   const [modelError, setModelError] = useState(false)
+  const [triedFallback, setTriedFallback] = useState(false)
 
   const startTimeRef = useRef<number>(0)
   const rafRef = useRef<number>(0)
@@ -112,6 +113,7 @@ export default function Demo() {
     // デモごとにランダムでモデルを選択
     setDemoModel(DEMO_MODELS[Math.floor(Math.random() * DEMO_MODELS.length)])
     setModelError(false)
+    setTriedFallback(false)
     setProgress(0)
     setStep('generating')
   }, [previewUrl])
@@ -282,7 +284,18 @@ export default function Demo() {
                     </code>
                   </div>
                 ) : (
-                  <Viewer3D glbUrl={demoModel.glbUrl} height={350} onError={() => setModelError(true)} />
+                  <Viewer3D
+                    glbUrl={demoModel.glbUrl}
+                    height={350}
+                    onError={() => {
+                      if (!triedFallback) {
+                        setTriedFallback(true)
+                        setDemoModel(DEMO_MODELS[0])
+                      } else {
+                        setModelError(true)
+                      }
+                    }}
+                  />
                 )}
 
                 <div style={{ padding: '16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
