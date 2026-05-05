@@ -378,7 +378,7 @@ export default function WorkDetail() {
           </div>
 
           {/* 右側: 作品情報 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* 作品情報カード */}
             <div
               style={{
@@ -471,7 +471,7 @@ export default function WorkDetail() {
               const isAuthor = user?.uid === work.author_firebase_uid
 
               const downloadButtons = (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {work.stl_url ? (
                     <button onClick={handleDownload} className="btn-primary" style={{ padding: isMobile ? '12px' : '16px', justifyContent: 'center', fontSize: isMobile ? '0.9rem' : '1rem', width: '100%' }}>
                       <Download size={20} /> ダウンロードして印刷する

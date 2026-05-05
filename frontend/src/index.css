@@ -246,6 +246,7 @@ main {
   /* WorkDetail グリッドを縦1列に */
   .work-detail-grid {
     grid-template-columns: 1fr;
+    gap: 32px;
   }
 
   /* ロゴ */
