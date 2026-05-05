@@ -9,8 +9,9 @@ import { useIsMobile } from '../hooks/useIsMobile'
 // frontend/public/demo/ に配置するファイル名と対応している
 const DEMO_MODELS = [
   { glbUrl: '/demo/model1.glb', stlUrl: '/demo/model1.stl' },
-  { glbUrl: '/demo/model2.glb', stlUrl: '/demo/model2.stl' },
-  { glbUrl: '/demo/model3.glb', stlUrl: '/demo/model3.stl' },
+  // model2, model3 を追加する場合はここにコメントアウトを外す
+  // { glbUrl: '/demo/model2.glb', stlUrl: '/demo/model2.stl' },
+  // { glbUrl: '/demo/model3.glb', stlUrl: '/demo/model3.stl' },
 ]
 
 // フェイクプログレスの時間設定（ms）
@@ -285,6 +286,7 @@ export default function Demo() {
                   </div>
                 ) : (
                   <Viewer3D
+                    key={demoModel.glbUrl}
                     glbUrl={demoModel.glbUrl}
                     height={350}
                     onError={() => {
