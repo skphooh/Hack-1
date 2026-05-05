@@ -15,6 +15,7 @@ import Competition from './pages/Competition'
 import Admin from './pages/Admin'
 import Profile from './pages/Profile'
 import Sell from './pages/Sell'
+import Demo from './pages/Demo'
 
 function App() {
   useEffect(() => { wakeBackend() }, [])
@@ -35,6 +36,7 @@ function App() {
         <Route path="/competition" element={<Competition />} />
         <Route path="/sell" element={<Sell />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/demo" element={<Demo />} />
         {/* 404 フォールバック */}
         <Route
           path="*"
