@@ -285,7 +285,7 @@ export default function Demo() {
                   <Viewer3D glbUrl={demoModel.glbUrl} height={350} onError={() => setModelError(true)} />
                 )}
 
-                <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ padding: '16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {/* STLダウンロード */}
                   <a
                     href={demoModel.stlUrl}
