@@ -1,11 +1,10 @@
 // WorkCardコンポーネント（ポップ・かわいいデザイン）
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { acquireContext, releaseContext } from '../lib/webglPool'
-import { useGLTF } from '@react-three/drei'
 
 interface WorkCardProps {
   work: WorkResponse
@@ -42,49 +41,77 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
 export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const isMobile = useIsMobile()
   const [has3DError, setHas3DError] = useState(false)
-  // プールが許可した時だけ Canvas をマウントする（WebGL上限管理）
-  const [active, setActive] = useState(false)
-  // 3Dモデルのロード完了フラグ（完了するまではサムネイルを背景表示）
+  // 持続表示: index<9の自動ロード、モバイルでのタップ
+  const [persistActive, setPersistActive] = useState(false)
+  // 一時表示: デスクトップのホバー・ボタン（マウスが外れたら戻る）
+  const [hoverActive, setHoverActive] = useState(false)
   const [is3DLoaded, setIs3DLoaded] = useState(false)
   const autoLoad = index < 9
   const cardRef = useRef<HTMLElement>(null)
 
-  /** プールにコンテキストを要求してactiveにする */
-  const activate = useCallback(() => {
-    if (!work.glb_url || has3DError) return
-    acquireContext(work.id, () => {
-      // 他のカードに押し出された → Canvas をアンマウントしてGLBキャッシュも解放
-      setActive(false)
-      setIs3DLoaded(false)
-      useGLTF.clear(work.glb_url!)
-    })
-    setActive(true)
-  }, [work.id, work.glb_url, has3DError])
+  // wantsToShow が変わった時だけプールを操作
+  const wantsToShow = (persistActive || hoverActive) && !!work.glb_url && !has3DError
+  useEffect(() => {
+    if (wantsToShow) {
+      acquireContext(work.id, () => {
+        // 他のカードに押し出されたらリセット（GLBキャッシュは残す）
+        setPersistActive(false)
+        setHoverActive(false)
+        setIs3DLoaded(false)
+      })
+    } else {
+      releaseContext(work.id)
+    }
+  }, [wantsToShow, work.id])
 
-  // アンマウント時（ページ遷移など）にスロットとGLBキャッシュを解放
-  useEffect(() => () => {
-    releaseContext(work.id)
-    if (work.glb_url) useGLTF.clear(work.glb_url)
-  }, [work.id, work.glb_url])
+  // ページ遷移時にスロット解放（GLBキャッシュはそのまま残す → 再訪即表示）
+  useEffect(() => () => releaseContext(work.id), [work.id])
 
-  // index < 9 は画面に入ったら自動起動
+  // index < 9: 画面に入ったら持続起動
   useEffect(() => {
     const el = cardRef.current
     if (!el || !work.glb_url || !autoLoad) return
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) activate() },
+      ([entry]) => { if (entry.isIntersecting) setPersistActive(true) },
       { rootMargin: '180px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [work.glb_url, autoLoad, activate])
+  }, [work.glb_url, autoLoad])
 
-  const show3D = active && work.glb_url && !has3DError
+  const show3D = wantsToShow
   useEffect(() => { if (!show3D) setIs3DLoaded(false) }, [show3D])
 
-  // 3D起動中でロード完了前はサムネイルを背景として見せる
   const showThumbnail = !show3D || !is3DLoaded
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
+
+  // デスクトップ: ホバーで一時起動
+  const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
+    if (!isMobile) setHoverActive(true)
+    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
+    ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
+  }
+  // デスクトップ: マウスが外れたら一時表示を解除（持続中のカードはそのまま）
+  const handleMouseLeave = (e: React.MouseEvent<HTMLElement>) => {
+    setHoverActive(false)
+    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
+    ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+  }
+
+  // 画像エリアタップ: モバイル→持続、デスクトップ→一時（マウス離れで戻る）
+  const handleMediaClick = (e: React.MouseEvent) => {
+    if (!show3D && work.glb_url && !has3DError) {
+      e.stopPropagation()
+      if (isMobile) setPersistActive(true)
+      else setHoverActive(true)
+    }
+  }
+
+  // ▶ 3D ボタン: デバイス問わず持続（明示的な操作なので戻さない）
+  const handle3DButton = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setPersistActive(true)
+  }
 
   return (
     <article
@@ -100,26 +127,12 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         transition: 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)',
         boxShadow: 'var(--shadow-card)',
       }}
-      onMouseEnter={(e) => {
-        activate()
-          ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
-          ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
-      }}
-      onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
-          ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* 3Dモデル または プレースホルダー */}
       <div
-        onClick={(e) => {
-          // 3D未表示かつGLBあり → タップで3D起動（ナビゲートしない）
-          if (!show3D && work.glb_url && !has3DError) {
-            e.stopPropagation()
-            activate()
-          }
-          // 3D表示済み → クリックをカードに委譲してナビゲート
-        }}
+        onClick={handleMediaClick}
         style={{
           position: 'relative',
           height: isMobile ? '155px' : '200px',
@@ -164,7 +177,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         {/* 手動ロードカード: 3Dタップボタン */}
         {!show3D && work.glb_url && !has3DError && (
           <button
-            onClick={(e) => { e.stopPropagation(); activate() }}
+            onClick={handle3DButton}
             style={{
               position: 'absolute',
               bottom: 8,

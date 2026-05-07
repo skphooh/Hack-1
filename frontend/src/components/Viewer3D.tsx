@@ -15,15 +15,6 @@ function RotatingModel({ url }: { url: string }) {
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
   const groupRef = useRef<Mesh>(null!)
   useFrame(() => { if (groupRef.current) groupRef.current.rotation.y += 0.005 })
-
-  useEffect(() => () => {
-    cloned.traverse((obj: any) => {
-      obj.geometry?.dispose()
-      const mats = Array.isArray(obj.material) ? obj.material : obj.material ? [obj.material] : []
-      mats.forEach((m: any) => { m.map?.dispose(); m.dispose() })
-    })
-  }, [cloned])
-
   return <primitive ref={groupRef} object={cloned} scale={2.2} />
 }
 
@@ -34,16 +25,6 @@ function StaticModel({ url, initialRotationY = 0, onLoad }: { url: string; initi
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
 
   useEffect(() => { onLoad?.() }, [])
-
-  // アンマウント時にクローンのGPUリソースを解放
-  useEffect(() => () => {
-    cloned.traverse((obj: any) => {
-      obj.geometry?.dispose()
-      const mats = Array.isArray(obj.material) ? obj.material : obj.material ? [obj.material] : []
-      mats.forEach((m: any) => { m.map?.dispose(); m.dispose() })
-    })
-  }, [cloned])
-
   return <primitive object={cloned} scale={2.2} rotation={[0, initialRotationY, 0]} />
 }
 
