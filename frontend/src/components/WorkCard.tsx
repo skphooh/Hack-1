@@ -1,9 +1,11 @@
 // WorkCardコンポーネント（ポップ・かわいいデザイン）
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { acquireContext, releaseContext } from '../lib/webglPool'
+import { useGLTF } from '@react-three/drei'
 
 interface WorkCardProps {
   work: WorkResponse
@@ -40,28 +42,44 @@ const GENRE_COLORS: Record<string, { bg: string; color: string; border: string }
 export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }: WorkCardProps) {
   const isMobile = useIsMobile()
   const [has3DError, setHas3DError] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  // index < 9 は自動ロード（IntersectionObserver）、それ以降は手動タップで起動
-  const autoLoad = index < 9
-  const [inView, setInView] = useState(false)
-  const [manualLoad, setManualLoad] = useState(false)
+  // プールが許可した時だけ Canvas をマウントする（WebGL上限管理）
+  const [active, setActive] = useState(false)
   // 3Dモデルのロード完了フラグ（完了するまではサムネイルを背景表示）
   const [is3DLoaded, setIs3DLoaded] = useState(false)
+  const autoLoad = index < 9
   const cardRef = useRef<HTMLElement>(null)
 
+  /** プールにコンテキストを要求してactiveにする */
+  const activate = useCallback(() => {
+    if (!work.glb_url || has3DError) return
+    acquireContext(work.id, () => {
+      // 他のカードに押し出された → Canvas をアンマウントしてGLBキャッシュも解放
+      setActive(false)
+      setIs3DLoaded(false)
+      useGLTF.clear(work.glb_url!)
+    })
+    setActive(true)
+  }, [work.id, work.glb_url, has3DError])
+
+  // アンマウント時（ページ遷移など）にスロットとGLBキャッシュを解放
+  useEffect(() => () => {
+    releaseContext(work.id)
+    if (work.glb_url) useGLTF.clear(work.glb_url)
+  }, [work.id, work.glb_url])
+
+  // index < 9 は画面に入ったら自動起動
   useEffect(() => {
     const el = cardRef.current
     if (!el || !work.glb_url || !autoLoad) return
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true) },
+      ([entry]) => { if (entry.isIntersecting) activate() },
       { rootMargin: '180px' }
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [work.glb_url, autoLoad])
+  }, [work.glb_url, autoLoad, activate])
 
-  const show3D = (inView || isHovered || manualLoad) && work.glb_url && !has3DError
-  // show3Dがオフになったらロード済みフラグをリセット
+  const show3D = active && work.glb_url && !has3DError
   useEffect(() => { if (!show3D) setIs3DLoaded(false) }, [show3D])
 
   // 3D起動中でロード完了前はサムネイルを背景として見せる
@@ -83,13 +101,12 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         boxShadow: 'var(--shadow-card)',
       }}
       onMouseEnter={(e) => {
-        setIsHovered(true)
+        activate()
           ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-6px) scale(1.01)'
           ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'
       }}
       onMouseLeave={(e) => {
-        setIsHovered(false)
-          ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
+          (e.currentTarget as HTMLElement).style.transform = 'translateY(0) scale(1)'
           ; (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
       }}
     >
@@ -97,11 +114,11 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       <div
         onClick={(e) => {
           // 3D未表示かつGLBあり → タップで3D起動（ナビゲートしない）
-          if (!is3DLoaded && work.glb_url && !has3DError) {
+          if (!show3D && work.glb_url && !has3DError) {
             e.stopPropagation()
-            setManualLoad(true)
+            activate()
           }
-          // 3D表示済みの場合はクリックをカードに委譲 → ナビゲート
+          // 3D表示済み → クリックをカードに委譲してナビゲート
         }}
         style={{
           position: 'relative',
@@ -111,7 +128,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: (!is3DLoaded && work.glb_url && !has3DError) ? 'pointer' : 'inherit',
+          cursor: (!show3D && work.glb_url && !has3DError) ? 'pointer' : 'inherit',
         }}
       >
         {/* サムネイル: 3D未起動またはロード中は背景として表示 */}
@@ -145,9 +162,9 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
         )}
 
         {/* 手動ロードカード: 3Dタップボタン */}
-        {!show3D && !autoLoad && work.glb_url && !has3DError && (
+        {!show3D && work.glb_url && !has3DError && (
           <button
-            onClick={(e) => { e.stopPropagation(); setManualLoad(true) }}
+            onClick={(e) => { e.stopPropagation(); activate() }}
             style={{
               position: 'absolute',
               bottom: 8,
