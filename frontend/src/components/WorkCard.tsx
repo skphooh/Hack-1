@@ -87,7 +87,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   const show3D = poolConfirmed && wantsToShow
   useEffect(() => { if (!show3D) setIs3DLoaded(false) }, [show3D])
 
-  const showThumbnail = !show3D || !is3DLoaded
+  const showThumbnail = !wantsToShow
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   const handleMouseEnter = (e: React.MouseEvent<HTMLElement>) => {
@@ -171,7 +171,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           />
         )}
-        {!show3D && !work.thumbnail_url && (
+        {!wantsToShow && !work.thumbnail_url && (
           <div style={{ textAlign: 'center', color: 'var(--color-purple)', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '2.5rem' }}>🎭</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>No Image</span>
