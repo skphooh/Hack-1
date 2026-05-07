@@ -1,5 +1,5 @@
 // Three.js 3Dビューアコンポーネント（GLB / OBJ / STL 対応）
-import { Suspense, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useLoader, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
@@ -21,9 +21,10 @@ function RotatingModel({ url }: { url: string }) {
 
 // ─── GLBモデル（非回転） ───────────────────────────────────────────────────
 
-function StaticModel({ url, initialRotationY = 0 }: { url: string; initialRotationY?: number }) {
+function StaticModel({ url, initialRotationY = 0, onLoad }: { url: string; initialRotationY?: number; onLoad?: () => void }) {
   const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
+  useEffect(() => { onLoad?.() }, [])
   return <primitive object={cloned} scale={2.2} rotation={[0, initialRotationY, 0]} />
 }
 
@@ -132,6 +133,7 @@ interface Viewer3DProps {
   height?: number
   isMarket?: boolean
   onError?: () => void
+  onLoad?: () => void
   /** 加工済みSTLを表示する場合に指定（設定するとGLBの代わりにSTLを表示） */
   stlUrl?: string
   /** 台座サイズのオーバーレイ */
@@ -153,6 +155,7 @@ export function Viewer3D({
   height = 400,
   isMarket = false,
   onError,
+  onLoad,
   stlUrl,
   baseOverlay,
   onHolePick,
@@ -246,7 +249,7 @@ export function Viewer3D({
               <StaticModel url={glbUrl} />
             ) : isMarket ? (
               // マーケットカード: 正面向きで静止（-90度でTripo3D正面を向く）
-              <StaticModel url={glbUrl} initialRotationY={-Math.PI / 2} />
+              <StaticModel url={glbUrl} initialRotationY={-Math.PI / 2} onLoad={onLoad} />
             ) : (
               // 通常モード（詳細ページ等）: 自動回転
               <RotatingModel url={glbUrl} />

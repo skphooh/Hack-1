@@ -45,6 +45,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   const autoLoad = index < 9
   const [inView, setInView] = useState(false)
   const [manualLoad, setManualLoad] = useState(false)
+  // 3Dモデルのロード完了フラグ（完了するまではサムネイルを背景表示）
+  const [is3DLoaded, setIs3DLoaded] = useState(false)
   const cardRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -59,6 +61,11 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   }, [work.glb_url, autoLoad])
 
   const show3D = (inView || isHovered || manualLoad) && work.glb_url && !has3DError
+  // show3Dがオフになったらロード済みフラグをリセット
+  useEffect(() => { if (!show3D) setIs3DLoaded(false) }, [show3D])
+
+  // 3D起動中でロード完了前はサムネイルを背景として見せる
+  const showThumbnail = !show3D || !is3DLoaded
   const genreColor = GENRE_COLORS[work.genre ?? ''] ?? GENRE_COLORS['other']
 
   return (
@@ -98,8 +105,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           justifyContent: 'center',
         }}
       >
-        {/* サムネイルは常に背景として表示（3Dロード中もすぐ見える） */}
-        {work.thumbnail_url ? (
+        {/* サムネイル: 3D未起動またはロード中は背景として表示 */}
+        {showThumbnail && work.thumbnail_url && (
           <img
             src={work.thumbnail_url}
             alt={work.title}
@@ -113,17 +120,18 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
               objectFit: 'cover',
             }}
           />
-        ) : !show3D && (
+        )}
+        {!show3D && !work.thumbnail_url && (
           <div style={{ textAlign: 'center', color: 'var(--color-purple)', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '2.5rem' }}>🎭</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>No Image</span>
           </div>
         )}
 
-        {/* 条件を満たした時のみ3Dモデルを起動（サムネイルの上に重ねる） */}
+        {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
         {show3D && (
           <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
-            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={isMobile ? 155 : 200} onError={() => setHas3DError(true)} />
+            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={isMobile ? 155 : 200} onError={() => setHas3DError(true)} onLoad={() => setIs3DLoaded(true)} />
           </div>
         )}
 
