@@ -1,8 +1,6 @@
 // アプリケーションルート: ルーティング設定
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { Canvas } from '@react-three/fiber'
-import { View } from '@react-three/drei'
 import { Navbar } from './components/Navbar'
 import { wakeBackend } from './lib/api'
 import Top from './pages/Top'
@@ -24,17 +22,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* 全WorkCardで共有するグローバルCanvas（WebGLコンテキスト1つで上限問題を根本解決） */}
-      <Canvas
-        style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}
-        eventSource={typeof document !== 'undefined' ? (document.getElementById('root') ?? document.body) : undefined as any}
-        gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
-        dpr={[1, 1.5]}
-        flat
-        frameloop="always"
-      >
-        <View.Port />
-      </Canvas>
       <Navbar />
       <Routes>
         <Route path="/" element={<Top />} />

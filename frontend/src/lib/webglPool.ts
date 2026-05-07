@@ -5,9 +5,8 @@
  * 上限に達したら最も長く放置されているカードを先に退去させる。
  */
 
-// Chrome は短時間に大量の Context Loss が起きるとページをブロックする。
-// PC・モバイル問わず同時 Canvas 数を抑えてその状態を防ぐ。
-export const MAX_CONTEXTS = 4
+// 同時 Canvas 数の上限。8 は PC・モバイルともに安定して動作する値。
+export const MAX_CONTEXTS = 8
 
 type Slot = { evict: () => void; lastActive: number }
 const pool = new Map<string, Slot>()
