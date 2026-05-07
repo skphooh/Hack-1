@@ -163,21 +163,25 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           </View>
         )}
 
-        {/* ▶ 3D ボタン（未表示かつGLBあり） */}
-        {!show3D && work.glb_url && !has3DError && (
+        {/* ▶ 3D ボタン（未表示かつGLBあり）/ エラー時は再試行ボタン */}
+        {!show3D && work.glb_url && (
           <button
-            onClick={handle3DButton}
+            onClick={has3DError
+              ? (e) => { e.stopPropagation(); setHas3DError(false) }
+              : handle3DButton
+            }
             style={{
               position: 'absolute', bottom: 8, left: 8,
               display: 'flex', alignItems: 'center', gap: 4,
               padding: '3px 10px',
-              background: 'rgba(107,159,255,0.88)', color: 'white',
+              background: has3DError ? 'rgba(180,80,80,0.85)' : 'rgba(107,159,255,0.88)',
+              color: 'white',
               border: 'none', borderRadius: 100,
               fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
               zIndex: 20, backdropFilter: 'blur(4px)',
             }}
           >
-            ▶ 3D
+            {has3DError ? '↺ 再試行' : '▶ 3D'}
           </button>
         )}
 

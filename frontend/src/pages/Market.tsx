@@ -104,7 +104,8 @@ export default function Market() {
 
   // --- ページ取得関数（初回 or 追加） ---
   const loadPage = useCallback(async (targetPage: number, isReset: boolean) => {
-    const MAX_RETRIES = 4
+    // Render無料プランは起動に最大60秒かかるため12回×5秒=60秒リトライ
+    const MAX_RETRIES = 12
     const RETRY_DELAY_MS = 5000
 
     if (isReset) {

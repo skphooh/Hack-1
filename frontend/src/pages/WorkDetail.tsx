@@ -27,6 +27,8 @@ export default function WorkDetail() {
 
   const [work, setWork] = useState<WorkResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
 
   // ─── 後処理用の状態 ───
@@ -54,28 +56,39 @@ export default function WorkDetail() {
 
   useEffect(() => {
     if (!id) return
-    // Marketなどで残存しているWebGLコンテキストをここで全解放し、
-    // WorkDetailのViewerが確実にコンテキストを取得できるようにする
     clearPool()
     wakeBackend()
+    setFetchError(false)
+    setLoading(true)
+
+    const MAX_RETRIES = 10
+    const RETRY_DELAY_MS = 5000
+
     const load = async () => {
-      try {
-        const data = await fetchWork(id)
-        setWork(data)
-        // 購入状態確認（有料作品のみ）
-        if (data.price > 0) {
-          import('../lib/api').then(({ checkPurchase }) =>
-            checkPurchase(id).then(r => setIsPurchased(r.purchased)).catch(() => {})
-          )
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const data = await fetchWork(id)
+          setWork(data)
+          if (data.price > 0) {
+            import('../lib/api').then(({ checkPurchase }) =>
+              checkPurchase(id).then(r => setIsPurchased(r.purchased)).catch(() => {})
+            )
+          }
+          setLoading(false)
+          return
+        } catch (e) {
+          if (attempt < MAX_RETRIES) {
+            await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+          } else {
+            console.error('Work fetch error:', e)
+            setFetchError(true)
+            setLoading(false)
+          }
         }
-      } catch (e) {
-        console.error('Work fetch error:', e)
-      } finally {
-        setLoading(false)
       }
     }
     load()
-  }, [id])
+  }, [id, retryCount])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -212,7 +225,7 @@ export default function WorkDetail() {
     }
   }
 
-  // ローディング中
+  // ローディング中（サーバー起動待ちのメッセージ付き）
   if (loading) {
     return (
       <main
@@ -232,12 +245,15 @@ export default function WorkDetail() {
           color="var(--color-pink)"
           style={{ animation: 'spin 1s linear infinite' }}
         />
+        <p style={{ color: 'var(--color-text-sub)', fontSize: '0.85rem', fontWeight: 600 }}>
+          サーバー起動中… しばらくお待ちください 🚀
+        </p>
       </main>
     )
   }
 
-  // 作品が見つからない場合
-  if (!work) {
+  // 取得エラー（サーバーダウン等）→ 再試行ボタン表示
+  if (fetchError || !work) {
     return (
       <main
         style={{
@@ -250,16 +266,24 @@ export default function WorkDetail() {
           gap: 20,
         }}
       >
-        <div style={{ fontSize: '4rem' }}>🔍</div>
-        <h2
-          style={{
-            fontWeight: 800,
-            color: 'var(--color-text)',
-            fontSize: '1.3rem',
-          }}
-        >
-          作品が見つからなかった…
+        <div style={{ fontSize: '4rem' }}>{fetchError ? '⚠️' : '🔍'}</div>
+        <h2 style={{ fontWeight: 800, color: 'var(--color-text)', fontSize: '1.3rem' }}>
+          {fetchError ? '読み込みに失敗しました' : '作品が見つからなかった…'}
         </h2>
+        {fetchError && (
+          <p style={{ color: 'var(--color-text-sub)', fontSize: '0.85rem' }}>
+            サーバーへの接続に失敗しました。再試行してください。
+          </p>
+        )}
+        {fetchError && (
+          <button
+            onClick={() => { setFetchError(false); setLoading(true); setRetryCount(c => c + 1) }}
+            className="btn-primary"
+            style={{ padding: '12px 28px' }}
+          >
+            <Loader2 size={16} /> 再試行
+          </button>
+        )}
         <button
           onClick={() => navigate('/market')}
           className="btn-outline"
