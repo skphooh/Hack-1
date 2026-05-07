@@ -31,7 +31,7 @@ function App() {
         gl={{ antialias: false, powerPreference: 'high-performance', alpha: true }}
         dpr={[1, 1.5]}
         flat
-        frameloop="demand"
+        frameloop="always"
       >
         <View.Port />
       </Canvas>
