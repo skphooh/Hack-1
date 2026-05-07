@@ -39,7 +39,7 @@ function RotatingModel({ url }: { url: string }) {
 
 // ─── GLBモデル（非回転） ───────────────────────────────────────────────────
 
-function StaticModel({ url, initialRotationY = 0, onLoad }: { url: string; initialRotationY?: number; onLoad?: () => void }) {
+export function StaticModel({ url, initialRotationY = 0, onLoad }: { url: string; initialRotationY?: number; onLoad?: () => void }) {
   const { scene } = useGLTF(url, 'https://www.gstatic.com/draco/versioned/decoders/1.5.5/')
   const cloned = useMemo(() => SkeletonUtils.clone(scene), [scene])
 
