@@ -1,6 +1,12 @@
 // アプリケーションルート: ルーティング設定
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  return null
+}
 import { Navbar } from './components/Navbar'
 import { wakeBackend } from './lib/api'
 import Top from './pages/Top'
@@ -22,6 +28,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Navbar />
       <Routes>
         <Route path="/" element={<Top />} />
