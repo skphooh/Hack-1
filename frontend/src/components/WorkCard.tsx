@@ -49,7 +49,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   // View API: グローバルCanvasへのスコープ（メディアエリアに追従）
   const mediaRef = useRef<HTMLDivElement>(null)
 
-  const autoLoad = index < 8
+  const autoLoad = index < 30
 
   // index < 8: 画面に入ったら持続起動
   useEffect(() => {
