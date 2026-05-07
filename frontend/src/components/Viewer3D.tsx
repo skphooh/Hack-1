@@ -1,5 +1,6 @@
 // Three.js 3Dビューアコンポーネント（GLB / OBJ / STL 対応）
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Component, Suspense, useEffect, useMemo, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { Canvas, useFrame, useLoader, type ThreeEvent } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, ContactShadows } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
@@ -7,6 +8,24 @@ import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 import { Box3, Vector3 } from 'three'
 import type { BufferGeometry, Mesh } from 'three'
 import { ErrorBoundary } from './ErrorBoundary'
+
+// HDR外部CDN取得失敗でも3Dビューア全体をクラッシュさせない
+class SilentBoundary extends Component<{ children: ReactNode }, { err: boolean }> {
+  state = { err: false }
+  static getDerivedStateFromError() { return { err: true } }
+  componentDidCatch() { /* silent */ }
+  render() { return this.state.err ? null : this.props.children }
+}
+
+function SafeEnvironment() {
+  return (
+    <SilentBoundary>
+      <Suspense fallback={null}>
+        <Environment preset="city" />
+      </Suspense>
+    </SilentBoundary>
+  )
+}
 
 // ─── GLBモデル（自動回転） ────────────────────────────────────────────────────
 
@@ -254,7 +273,7 @@ export function Viewer3D({
               // 通常モード（詳細ページ等）: 自動回転
               <RotatingModel url={glbUrl} />
             )}
-            {!isMarket && <Environment preset="city" />}
+            {!isMarket && <SafeEnvironment />}
             {!isMarket && <ContactShadows position={[0, -2.0, 0]} opacity={0.4} blur={2} />}
           </Suspense>
 

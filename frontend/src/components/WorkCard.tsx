@@ -49,22 +49,27 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   const autoLoad = index < 9
   const cardRef = useRef<HTMLElement>(null)
 
-  // wantsToShow が変わった時だけプールを操作
   const wantsToShow = (persistActive || hoverActive) && !!work.glb_url && !has3DError
+  // プールの eviction が React の再レンダーを経由するため、
+  // 古い Canvas がアンマウントされてから新しい Canvas をマウントするよう
+  // RAF で 1 フレーム待つ（Context Lost 防止）
+  const [poolConfirmed, setPoolConfirmed] = useState(false)
   useEffect(() => {
-    if (wantsToShow) {
-      acquireContext(work.id, () => {
-        // 他のカードに押し出されたらリセット（GLBキャッシュは残す）
-        setPersistActive(false)
-        setHoverActive(false)
-        setIs3DLoaded(false)
-      })
-    } else {
+    if (!wantsToShow) {
+      setPoolConfirmed(false)
       releaseContext(work.id)
+      return
     }
+    acquireContext(work.id, () => {
+      setPoolConfirmed(false)
+      setPersistActive(false)
+      setHoverActive(false)
+      setIs3DLoaded(false)
+    })
+    const raf = requestAnimationFrame(() => setPoolConfirmed(true))
+    return () => cancelAnimationFrame(raf)
   }, [wantsToShow, work.id])
 
-  // ページ遷移時にスロット解放（GLBキャッシュはそのまま残す → 再訪即表示）
   useEffect(() => () => releaseContext(work.id), [work.id])
 
   // index < 9: 画面に入ったら持続起動
@@ -79,7 +84,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
     return () => observer.disconnect()
   }, [work.glb_url, autoLoad])
 
-  const show3D = wantsToShow
+  // poolConfirmed = 退去した旧Canvasのアンマウント後に立つフラグ
+  const show3D = poolConfirmed && wantsToShow
   useEffect(() => { if (!show3D) setIs3DLoaded(false) }, [show3D])
 
   const showThumbnail = !show3D || !is3DLoaded
