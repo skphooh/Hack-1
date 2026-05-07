@@ -1,7 +1,7 @@
 // WorkCardコンポーネント（ポップ・かわいいデザイン）
 // 3D表示は @react-three/drei の View API を使いアプリ全体で Canvas を1つ共有。
 // WebGLコンテキストが1つなのでコンテキスト上限問題が根本解消される。
-import { useState, useEffect, useRef, Suspense } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { StaticModel } from './Viewer3D'
@@ -144,7 +144,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
 
         {/* グローバルCanvasのViewポート（WebGLコンテキスト共有） */}
         {show3D && (
-          <View track={mediaRef} style={{ position: 'absolute', inset: 0 }}>
+          <View track={mediaRef as React.RefObject<HTMLElement>} style={{ position: 'absolute', inset: 0 }}>
             <PerspectiveCamera makeDefault position={[0, 0, 3.5]} fov={45} />
             <ambientLight intensity={1.2} />
             <directionalLight position={[5, 5, 5]} intensity={1.0} />
