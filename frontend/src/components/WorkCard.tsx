@@ -4,7 +4,7 @@ import { Heart, Download, Star } from 'lucide-react'
 import type { WorkResponse } from '../lib/api'
 import { Viewer3D } from './Viewer3D'
 import { useIsMobile } from '../hooks/useIsMobile'
-import { acquireContext, releaseContext } from '../lib/webglPool'
+import { acquireContext, releaseContext, MAX_CONTEXTS } from '../lib/webglPool'
 
 interface WorkCardProps {
   work: WorkResponse
@@ -46,13 +46,12 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
   // 一時表示: デスクトップのホバー・ボタン（マウスが外れたら戻る）
   const [hoverActive, setHoverActive] = useState(false)
   const [is3DLoaded, setIs3DLoaded] = useState(false)
-  const autoLoad = index < 9
+  const autoLoad = index < MAX_CONTEXTS
   const cardRef = useRef<HTMLElement>(null)
 
   const wantsToShow = (persistActive || hoverActive) && !!work.glb_url && !has3DError
-  // プールの eviction が React の再レンダーを経由するため、
-  // 古い Canvas がアンマウントされてから新しい Canvas をマウントするよう
-  // RAF で 1 フレーム待つ（Context Lost 防止）
+  // 退去した旧 Canvas のアンマウント + カード間の一斉起動を防ぐため
+  // index に応じた遅延（16ms × index）を加えてから Canvas をマウントする
   const [poolConfirmed, setPoolConfirmed] = useState(false)
   useEffect(() => {
     if (!wantsToShow) {
@@ -66,9 +65,11 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
       setHoverActive(false)
       setIs3DLoaded(false)
     })
-    const raf = requestAnimationFrame(() => setPoolConfirmed(true))
-    return () => cancelAnimationFrame(raf)
-  }, [wantsToShow, work.id])
+    // ホバー・ボタン操作は即座に（index=0 相当）、自動ロードはずらす
+    const delay = autoLoad ? index * 16 : 0
+    const tid = setTimeout(() => setPoolConfirmed(true), delay)
+    return () => clearTimeout(tid)
+  }, [wantsToShow, work.id, index, autoLoad])
 
   useEffect(() => () => releaseContext(work.id), [work.id])
 

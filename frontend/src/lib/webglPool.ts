@@ -1,14 +1,13 @@
 /**
  * WebGLコンテキストのグローバル上限管理（LRU方式）
  *
- * モバイルブラウザは同時に持てるWebGLコンテキスト数に制限がある（iOS Safari: 約8）。
- * 上限に達したら最も長く放置されているカードを先にアンマウントして新しいものを起動する。
+ * モバイルブラウザの実用上限は6前後（iOS Safari: ~8、安全マージン込みで6）。
+ * 上限に達したら最も長く放置されているカードを先に退去させる。
  */
 
-const MAX_CONTEXTS =
-  typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-    ? 9   // モバイル: 従来通り9
-    : 16  // デスクトップ: 余裕あり
+// Chrome は短時間に大量の Context Loss が起きるとページをブロックする。
+// PC・モバイル問わず同時 Canvas 数を抑えてその状態を防ぐ。
+export const MAX_CONTEXTS = 4
 
 type Slot = { evict: () => void; lastActive: number }
 const pool = new Map<string, Slot>()
@@ -36,4 +35,10 @@ export function acquireContext(id: string, onEvict: () => void): void {
 /** コンテキスト解放（コンポーネントのアンマウント時） */
 export function releaseContext(id: string): void {
   pool.delete(id)
+}
+
+/** プール全消去（WorkDetailなど専用ページへの遷移時に呼ぶ） */
+export function clearPool(): void {
+  pool.forEach(slot => slot.evict())
+  pool.clear()
 }

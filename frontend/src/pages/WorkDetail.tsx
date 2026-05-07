@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Download, Heart, ArrowLeft, Loader2, Flag, ShoppingCart } from 'lucide-react'
 import { Viewer3D } from '../components/Viewer3D'
 import { fetchWork, toggleLike, addStrapHole, addBase, recordDownload, reportWork, wakeBackend, type WorkResponse } from '../lib/api'
+import { clearPool } from '../lib/webglPool'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
 import type { Vector3 } from 'three'
@@ -53,7 +54,9 @@ export default function WorkDetail() {
 
   useEffect(() => {
     if (!id) return
-    // ページ読み込み時にバックエンドを起動しておく（Renderスリープ対策）
+    // Marketなどで残存しているWebGLコンテキストをここで全解放し、
+    // WorkDetailのViewerが確実にコンテキストを取得できるようにする
+    clearPool()
     wakeBackend()
     const load = async () => {
       try {
