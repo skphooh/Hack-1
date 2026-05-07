@@ -180,7 +180,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
 
         {/* 3Dビューア（個別Canvas）: pointer-events はそのまま有効にしてOrbitControls動作 */}
         {show3D && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 10, visibility: is3DLoaded ? 'visible' : 'hidden' }}>
             <Viewer3D
               glbUrl={work.glb_url!}
               isMarket={true}
