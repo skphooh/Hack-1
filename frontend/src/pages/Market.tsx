@@ -6,6 +6,7 @@ import { WorkCard } from '../components/WorkCard'
 import { fetchWorks, toggleLike, type WorkResponse } from '../lib/api'
 import { useAuthState } from '../components/useAuthState'
 import { useIsMobile } from '../hooks/useIsMobile'
+import { useGLTF } from '@react-three/drei'
 
 /** ジャンルフィルター（絵文字付き） */
 const GENRES = [
@@ -176,6 +177,13 @@ export default function Market() {
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
   }, [hasMore, loadingMore, initialLoading])
+
+  // 最初の9件のGLBをAPIレスポンス直後にバックグラウンドで先読み
+  useEffect(() => {
+    works.slice(0, 9).forEach(w => {
+      if (w.glb_url) useGLTF.preload(w.glb_url)
+    })
+  }, [works])
 
   const handleLike = async (workId: string) => {
     if (!user) return

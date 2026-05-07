@@ -98,15 +98,8 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           justifyContent: 'center',
         }}
       >
-        {/* 条件を満たした時のみ3Dモデルを起動（WebGL上限回避） */}
-        {show3D && (
-          <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
-            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={isMobile ? 155 : 200} onError={() => setHas3DError(true)} />
-          </div>
-        )}
-
-        {/* 通常時（3Dが起動していない時）は元の2D画像を背景として表示 */}
-        {!show3D && work.thumbnail_url ? (
+        {/* サムネイルは常に背景として表示（3Dロード中もすぐ見える） */}
+        {work.thumbnail_url ? (
           <img
             src={work.thumbnail_url}
             alt={work.title}
@@ -124,6 +117,13 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           <div style={{ textAlign: 'center', color: 'var(--color-purple)', opacity: 0.6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '2.5rem' }}>🎭</span>
             <span style={{ fontSize: '0.85rem', fontWeight: 800 }}>No Image</span>
+          </div>
+        )}
+
+        {/* 条件を満たした時のみ3Dモデルを起動（サムネイルの上に重ねる） */}
+        {show3D && (
+          <div style={{ pointerEvents: 'none', position: 'absolute', inset: 0, zIndex: 10 }}>
+            <Viewer3D glbUrl={work.glb_url!} isMarket={true} height={isMobile ? 155 : 200} onError={() => setHas3DError(true)} />
           </div>
         )}
 
