@@ -95,6 +95,14 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
     >
       {/* 3Dモデル または プレースホルダー */}
       <div
+        onClick={(e) => {
+          // 3D未表示かつGLBあり → タップで3D起動（ナビゲートしない）
+          if (!is3DLoaded && work.glb_url && !has3DError) {
+            e.stopPropagation()
+            setManualLoad(true)
+          }
+          // 3D表示済みの場合はクリックをカードに委譲 → ナビゲート
+        }}
         style={{
           position: 'relative',
           height: isMobile ? '155px' : '200px',
@@ -103,6 +111,7 @@ export function WorkCard({ work, onClick, onLike, isLiked = false, index = 99 }:
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          cursor: (!is3DLoaded && work.glb_url && !has3DError) ? 'pointer' : 'inherit',
         }}
       >
         {/* サムネイル: 3D未起動またはロード中は背景として表示 */}
