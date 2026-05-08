@@ -31,8 +31,8 @@ def _load_mesh(file_bytes: bytes, extension: str) -> trimesh.Trimesh:
 
 
 def _repair_mesh(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
-    """メッシュの修復を試みる。ウォータータイトでなくても処理が続くようにする。"""
-    trimesh.repair.fill_holes(mesh)
+    # fill_holes は O(n²) のメモリを使い 512MB 制限でクラッシュするため除外
+    # concatenate アプローチは watertight 不要なので fix_winding / fix_normals のみ
     trimesh.repair.fix_winding(mesh)
     trimesh.repair.fix_normals(mesh)
     return mesh
@@ -110,7 +110,6 @@ def _add_strap_hole_sync(
     angle_x, angle_y, angle_z : 穴の回転角度（度）
     """
     mesh = _load_mesh(file_bytes, extension)
-    _repair_mesh(mesh)
 
     bounds = mesh.bounds
     cx    = (bounds[0][0] + bounds[1][0]) / 2
@@ -197,7 +196,6 @@ def _add_base_sync(
     margin_pct  : モデルの最大径に対する余白（%）
     """
     mesh = _load_mesh(file_bytes, extension)
-    _repair_mesh(mesh)
 
     bounds = mesh.bounds
     width  = bounds[1][0] - bounds[0][0]
@@ -213,7 +211,6 @@ def _add_base_sync(
 
     # Boolean union ではなく直接結合（非ウォータータイトでも動作）
     result = trimesh.util.concatenate([mesh, base])
-    _repair_mesh(result)
     return result.export(file_type="stl")
 
 
