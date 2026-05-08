@@ -70,12 +70,12 @@ export default function Generate() {
   const [showStl, setShowStl] = useState(false)
 
   // ストラップ穴パラメータ
-  const [holeOffsetY,  setHoleOffsetY]  = useState(0)
-  const [holeDepthMm,  setHoleDepthMm]  = useState(5)
+  const [holeOffsetY, setHoleOffsetY] = useState(0)
+  const [holeDepthMm, setHoleDepthMm] = useState(5)
   const [holeRadiusMm, setHoleRadiusMm] = useState(1.0)
 
   // 台座パラメータ
-  const [baseHeightMm,  setBaseHeightMm]  = useState(3)
+  const [baseHeightMm, setBaseHeightMm] = useState(3)
   const [baseMarginPct, setBaseMarginPct] = useState(15)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -168,9 +168,9 @@ export default function Generate() {
     if (strapBlobUrl) { URL.revokeObjectURL(strapBlobUrl); setStrapBlobUrl(null) }
     try {
       const blobUrl = await addStrapHole(work.id, {
-        offset_x:  0,
-        offset_y:  holeOffsetY,
-        depth_mm:  holeDepthMm,
+        offset_x: 0,
+        offset_y: holeOffsetY,
+        depth_mm: holeDepthMm,
         radius_mm: holeRadiusMm,
       })
       setStrapBlobUrl(blobUrl)
@@ -197,7 +197,7 @@ export default function Generate() {
     if (baseBlobUrl) { URL.revokeObjectURL(baseBlobUrl); setBaseBlobUrl(null) }
     try {
       const blobUrl = await addBase(work.id, {
-        height_mm:  baseHeightMm,
+        height_mm: baseHeightMm,
         margin_pct: baseMarginPct,
       })
       setBaseBlobUrl(blobUrl)
@@ -268,8 +268,8 @@ export default function Generate() {
                       ...(isCurrent
                         ? { background: 'var(--color-pink)', color: 'white', boxShadow: '0 4px 14px rgba(107,159,255,0.35)' }
                         : isDone
-                        ? { background: '#EDF2FF', color: 'var(--color-pink)', border: 'none' }
-                        : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
+                          ? { background: '#EDF2FF', color: 'var(--color-pink)', border: 'none' }
+                          : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
                     }}
                   >
                     {label}
@@ -447,7 +447,7 @@ export default function Generate() {
               <div style={{ display: 'flex', gap: 10 }}>
                 {([
                   { value: 'private', label: '自分のみ' },
-                  { value: 'public',  label: 'マーケットに投稿' },
+                  { value: 'public', label: 'マーケットに投稿' },
                 ] as const).map(({ value, label }) => {
                   const selected = visibility === value
                   return (
@@ -558,7 +558,7 @@ export default function Generate() {
                     fontWeight: 500,
                   }}
                 >
-                  ⏳ Tripo3D が処理中です（1〜3分）
+                  ⏳ Tripo3D が処理中です（30秒〜2分）
                 </p>
                 {taskStatus && taskStatus.progress > 0 && (
                   <div style={{ marginTop: 20 }}>
@@ -710,9 +710,9 @@ export default function Generate() {
                           🔗 ストラップ穴（横向き・左右貫通）
                         </p>
                         {[
-                          { label: '前後位置 (前↔奥)', value: holeOffsetY,  min: -50, max: 50, step: 1,    unit: '%',  setter: setHoleOffsetY },
-                          { label: '高さ（上端から）',  value: holeDepthMm,  min: 1,   max: 20, step: 0.5,  unit: 'mm', setter: setHoleDepthMm },
-                          { label: '穴の半径',           value: holeRadiusMm, min: 0.5, max: 3,  step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
+                          { label: '前後位置 (前↔奥)', value: holeOffsetY, min: -50, max: 50, step: 1, unit: '%', setter: setHoleOffsetY },
+                          { label: '高さ（上端から）', value: holeDepthMm, min: 1, max: 20, step: 0.5, unit: 'mm', setter: setHoleDepthMm },
+                          { label: '穴の半径', value: holeRadiusMm, min: 0.5, max: 3, step: 0.25, unit: 'mm', setter: setHoleRadiusMm },
                         ].map(({ label, value, min, max, step, unit, setter }) => (
                           <div key={label} style={{ marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
@@ -767,8 +767,8 @@ export default function Generate() {
                           🔳 台座の設定
                         </p>
                         {[
-                          { label: '台座の高さ',       value: baseHeightMm,  min: 1, max: 10, step: 0.5, unit: 'mm', setter: setBaseHeightMm },
-                          { label: 'モデルからの張り出し', value: baseMarginPct, min: 0, max: 50, step: 5,   unit: '%',  setter: setBaseMarginPct },
+                          { label: '台座の高さ', value: baseHeightMm, min: 1, max: 10, step: 0.5, unit: 'mm', setter: setBaseHeightMm },
+                          { label: 'モデルからの張り出し', value: baseMarginPct, min: 0, max: 50, step: 5, unit: '%', setter: setBaseMarginPct },
                         ].map(({ label, value, min, max, step, unit, setter }) => (
                           <div key={label} style={{ marginBottom: 8 }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>

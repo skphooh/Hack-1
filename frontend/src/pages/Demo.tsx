@@ -16,10 +16,10 @@ const DEMO_MODELS = [
 
 // フェイクプログレスの時間設定（ms）
 const PROGRESS_STAGES = [
-  { until: 2000,  target: 35 },   // アップロード
-  { until: 5000,  target: 75 },   // Tripo3D処理
-  { until: 7500,  target: 95 },   // メッシュ変換
-  { until: 8800,  target: 100 },  // 完了
+  { until: 2000, target: 35 },   // アップロード
+  { until: 5000, target: 75 },   // Tripo3D処理
+  { until: 7500, target: 95 },   // メッシュ変換
+  { until: 8800, target: 100 },  // 完了
 ]
 
 const STEPS = [
@@ -161,8 +161,8 @@ export default function Demo() {
                     ...(isCurrent
                       ? { background: 'var(--color-pink)', color: 'white', boxShadow: '0 4px 14px rgba(107,159,255,0.35)' }
                       : isDone
-                      ? { background: '#EDF2FF', color: 'var(--color-pink)', border: 'none' }
-                      : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
+                        ? { background: '#EDF2FF', color: 'var(--color-pink)', border: 'none' }
+                        : { background: '#F3F4F6', color: '#bbb', border: '1.5px solid #E5E7EB' }),
                   }}>
                     {label}
                   </div>
@@ -255,7 +255,7 @@ export default function Demo() {
                 <Loader2 size={36} color="var(--color-pink)" style={{ animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
                 <p style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--color-text)' }}>3Dモデルを生成中...</p>
                 <p style={{ color: 'var(--color-text-sub)', fontSize: '0.875rem', marginTop: 8, fontWeight: 500 }}>
-                  ⏳ Tripo3D が処理中です（1〜3分）
+                  ⏳ Tripo3D が処理中です（30秒〜2分）
                 </p>
                 <div style={{ marginTop: 20 }}>
                   <div style={{ height: 8, background: '#FFD6E8', borderRadius: 100, overflow: 'hidden' }}>
