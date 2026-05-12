@@ -38,10 +38,13 @@
 | 機能 | 説明 |
 |------|------|
 | 📸 **AI 3D Generation** | Tripo3D API で画像→GLB を非同期生成。`standard` / `high`（PBR テクスチャ）品質を選択可 |
-| 🔄 **Turnaround Generation** | GPT-4o + DALL-E 3 で「見えない裏面」を補完した 4 面ターンアラウンドシートを生成し、マルチビュー 3D 化の精度を向上 |
+| 🔄 **Turnaround Generation** | Gemini API で「見えない裏面」を補完した 4 面ターンアラウンドシートを生成し、マルチビュー 3D 化の精度を向上 |
 | 🎨 **3D Viewer** | React Three Fiber / Three.js によるブラウザ内インタラクティブビューア |
 | 🛠️ **Print-Ready Export** | trimesh + manifold3d で GLB → STL 自動変換・メッシュ修復・ストラップ穴・台座追加 |
-| 🛒 **Marketplace** | 生成作品の公開・共有・売買ができるコミュニティ機能 |
+| 🛒 **Marketplace** | 生成作品の公開・共有・売買ができるコミュニティ機能（いいね・カテゴリフィルタ・無限スクロール） |
+| 💳 **Stripe 決済** | 有料データの Stripe Checkout による購入フロー・Webhook による購入確認 |
+| 🏆 **コンペティション** | 企業スポンサードのデザインコンペ参加・エントリー管理 |
+| 🛡️ **管理ダッシュボード** | 作品通報・コンペ管理・ユーザー管理のための管理者機能 |
 
 ---
 
@@ -51,24 +54,26 @@
 
 | カテゴリ | 技術 |
 |----------|------|
-| Framework | React 18 + Vite (TypeScript) |
-| 3D Rendering | React Three Fiber / Three.js |
+| Framework | React 19 + Vite 8 (TypeScript 6) |
+| 3D Rendering | React Three Fiber / Three.js / @react-three/drei |
 | Styling | Tailwind CSS v4 |
 | State | Zustand |
 | Auth | Firebase Authentication (クライアント SDK) |
+| Routing | React Router v7 |
 
 ### Backend（Render）
 
 | カテゴリ | 技術 |
 |----------|------|
-| Framework | FastAPI (Python 3.12) |
+| Framework | FastAPI (Python 3.12+) |
 | ORM | SQLAlchemy (async) + asyncpg |
 | Database | PostgreSQL (Render managed) |
 | Storage | Firebase Storage |
 | Auth | Firebase Admin SDK (JWT 検証) |
 | AI — 3D 生成 | Tripo3D API |
-| AI — ターンアラウンド | OpenAI GPT-4o / DALL-E 3 |
+| AI — ターンアラウンド | Gemini API (gemini-3.1-flash-image-preview) |
 | Mesh 処理 | trimesh + manifold3d |
+| 決済 | Stripe (Checkout + Webhook) |
 
 ---
 
@@ -80,7 +85,7 @@ flowchart TB
 
     subgraph Vercel["☁️ Vercel — Frontend"]
         direction TB
-        FE["React + Vite\n(TypeScript)"]
+        FE["React 19 + Vite\n(TypeScript)"]
         Viewer["Three.js 3D Viewer"]
         FE --> Viewer
     end
@@ -102,13 +107,15 @@ flowchart TB
             R5["/api/postprocess\n穴あけ・台座追加"]
             R6["/api/works\nCRUD"]
             R7["/api/depth\n深度推定"]
+            R8["/api/purchases\nStripe 決済"]
+            R9["/api/competitions\nコンペ管理"]
         end
 
         API --> Routers
 
         subgraph Services["Services"]
             S1["tripo3d.py\n3D生成"]
-            S2["turnaround.py\nターンアラウンド"]
+            S2["turnaround.py\nGemini ターンアラウンド"]
             S3["mesh.py\nメッシュ変換・修復"]
             S4["storage.py\nFirebase Storage 操作"]
             S5["auth.py\nFirebase JWT 検証"]
@@ -120,11 +127,15 @@ flowchart TB
     subgraph DB["🗄️ PostgreSQL (Render)"]
         T1["users"]
         T2["works\n(task_id, status, urls)"]
+        T3["likes / purchases"]
+        T4["competitions\ncompetition_entries"]
+        T5["reports"]
     end
 
     subgraph ExternalAI["🤖 外部 AI API"]
         AI1["Tripo3D API\n画像→GLB"]
-        AI2["OpenAI\nGPT-4o / DALL-E 3"]
+        AI2["Gemini API\nターンアラウンド生成"]
+        AI3["Stripe\n決済処理"]
     end
 
     %% ユーザーフロー
@@ -136,12 +147,15 @@ flowchart TB
     %% バックエンド内部フロー
     S1 -->|"生成リクエスト"| AI1
     AI1 -->|"GLB URL"| S1
-    S2 -->|"画像補完リクエスト"| AI2
-    AI2 -->|"ターンアラウンド画像"| S2
+    S2 -->|"ターンアラウンドリクエスト"| AI2
+    AI2 -->|"4面シート画像"| S2
     S3 -->|"メッシュ処理"| S1
     Services --> S4
     S4 -->|"ファイル保存"| FS
     Services --> DB
+
+    %% 決済フロー
+    R8 -->|"Checkout 作成"| AI3
 
     %% フロントエンドへの返却
     FS -->|"④ 署名付き URL"| FE
@@ -182,7 +196,7 @@ flowchart TB
 - Python 3.12+
 - Firebase プロジェクト（Auth + Storage 有効化）
 - Tripo3D API キー
-- OpenAI API キー
+- Gemini API キー
 
 ### Frontend
 
@@ -216,8 +230,12 @@ uvicorn main:app --reload    # http://localhost:8000
 | `VITE_API_BASE_URL` | Frontend | FastAPI サーバー URL |
 | `DATABASE_URL` | Backend | PostgreSQL 接続文字列 (`postgresql+asyncpg://...`) |
 | `TRIPO3D_API_KEY` | Backend | Tripo3D API キー |
-| `OPENAI_API_KEY` | Backend | OpenAI API キー |
+| `GEMINI_API_KEY` | Backend | Gemini API キー（ターンアラウンド生成） |
 | `FIREBASE_SERVICE_ACCOUNT` | Backend | Firebase Admin SDK 用 JSON (1行) |
+| `STRIPE_SECRET_KEY` | Backend | Stripe シークレットキー |
+| `STRIPE_WEBHOOK_SECRET` | Backend | Stripe Webhook 署名シークレット |
+| `FRONTEND_URL` | Backend | Stripe リダイレクト先 URL |
+| `ADMIN_PASSWORD` | Backend | 管理者 API 認証パスワード |
 
 ---
 
@@ -227,10 +245,17 @@ uvicorn main:app --reload    # http://localhost:8000
 |--------|------|------|
 | `POST` | `/api/generate` | 画像→3D 生成ジョブ開始 |
 | `GET` | `/api/task/{task_id}` | 生成ジョブ状態ポーリング |
-| `POST` | `/api/generate/turnaround` | ターンアラウンドシート生成 |
+| `POST` | `/api/generate/turnaround` | Gemini によるターンアラウンドシート生成 |
 | `POST` | `/api/convert` | GLB → STL 変換 |
-| `POST` | `/api/postprocess` | メッシュ後処理（穴あけ・台座） |
-| `GET` | `/api/works` | 作品一覧取得 |
+| `POST` | `/api/postprocess/strap-hole` | ストラップ穴追加 |
+| `POST` | `/api/postprocess/base` | 台座追加 |
+| `GET` | `/api/works` | 作品一覧取得（フィルタ・ページネーション） |
+| `POST` | `/api/works/{id}/like` | いいね追加・解除 |
+| `GET` | `/api/purchases/check/{work_id}` | 購入済み確認 |
+| `POST` | `/api/purchases/checkout` | Stripe Checkout セッション作成 |
+| `POST` | `/api/purchases/webhook` | Stripe Webhook 受信 |
+| `GET` | `/api/competitions` | コンペ一覧取得 |
+| `POST` | `/api/competitions/{id}/entry` | コンペへのエントリー |
 | `GET` | `/health` | ヘルスチェック |
 
 ---
@@ -238,14 +263,16 @@ uvicorn main:app --reload    # http://localhost:8000
 ## 🗺️ ロードマップ
 
 - [x] 1枚の画像からの 3D 生成（Tripo3D）
-- [x] GPT-4o によるターンアラウンド生成とマルチビュー 3D 化
-- [x] ブラウザ上での 3D プレビュー
+- [x] Gemini によるターンアラウンド生成とマルチビュー 3D 化
+- [x] ブラウザ上での 3D プレビュー（GLB / STL 切り替え）
 - [x] STL 形式への書き出し・ストラップ穴・台座追加
-- [ ] Wonder3D / 高品質モデルへの切り替え
-- [ ] マーケットプレイス（検索・タグ・購入フロー）
-- [ ] 企業向けグッズコンペ機能
+- [x] マーケットプレイス（カテゴリフィルタ・いいね・無限スクロール）
+- [x] Stripe による有料データ購入フロー
+- [x] 企業向けグッズコンペ機能
+- [ ] Wonder3D / 高品質モデルへの切り替え（イラスト特化）
 - [ ] 公式ライセンス管理（DRM）
 - [ ] クリエイター実績・ポートフォリオ機能
+- [ ] 近くの 3D プリンター保有者マッチング
 
 ---
 
