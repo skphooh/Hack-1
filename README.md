@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="https://utinoko.skphooh.com">🌐 Live Demo</a> ·
+  <a href="https://student.redesigner.jp/portfolios/PF75c1f33ff2281285306fcba61a4d443a">📊 発表スライド</a> ·
   <a href="#-セットアップ">🛠 Setup</a> ·
   <a href="#-システム構成">🏗 Architecture</a>
 </p>
