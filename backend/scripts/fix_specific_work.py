@@ -11,7 +11,7 @@ sys.path.append(str(BASE_DIR))
 from db.models import Work
 
 # RenderのDB接続情報
-DATABASE_URL = "postgresql+asyncpg://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+DATABASE_URL = "postgresql+asyncpg://user:password@host/dbname"
 engine = create_async_engine(DATABASE_URL, echo=False)
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 

@@ -27,7 +27,7 @@ from db.models import Work
 from services.storage import upload_to_storage # ローカルバイト用
 
 # DB接続
-DATABASE_URL = "postgresql+asyncpg://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+DATABASE_URL = "postgresql+asyncpg://user:password@host/dbname"
 engine = create_async_engine(DATABASE_URL, echo=False)
 SessionFactory = async_sessionmaker(engine, expire_on_commit=False)
 

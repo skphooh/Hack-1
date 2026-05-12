@@ -6,7 +6,7 @@ from firebase_admin import credentials, storage
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-DATABASE_URL = "postgresql+asyncpg://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+DATABASE_URL = "postgresql+asyncpg://user:password@host/dbname"
 
 def load_env_safe():
     env_file = os.path.join(os.path.dirname(__file__), ".env")

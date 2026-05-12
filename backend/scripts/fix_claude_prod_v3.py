@@ -21,7 +21,7 @@ def load_env_safe():
 
 async def fix_data():
     env = load_env_safe()
-    DATABASE_URL = "postgresql+asyncpg://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+    DATABASE_URL = "postgresql+asyncpg://user:password@host/dbname"
     
     # Firebase 初期化
     sa_json = env.get("FIREBASE_SERVICE_ACCOUNT")

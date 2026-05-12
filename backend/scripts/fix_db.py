@@ -2,7 +2,7 @@ import asyncio
 import asyncpg
 
 # あなたのデータベース接続URL
-DATABASE_URL = "postgresql://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+DATABASE_URL = "postgresql://user:password@host/dbname"
 
 async def fix():
     print("🚀 データベースに接続中...")

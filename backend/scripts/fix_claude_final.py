@@ -5,7 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 # Render's production Postgres URL
-DATABASE_URL = "postgresql+asyncpg://utinoko_db_user:REDACTED@dpg-d7jih57avr4c73cb88tg-a.singapore-postgres.render.com/utinoko_db"
+DATABASE_URL = "postgresql+asyncpg://user:password@host/dbname"
 
 async def fix_claude_final():
     engine = create_async_engine(DATABASE_URL)
